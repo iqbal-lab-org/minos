@@ -1,2 +1,2 @@
 # minos
-Variant call adjudication
+Variant call adjudication.
