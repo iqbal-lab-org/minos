@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+
+import argparse
+import logging
+import minos
+
+parser = argparse.ArgumentParser(
+    prog='minos',
+    usage='minos <command> <options>',
+    description='minos: variant call adjudication',
+)
+
+parser.add_argument('--version', action='version', version=minos.__version__)
+log_group = parser.add_mutually_exclusive_group()
+log_group.add_argument( '-d', '--debug', help="Show debugging info (incompatible with --verbose)", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.WARNING)
+log_group.add_argument( '-v', '--verbose', help="Be verbose (incompatible with --debug)", action="store_const", dest="loglevel", const=logging.INFO)
+
+
+subparsers = parser.add_subparsers(title='Available commands', help='', metavar='')
+
+
+#------------------------ adjudicate -----------------------------------------
+subparser_adjudicate = subparsers.add_parser(
+    'adjudicate',
+    help='Choose correct variants from VCF files',
+    usage='minos adjudicate [options] <outdir> <ref_fasta> <reads_file> <vcf_in_1> [vcf_in_2 ...]',
+    description='Choose correct variants from VCF files by remapping to graph',
+)
+
+subparser_adjudicate.add_argument('--max_read_length', type=int, help='Maximum read length, this is used by gramtools [%(default)s]', default=150, metavar='INT')
+subparser_adjudicate.add_argument('--read_error_rate', type=float, help='Read error rate. If not given, is estimated from quality scores of first 10,000 reads', metavar='FLOAT')
+subparser_adjudicate.add_argument('--force', action='store_true', help='Replace outdir, if it already exists')
+subparser_adjudicate.add_argument('outdir', help='Name of output directory')
+subparser_adjudicate.add_argument('ref_fasta', help='Reference FASTA filename (must match VCF file(s))')
+subparser_adjudicate.add_argument('reads_file', help='Reads file. Can be any format compatible with htslib')
+subparser_adjudicate.add_argument('vcf_files', nargs='+', help='VCF filename(s) to be merged. Must provide at least one filename.')
+subparser_adjudicate.set_defaults(func=minos.tasks.adjudicate.run)
+
+
+#------------------------ check_with_ref -------------------------------------
+subparser_check_with_ref = subparsers.add_parser(
+    'check_with_ref',
+    help='Check VCF file using "truth" reference',
+    usage='minos check_with_ref [options] <vcf_file> <vcf_ref> <truth_ref> <outprefix>',
+    description='Checks each record in a VCF file, by taking a provided reference as the "truth". Maps each allele plus flanking sequence to the truth genome. Writes 3 files: annotated VCF, SAM file of seqs+flanks mapped to truth_ref, and basic stats of how many good/bad variants identified',
+)
+
+subparser_check_with_ref.add_argument('--flank_length', type=int, help='Number of nucleotides to use before and after each allele for mapping [%(default)s]', default=31, metavar='INT')
+subparser_check_with_ref.add_argument('vcf_file', help='Name of VCF file to be checked')
+subparser_check_with_ref.add_argument('vcf_ref', help='Reference FASTA file used to make VCF (must match VCF file)')
+subparser_check_with_ref.add_argument('truth_ref', help='Reference FASTA file that we assume to tbe the truth')
+subparser_check_with_ref.add_argument('outprefix', help='Prefix of output files')
+subparser_check_with_ref.set_defaults(func=minos.tasks.check_with_ref.run)
+
+
+#------------------------ cluster_vcfs ---------------------------------------
+subparser_cluster_vcfs = subparsers.add_parser(
+    'cluster_vcfs',
+    help='Cluster one or more VCF files',
+    usage='minos cluster_vcfs [options] <ref_fasta> <vcf_in_1> [vcf_in_2 ...]',
+    description='Clusters one of more VCF files, outputting a single VCF file where overlapping variants are merged into one record',
+)
+
+subparser_cluster_vcfs.add_argument('--max_ref_len', type=int, help='Maximum length in REF column of VCF files. Lines with REF too long will be ignored. Default is no filtering', metavar='INT')
+subparser_cluster_vcfs.add_argument('--max_snps_per_cluster', type=int, help='Maximum allowed SNPs in one cluster. Default is no maximumi', metavar='INT')
+subparser_cluster_vcfs.add_argument('--max_var_dist', type=int, help='Variants up to this distance apart are merged [%(default)s]', default=1, metavar='INT')
+subparser_cluster_vcfs.add_argument('-o', '--outfile', help='Name of output VCF file (default is stdout)', default='-', metavar='FILENAME')
+subparser_cluster_vcfs.add_argument('ref_fasta', help='FASTA filename of reference genome that matches the VCF file')
+subparser_cluster_vcfs.add_argument('vcf_files', nargs='+', help='VCF filename(s) to be merged. Must provide at least one filename.')
+subparser_cluster_vcfs.set_defaults(func=minos.tasks.cluster_vcfs.run)
+
+
+#------------------------ versions -------------------------------------------
+subparser_versions = subparsers.add_parser(
+    'versions',
+    help='Report versions of minos and dependencies',
+    usage='minos versions',
+    description='Checks all dependencies are found. Reports where they are found and their versions'
+)
+subparser_versions.set_defaults(func=minos.tasks.versions.run)
+
+
+args = parser.parse_args()
+logging.basicConfig(level=args.loglevel, format='[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+
+if hasattr(args, 'func'):
+    args.func(args)
+else:
+    parser.print_help()
+

@@ -1,0 +1,5 @@
+##fileformat=VCFv4.2
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	run_gramtools.bwa.bam
+ref	1	.	G	T	61	PASS	SVTYPE=SNP	GT	1/1
+ref	2	.	A	TA,G	61	PASS	SVTYPE=SNP	GT	1/1
+ref	3	.	C	T	61	PASS	SVTYPE=SNP	GT	1/1
