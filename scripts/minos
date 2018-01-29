@@ -29,6 +29,8 @@ subparser_adjudicate = subparsers.add_parser(
 
 subparser_adjudicate.add_argument('--max_read_length', type=int, help='Maximum read length, this is used by gramtools [%(default)s]', default=150, metavar='INT')
 subparser_adjudicate.add_argument('--read_error_rate', type=float, help='Read error rate. If not given, is estimated from quality scores of first 10,000 reads', metavar='FLOAT')
+subparser_adjudicate.add_argument('--max_snps_per_cluster', type=int, help='maximum allowed SNPs in one cluster. If a cluster has more than this, then it is ignored. Use this option in combination with --max_ref_len to prevent clusters with huge numbers of SNPs [%(default)s]', default=10, metavar='INT')
+subparser_adjudicate.add_argument('--max_ref_len', type=int, help='When loading the VCF files, any records with REF longer than this will be ignored [%(default)s]', default=2000)
 subparser_adjudicate.add_argument('--force', action='store_true', help='Replace outdir, if it already exists')
 subparser_adjudicate.add_argument('outdir', help='Name of output directory')
 subparser_adjudicate.add_argument('ref_fasta', help='Reference FASTA filename (must match VCF file(s))')
