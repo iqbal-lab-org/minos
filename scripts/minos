@@ -64,7 +64,7 @@ subparser_cluster_vcfs = subparsers.add_parser(
 )
 
 subparser_cluster_vcfs.add_argument('--max_ref_len', type=int, help='Maximum length in REF column of VCF files. Lines with REF too long will be ignored. Default is no filtering', metavar='INT')
-subparser_cluster_vcfs.add_argument('--max_snps_per_cluster', type=int, help='Maximum allowed SNPs in one cluster. Default is no maximumi', metavar='INT')
+subparser_cluster_vcfs.add_argument('--max_snps_per_cluster', type=int, help='Maximum allowed SNPs in one cluster. Default is no maximum', metavar='INT')
 subparser_cluster_vcfs.add_argument('--max_var_dist', type=int, help='Variants up to this distance apart are merged [%(default)s]', default=1, metavar='INT')
 subparser_cluster_vcfs.add_argument('-o', '--outfile', help='Name of output VCF file (default is stdout)', default='-', metavar='FILENAME')
 subparser_cluster_vcfs.add_argument('ref_fasta', help='FASTA filename of reference genome that matches the VCF file')
