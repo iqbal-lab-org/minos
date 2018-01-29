@@ -123,11 +123,11 @@ class MappingBasedVerifier:
             ref_name, expected_start, vcf_record_index = ref_info_tuples.pop()
             expected_start = int(expected_start) - 1
             vcf_record_index = int(vcf_record_index)
-            results = {x: [] for x in ['VCE_PASS', 'VCE_BEST_HITS', 'VCE_NM', 'VCE_CIGAR', 'VCE_MD']}
+            results = {x: [] for x in ['MINOS_CHECK_PASS', 'MINOS_CHECK_BEST_HITS', 'MINOS_CHECK_NM', 'MINOS_CHECK_CIGAR', 'MINOS_CHECK_MD']}
 
             for allele_sam_list in sam_records_by_allele:
                 indexes_with_matched_flanks = []
-                results['VCE_PASS'].append('0')
+                results['MINOS_CHECK_PASS'].append('0')
 
                 for i, hit in enumerate(allele_sam_list):
                     if hit.is_unmapped:
@@ -149,29 +149,29 @@ class MappingBasedVerifier:
 
                     for i in best_nm_hits_indexes:
                         if allele_sam_list[i].query_alignment_length == allele_sam_list[i].infer_query_length() and min_nm == 0:
-                            results['VCE_PASS'][-1] = '1'
+                            results['MINOS_CHECK_PASS'][-1] = '1'
                             break
 
-                    results['VCE_BEST_HITS'].append(str(len(best_nm_hits_indexes)))
-                    results['VCE_NM'].append(str(min_nm))
+                    results['MINOS_CHECK_BEST_HITS'].append(str(len(best_nm_hits_indexes)))
+                    results['MINOS_CHECK_NM'].append(str(min_nm))
                     cigars = '_'.join([allele_sam_list[i].cigarstring for i in best_nm_hits_indexes])
-                    results['VCE_CIGAR'].append(cigars)
+                    results['MINOS_CHECK_CIGAR'].append(cigars)
                     md = '_'.join([allele_sam_list[i].get_tag('MD') for i in best_nm_hits_indexes])
-                    results['VCE_MD'].append(md)
+                    results['MINOS_CHECK_MD'].append(md)
                 else:
-                    results['VCE_BEST_HITS'].append('0')
-                    results['VCE_NM'].append('NA')
-                    results['VCE_CIGAR'].append('NA')
-                    results['VCE_MD'].append('NA')
+                    results['MINOS_CHECK_BEST_HITS'].append('0')
+                    results['MINOS_CHECK_NM'].append('NA')
+                    results['MINOS_CHECK_CIGAR'].append('NA')
+                    results['MINOS_CHECK_MD'].append('NA')
 
             vcf_record = vcf_records[ref_name][vcf_record_index]
 
             for key in sorted(results):
                 vcf_record.set_format_key_value(key, ','.join(results[key]))
 
-            if '1' in results['VCE_PASS'][1:]:
+            if '1' in results['MINOS_CHECK_PASS'][1:]:
                 stats['alt_pass'] += 1
-            if results['VCE_PASS'][0] == '1':
+            if results['MINOS_CHECK_PASS'][0] == '1':
                 stats['ref_pass'] += 1
         return stats
 
