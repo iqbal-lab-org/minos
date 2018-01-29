@@ -8,12 +8,24 @@ from minos import dependencies, gramtools, utils
 class Error (Exception): pass
 
 class Adjudicator:
-    def __init__(self, outdir, ref_fasta, reads_file, vcf_files, max_read_length=150, read_error_rate=None, overwrite_outdir=False):
+    def __init__(self,
+        outdir,
+        ref_fasta,
+        reads_file,
+        vcf_files,
+        max_read_length=150,
+        read_error_rate=None,
+        overwrite_outdir=False,
+        max_snps_per_cluster=10,
+        max_ref_len=1000,
+    ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_file = os.path.abspath(reads_file)
         self.vcf_files = [os.path.abspath(x) for x in vcf_files]
         self.max_read_length = max_read_length
         self.overwrite_outdir = overwrite_outdir
+        self.max_snps_per_cluster = max_snps_per_cluster
+        self.max_ref_len = max_ref_len
 
         self.outdir = os.path.abspath(outdir)
         self.log_file = os.path.join(self.outdir, 'log.txt')
@@ -44,6 +56,8 @@ class Adjudicator:
             self.ref_fasta,
             self.clustered_vcf,
             max_distance_between_variants=1,
+            max_snps_per_cluster=self.max_snps_per_cluster,
+            max_REF_len=self.max_ref_len,
         )
         clusterer.run()
 

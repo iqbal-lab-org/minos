@@ -14,7 +14,7 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose >= 1.3'],
     install_requires=[
-        'cluster_vcf_records >= 0.0.1',
+        'cluster_vcf_records >= 0.0.2',
         'gramtools',
         'pyfastaq >= 3.14.0',
         'pysam >= 0.12',
