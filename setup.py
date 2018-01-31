@@ -17,6 +17,7 @@ setup(
         'cluster_vcf_records >= 0.0.2',
         'gramtools',
         'pyfastaq >= 3.14.0',
+        'pymummer >= 0.10.3',
         'pysam >= 0.12',
         'scipy >= 1.0.0',
     ],
