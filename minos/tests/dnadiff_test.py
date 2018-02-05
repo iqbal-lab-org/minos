@@ -79,12 +79,13 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'dnadiff')
 
 class TestDnadiff(unittest.TestCase):
     def test_run_dnadiff(self):
+        '''test _run_dnadiff'''
         # Just test that dnadiff runs and we get the
         # output files we need. Not check their contents.
         ref_fasta = os.path.join(data_dir, 'run_dnadiff.ref.fa')
         qry_fasta = os.path.join(data_dir, 'run_dnadiff.qry.fa')
         tmp_prefix = 'tmp.run_dnadiff'
-        dnadiff.Dnadiff.run_dnadiff(ref_fasta, qry_fasta, tmp_prefix)
+        dnadiff.Dnadiff._run_dnadiff(ref_fasta, qry_fasta, tmp_prefix)
 
         expected_files = [tmp_prefix + '.' + x for x in dnadiff_output_extensions]
 
@@ -94,7 +95,7 @@ class TestDnadiff(unittest.TestCase):
 
 
     def test_load_qdiff_file(self):
-        '''test load_qdiff_file'''
+        '''test _load_qdiff_file'''
         # Easy (for me at least!) to get confused between
         # insertions and deletions bewteen ref and query.
         # Generate ref and qry sequences here, where we know the differences
@@ -110,7 +111,7 @@ class TestDnadiff(unittest.TestCase):
         outprefix = 'tmp.test_load_qdiff_file.dnadiff'
         dnadiff.Dnadiff.run_dnadiff(ref_fa, qry_fa, outprefix)
         qdiff_file = outprefix + '.qdiff'
-        got_regions = dnadiff.Dnadiff.load_qdiff_file(qdiff_file)
+        got_regions = dnadiff.Dnadiff._load_qdiff_file(qdiff_file)
         expected_regions = {
             'qry.indel': [pyfastaq.intervals.Interval(2500, 2599)],
             'qry.gap': [

@@ -14,13 +14,13 @@ class Dnadiff:
 
 
     @classmethod
-    def run_dnadiff(cls, ref_fasta, query_fasta, outprefix):
+    def _run_dnadiff(cls, ref_fasta, query_fasta, outprefix):
         command = ' '.join(['dnadiff -p', outprefix, ref_fasta, query_fasta])
         utils.syscall(command)
 
 
     @classmethod
-    def load_qdiff_file(cls, qdiff_file):
+    def _load_qdiff_file(cls, qdiff_file):
         '''Loads the out.qdiff file made by dnadiff.
         Returns dict of seq name -> list of sorted non-overlapping
         regions that contain variants compared to the ref'''
