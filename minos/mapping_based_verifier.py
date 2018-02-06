@@ -187,11 +187,14 @@ class MappingBasedVerifier:
             for key in sorted(results):
                 vcf_record.set_format_key_value(key, ','.join(results[key]))
 
+            MappingBasedVerifier._check_called_genotype(vcf_record)
+
             if '1' in results['MINOS_CHECK_PASS'][1:]:
                 stats['alt_pass'] += 1
             if results['MINOS_CHECK_PASS'][0] == '1':
                 stats['ref_pass'] += 1
         return stats
+
 
     def run(self):
         vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_file_in, sort=True)
