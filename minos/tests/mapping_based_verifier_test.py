@@ -52,6 +52,39 @@ class TestMappingBasedVerifier(unittest.TestCase):
         os.unlink(tmp_out)
 
 
+    def test_check_called_genotype(self):
+        '''test _check_called_genotype'''
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:0,0,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:0,0,0:0')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:0,0,1')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:0,0,1:0')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:1,0,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:1,0,0:1')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/1:1,0,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/1:1,0,0:HET')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t1/1:0,1,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t1/1:0,1,0:1')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tMINOS_CHECK_PASS\t0,0,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tMINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0,0,0:UNKNOWN_NO_GT')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+
     def test_run(self):
         '''test run'''
         vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')

@@ -95,6 +95,20 @@ class MappingBasedVerifier:
 
 
     @classmethod
+    def _check_called_genotype(cls, vcf_record):
+        if 'GT' in vcf_record.FORMAT:
+            called_alts = list(set(vcf_record.FORMAT['GT'].split('/')))
+            if len(called_alts) > 1:
+                vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE', 'HET')
+            else:
+                called_alt = int(called_alts[0])
+                pass_per_alt = vcf_record.FORMAT['MINOS_CHECK_PASS'].split(',')
+                vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE',pass_per_alt[called_alt])
+        else:
+            vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE', 'UNKNOWN_NO_GT')
+
+
+    @classmethod
     def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records):
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
