@@ -85,6 +85,8 @@ class Dnadiff:
                     '.',
                     '.',
                     'SVTYPE=DNADIFF_SNP',
+                    'GT',
+                    '1/1',
                 ]))
             elif variant.var_type == pymummer.variant.DEL:
                 # The query has sequence missing, compared to the
@@ -100,6 +102,8 @@ class Dnadiff:
                     '.',
                     '.',
                     'SVTYPE=DNADIFF_INS',
+                    'GT',
+                    '1/1',
                 ]))
             elif variant.var_type == pymummer.variant.INS:
                 # The ref has sequence missing, compared to the
@@ -115,6 +119,8 @@ class Dnadiff:
                     '.',
                     '.',
                     'SVTYPE=DNADIFF_DEL',
+                    'GT',
+                    '1/1',
                 ]))
             else:
                 raise Error('Unknown variant type: ' + str(variant))
