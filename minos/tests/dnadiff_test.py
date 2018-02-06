@@ -173,6 +173,43 @@ class TestDnadiff(unittest.TestCase):
         os.unlink(qry_fa)
 
 
+    def test_make_all_variants_intervals(self):
+        '''test _make_all_variants_intervals'''
+        variants = {
+            'seq.1': [
+                vcf_record.VcfRecord('seq.1\t15\t.\tAGTTGTC\tA\t.\t.\tSVTYPE=DEL'),
+                vcf_record.VcfRecord('seq.1\t100\t.\tT\tA\t.\t.\tSVTYPE=SNP'),
+            ],
+            'seq.2': [
+                vcf_record.VcfRecord('seq.1\t43\t.\tA\tACGTA\t.\t.\tSVTYPE=INS'),
+            ],
+        }
+        big_variant_intervals = {
+            'seq.1': [
+                pyfastaq.intervals.Interval(9, 19),
+                pyfastaq.intervals.Interval(50, 60),
+            ],
+            'seq.3': [
+                pyfastaq.intervals.Interval(42, 45),
+            ],
+        }
+        got = dnadiff.Dnadiff._make_all_variants_intervals(variants, big_variant_intervals)
+        expected = {
+            'seq.1': [
+                pyfastaq.intervals.Interval(9, 20),
+                pyfastaq.intervals.Interval(50, 60),
+                pyfastaq.intervals.Interval(99, 99),
+            ],
+            'seq.2': [
+                pyfastaq.intervals.Interval(42, 42),
+            ],
+            'seq.3': [
+                pyfastaq.intervals.Interval(42, 45),
+            ],
+        }
+        self.assertEqual(expected, got)
+
+
     def test_run(self):
         '''test run'''
         ref_fa = 'tmp.test_load_snps_file.ref.fa'

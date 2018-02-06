@@ -114,8 +114,32 @@ class Dnadiff:
         return vcf_records
 
 
+    @classmethod
+    def _make_all_variants_intervals(cls, variants, big_variant_intervals):
+        '''Makes union of all positions where there are variants,
+        by combining output of _load_qdiff_file() and _load_snps_file()'''
+        all_ref_seqs = set(variants.keys()).union(set(big_variant_intervals.keys()))
+        intervals = {x: [] for x in all_ref_seqs}
+
+        for ref_seq in intervals:
+            if ref_seq in variants:
+                for variant in variants[ref_seq]:
+                    if len(variant.REF) > 1 or len(variant.ALT) > 1:
+                        intervals[ref_seq].append(pyfastaq.intervals.Interval(variant.POS + 1, variant.ref_end_pos()))
+                    else:
+                        intervals[ref_seq].append(pyfastaq.intervals.Interval(variant.POS, variant.ref_end_pos()))
+
+            if ref_seq in big_variant_intervals:
+                intervals[ref_seq].extend(big_variant_intervals[ref_seq])
+
+            pyfastaq.intervals.merge_overlapping_in_list(intervals[ref_seq])
+
+        return intervals
+
+
     def run(self):
         Dnadiff._run_dnadiff(self.ref_fasta, self.query_fasta, self.outprefix)
         self.variants = Dnadiff._load_snps_file(self.outprefix + '.snps', self.query_seqs)
         self.big_variant_intervals = Dnadiff._load_qdiff_file(self.outprefix + '.qdiff')
+        self.all_variant_intervals = Dnadiff._make_all_variants_intervals(self.variants, self.big_variant_intervals)
 
