@@ -1,5 +1,6 @@
 import copy
 from operator import attrgetter
+import os
 
 import pyfastaq
 import pymummer
@@ -9,17 +10,37 @@ from minos import utils
 
 class Error (Exception): pass
 
+dnadiff_output_extensions = [
+    '1coords',
+    '1delta',
+    'delta',
+    'mcoords',
+    'mdelta',
+    'qdiff',
+    'rdiff',
+    'report',
+    'snps',
+    'unqry',
+    'unref',
+]
 
 class Dnadiff:
-    def __init__(self, ref_fasta, query_fasta, outprefix, query_seqs=None):
+    def __init__(self, ref_fasta, query_fasta, outprefix):
         self.ref_fasta = ref_fasta
         self.query_fasta = query_fasta
         self.outprefix = outprefix
-        if query_seqs is None:
-            self.query_seqs = {}
-            pyfastaq.tasks.file_to_dict(self.query_fasta, self.query_seqs)
-        else:
-            self.query_seqs = query_seqs
+        self.ref_seq_names, self.ref_seqs = Dnadiff._load_seq_file(self.ref_fasta)
+        self.query_seq_names, self.query_seqs = Dnadiff._load_seq_file(self.query_fasta)
+
+
+    @classmethod
+    def clean_dnadiff_files(cls, prefix):
+        for extension in dnadiff_output_extensions:
+            # not all files get written, hence try except pass
+            try:
+                os.unlink(prefix + '.' + extension)
+            except:
+                pass
 
 
     @classmethod
@@ -160,7 +181,27 @@ class Dnadiff:
 
 
     def run(self):
-        Dnadiff._run_dnadiff(self.ref_fasta, self.query_fasta, self.outprefix)
+        snps_file = self.outprefix + '.snps'
+        qdiff_file = self.outprefix + '.qdiff'
+        for filename in [snps_file, qdiff_file]:
+            if os.path.exists(filename):
+                os.unlink(filename)
+        tmp_prefix = self.outprefix + '.tmp'
+
+        for ref_name, query_name in zip(self.ref_seq_names, self.query_seq_names):
+            ref_fasta = tmp_prefix + '.ref.fa'
+            query_fasta = tmp_prefix + '.query.fa'
+            with open(ref_fasta, 'w') as f:
+                print(self.ref_seqs[ref_name], file=f)
+            with open(query_fasta, 'w') as f:
+                print(self.query_seqs[query_name], file=f)
+            Dnadiff._run_dnadiff(ref_fasta, query_fasta, tmp_prefix)
+            utils.syscall('cat ' + tmp_prefix + '.snps >> ' + snps_file)
+            utils.syscall('cat ' + tmp_prefix + '.qdiff >> ' + qdiff_file)
+            Dnadiff.clean_dnadiff_files(tmp_prefix)
+            os.unlink(ref_fasta)
+            os.unlink(query_fasta)
+
         self.variants = Dnadiff._load_snps_file(self.outprefix + '.snps', self.query_seqs)
         self.big_variant_intervals = Dnadiff._load_qdiff_file(self.outprefix + '.qdiff')
         self.all_variant_intervals = Dnadiff._make_all_variants_intervals(self.variants, self.big_variant_intervals)
