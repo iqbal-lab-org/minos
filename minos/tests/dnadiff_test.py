@@ -113,6 +113,22 @@ modules_dir = os.path.dirname(os.path.abspath(dnadiff.__file__))
 data_dir = os.path.join(modules_dir, 'tests', 'data', 'dnadiff')
 
 class TestDnadiff(unittest.TestCase):
+    def test_load_seq_file(self):
+        '''test _load_seq_file'''
+        seq1 = pyfastaq.sequences.Fasta('seq.1', 'ACGTA')
+        seq2 = pyfastaq.sequences.Fasta('seq.2', 'AAA')
+        tmp_file = 'tmp.dnadiff.test_load_seq_file.fa'
+        with open(tmp_file, 'w') as f:
+            print(seq1, file=f)
+            print(seq2, file=f)
+        got_names, got_seqs = dnadiff.Dnadiff._load_seq_file(tmp_file)
+        expected_names = ['seq.1', 'seq.2']
+        expected_seqs = {'seq.1': seq1, 'seq.2': seq2}
+        self.assertEqual(expected_names, got_names)
+        self.assertEqual(expected_seqs, got_seqs)
+        os.unlink(tmp_file)
+
+
     def test_run_dnadiff(self):
         '''test _run_dnadiff'''
         # Just test that dnadiff runs and we get the

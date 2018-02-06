@@ -1,3 +1,4 @@
+import copy
 from operator import attrgetter
 
 import pyfastaq
@@ -19,6 +20,21 @@ class Dnadiff:
             pyfastaq.tasks.file_to_dict(self.query_fasta, self.query_seqs)
         else:
             self.query_seqs = query_seqs
+
+
+    @classmethod
+    def _load_seq_file(cls, infile):
+        '''Returns tuple of:
+        1. list of seqnames in same order as in file, and
+        2. dictionary of seqs'''
+        seqreader = pyfastaq.sequences.file_reader(infile)
+        seqs = {}
+        seqnames = []
+        for seq in seqreader:
+            seqnames.append(seq.id)
+            seqs[seq.id] = copy.copy(seq)
+
+        return seqnames, seqs
 
 
     @classmethod
