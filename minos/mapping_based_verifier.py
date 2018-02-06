@@ -198,6 +198,35 @@ class MappingBasedVerifier:
         return stats
 
 
+
+    @classmethod
+    def _get_missing_vcf_records(cls, called_vcfs, expected_vcfs):
+        missing_records = {}
+
+        for ref_seq in expected_vcfs:
+            if ref_seq not in called_vcfs:
+                missing_records[ref_seq] = expected_vcfs[ref_seq]
+                continue
+
+            i = 0
+            called_vcf_list = called_vcfs[ref_seq]
+            missing_records[ref_seq] = []
+
+            for expected_record in expected_vcfs[ref_seq]:
+                while i < len(called_vcf_list) and called_vcf_list[i].ref_end_pos() < expected_record.POS:
+                    i += 1
+
+                if i == len(called_vcf_list):
+                    missing_records[ref_seq].append(expected_record)
+                else:
+                    expected_alts = expected_record.called_alts_from_genotype()
+                    called_alts = called_vcf_list[i].called_alts_from_genotype()
+                    if expected_record.POS != called_vcf_list[i].POS or None in [expected_alts, called_alts] or expected_alts != called_alts:
+                        missing_records[ref_seq].append(expected_record)
+
+        return missing_records
+
+
     def run(self):
         vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_file_in, sort=True)
         vcf_ref_seqs = {}

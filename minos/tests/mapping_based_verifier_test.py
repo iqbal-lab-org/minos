@@ -85,6 +85,43 @@ class TestMappingBasedVerifier(unittest.TestCase):
         self.assertEqual(expect_vcf, vcf)
 
 
+    def test_get_missing_vcf_records(self):
+        '''test _get_missing_vcf_records'''
+        vcfs_should_find = {
+            'ref.1': [
+                vcf_record.VcfRecord('ref.1\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t1/1'),
+                vcf_record.VcfRecord('ref.1\t100\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+                vcf_record.VcfRecord('ref.1\t200\t.\tC\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+            ],
+            'ref.2': [
+                vcf_record.VcfRecord('ref.2\t50\t.\tT\tA\t42.0\t.\tDP4=42\tGT\t1/1'),
+            ],
+        }
+
+        vcfs_to_check = {
+            'ref.1': [
+                vcf_record.VcfRecord('ref.1\t12\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t1/1'),
+                vcf_record.VcfRecord('ref.1\t42\t.\tT\tG,A\t42.0\t.\tDP4=42\tGT\t2/2'),
+                vcf_record.VcfRecord('ref.1\t200\t.\tC\tA,G\t42.0\t.\tDP4=42\tGT\t1/1'),
+            ],
+            'ref.3': [
+                vcf_record.VcfRecord('ref.3\t25\t.\tA\tT\t42.0\t.\tDP4=42\tGT\t1/1'),
+            ],
+        }
+
+        expected = {
+            'ref.1': [
+                vcf_record.VcfRecord('ref.1\t100\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+                vcf_record.VcfRecord('ref.1\t200\t.\tC\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+            ],
+            'ref.2': [
+                vcf_record.VcfRecord('ref.2\t50\t.\tT\tA\t42.0\t.\tDP4=42\tGT\t1/1'),
+            ],
+        }
+        got = mapping_based_verifier.MappingBasedVerifier._get_missing_vcf_records(vcfs_to_check, vcfs_should_find)
+        self.assertEqual(expected, got)
+
+
     def test_run(self):
         '''test run'''
         vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')
