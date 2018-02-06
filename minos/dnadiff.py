@@ -10,10 +10,15 @@ class Error (Exception): pass
 
 
 class Dnadiff:
-    def __init__(self, ref_fasta, query_fasta, outdir):
+    def __init__(self, ref_fasta, query_fasta, outprefix, query_seqs=None):
         self.ref_fasta = ref_fasta
-        self.qry_fasta = qry_fasta
-        self.outfile = outfile
+        self.query_fasta = query_fasta
+        self.outprefix = outprefix
+        if query_seqs is None:
+            self.query_seqs = {}
+            pyfastaq.tasks.file_to_dict(self.query_fasta, self.query_seqs)
+        else:
+            self.query_seqs = query_seqs
 
 
     @classmethod
@@ -107,4 +112,10 @@ class Dnadiff:
             vcf_list.sort(key=attrgetter('POS'))
 
         return vcf_records
+
+
+    def run(self):
+        Dnadiff._run_dnadiff(self.ref_fasta, self.query_fasta, self.outprefix)
+        self.variants = Dnadiff._load_snps_file(self.outprefix + '.snps', self.query_seqs)
+        self.big_variant_intervals = Dnadiff._load_qdiff_file(self.outprefix + '.qdiff')
 

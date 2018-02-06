@@ -70,7 +70,30 @@ def write_test_fasta_files(ref_fa, qry_fa):
     with open(qry_fa, 'w') as f:
             print(*qry_seqs.values(), sep='\n', file=f)
 
-    return ref_seqs, qry_seqs
+    expected_vcf_records = {
+        'qry.snp_indel': [
+            vcf_record.VcfRecord('qry.snp_indel\t100\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP'),
+            vcf_record.VcfRecord('qry.snp_indel\t194\t.\tC\tCGATTC\t.\t.\tSVTYPE=DNADIFF_INS'),
+            vcf_record.VcfRecord('qry.snp_indel\t395\t.\tAACGT\tA\t.\t.\tSVTYPE=DNADIFF_DEL'),
+        ],
+        'qry.snp_indel.2': [
+            vcf_record.VcfRecord('qry.snp_indel.2\t250\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP'),
+        ],
+    }
+
+    expected_regions = {
+        'qry.indel': [pyfastaq.intervals.Interval(2500, 2599)],
+        'qry.gap': [
+            pyfastaq.intervals.Interval(1000, 1498),
+            pyfastaq.intervals.Interval(3999, 4000),
+        ],
+        'qry.dup': [
+            pyfastaq.intervals.Interval(599, 603),
+            pyfastaq.intervals.Interval(1199, 1300),
+        ],
+    }
+
+    return ref_seqs, qry_seqs, expected_vcf_records, expected_regions
 
 
 dnadiff_output_extensions = [
@@ -118,23 +141,12 @@ class TestDnadiff(unittest.TestCase):
         # output of dnadiff (manually checking that it's "close enough").
         ref_fa = 'tmp.test_load_qdiff_file.ref.fa'
         qry_fa = 'tmp.test_load_qdiff_file.qry.fa'
-        write_test_fasta_files(ref_fa, qry_fa)
+        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_test_fasta_files(ref_fa, qry_fa)
 
         outprefix = 'tmp.test_load_qdiff_file.dnadiff'
         dnadiff.Dnadiff._run_dnadiff(ref_fa, qry_fa, outprefix)
         qdiff_file = outprefix + '.qdiff'
         got_regions = dnadiff.Dnadiff._load_qdiff_file(qdiff_file)
-        expected_regions = {
-            'qry.indel': [pyfastaq.intervals.Interval(2500, 2599)],
-            'qry.gap': [
-                pyfastaq.intervals.Interval(1000, 1498),
-                pyfastaq.intervals.Interval(3999, 4000),
-            ],
-            'qry.dup': [
-                pyfastaq.intervals.Interval(599, 603),
-                pyfastaq.intervals.Interval(1199, 1300),
-            ],
-        }
         self.assertEqual(expected_regions, got_regions)
 
         for filename in [outprefix + '.' + x for x in dnadiff_output_extensions]:
@@ -148,21 +160,29 @@ class TestDnadiff(unittest.TestCase):
         '''test _load_snps_file'''
         ref_fa = 'tmp.test_load_snps_file.ref.fa'
         qry_fa = 'tmp.test_load_snps_file.qry.fa'
-        ref_seqs, query_seqs = write_test_fasta_files(ref_fa, qry_fa)
+        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_test_fasta_files(ref_fa, qry_fa)
         outprefix = 'tmp.test_load_snps_file.dnadiff'
         dnadiff.Dnadiff._run_dnadiff(ref_fa, qry_fa, outprefix)
-        got = dnadiff.Dnadiff._load_snps_file(outprefix + '.snps', query_seqs)
-        expected = {
-            'qry.snp_indel': [
-                vcf_record.VcfRecord('qry.snp_indel\t100\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP'),
-                vcf_record.VcfRecord('qry.snp_indel\t194\t.\tC\tCGATTC\t.\t.\tSVTYPE=DNADIFF_INS'),
-                vcf_record.VcfRecord('qry.snp_indel\t395\t.\tAACGT\tA\t.\t.\tSVTYPE=DNADIFF_DEL'),
-            ],
-            'qry.snp_indel.2': [
-                vcf_record.VcfRecord('qry.snp_indel.2\t250\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP'),
-            ],
-        }
-        self.assertEqual(expected, got)
+        got = dnadiff.Dnadiff._load_snps_file(outprefix + '.snps', qry_seqs)
+        self.assertEqual(expected_vcf_records, got)
+
+        for filename in [outprefix + '.' + x for x in dnadiff_output_extensions]:
+            os.unlink(filename)
+
+        os.unlink(ref_fa)
+        os.unlink(qry_fa)
+
+
+    def test_run(self):
+        '''test run'''
+        ref_fa = 'tmp.test_load_snps_file.ref.fa'
+        qry_fa = 'tmp.test_load_snps_file.qry.fa'
+        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_test_fasta_files(ref_fa, qry_fa)
+        outprefix = 'tmp.test_load_snps_file.dnadiff'
+        dnadiffer = dnadiff.Dnadiff(ref_fa, qry_fa, outprefix)
+        dnadiffer.run()
+        self.assertEqual(expected_vcf_records, dnadiffer.variants)
+        self.assertEqual(expected_regions, dnadiffer.big_variant_intervals)
 
         for filename in [outprefix + '.' + x for x in dnadiff_output_extensions]:
             os.unlink(filename)
