@@ -220,6 +220,8 @@ class TestDnadiff(unittest.TestCase):
         dnadiffer.run()
         self.assertEqual(expected_vcf_records, dnadiffer.variants)
         self.assertEqual(expected_regions, dnadiffer.big_variant_intervals)
+        expected_all_variant_intervals = dnadiff.Dnadiff._make_all_variants_intervals(dnadiffer.variants, dnadiffer.big_variant_intervals)
+        self.assertEqual(expected_all_variant_intervals, dnadiffer.all_variant_intervals)
 
         for filename in [outprefix + '.' + x for x in dnadiff_output_extensions]:
             os.unlink(filename)
