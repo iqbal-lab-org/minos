@@ -122,6 +122,29 @@ class TestMappingBasedVerifier(unittest.TestCase):
         self.assertEqual(expected, got)
 
 
+    def test_get_total_length_of_expected_regions_called(self):
+        '''test _get_total_length_of_expected_regions_called'''
+        expected_regions = {
+            'ref.1': [
+                pyfastaq.intervals.Interval(101, 200), # 100 long, 92 get called
+                pyfastaq.intervals.Interval(251, 260), # 10 long, none get called
+            ],
+            'ref.2': [
+                pyfastaq.intervals.Interval(42,43), # 2 long, none get called
+            ],
+        }
+
+        called_vcf_records = {
+            'ref.1': [
+                vcf_record.VcfRecord('ref.1\t100\t.\tACGTACTGTA\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+            ],
+        }
+
+        got_all, got_called  = mapping_based_verifier.MappingBasedVerifier._get_total_length_of_expected_regions_called(expected_regions, called_vcf_records)
+        self.assertEqual(112, got_all)
+        self.assertEqual(8, got_called)
+
+
     def test_run(self):
         '''test run'''
         vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')

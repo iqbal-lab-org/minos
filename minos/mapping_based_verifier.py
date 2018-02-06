@@ -227,6 +227,25 @@ class MappingBasedVerifier:
         return missing_records
 
 
+    @classmethod
+    def _get_total_length_of_expected_regions_called(cls, expected_regions, called_vcf_records):
+        '''Returns total length of expected regions, and total length that was called'''
+        total_length = 0
+        called_length = 0
+
+        for ref_seq, expected_list in expected_regions.items():
+            if ref_seq in called_vcf_records:
+                called_list = [pyfastaq.intervals.Interval(x.POS, x.ref_end_pos()) for x in called_vcf_records[ref_seq]]
+                pyfastaq.intervals.merge_overlapping_in_list(called_list)
+                total_length += pyfastaq.intervals.length_sum_from_list(expected_list)
+                intersect_regions = pyfastaq.intervals.intersection(called_list, expected_list)
+                called_length += pyfastaq.intervals.length_sum_from_list(intersect_regions)
+            else:
+                total_length += pyfastaq.intervals.length_sum_from_list(expected_list)
+
+        return total_length, called_length
+
+
     def run(self):
         vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_file_in, sort=True)
         vcf_ref_seqs = {}
