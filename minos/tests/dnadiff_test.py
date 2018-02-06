@@ -164,3 +164,8 @@ class TestDnadiff(unittest.TestCase):
         }
         self.assertEqual(expected, got)
 
+        for filename in [outprefix + '.' + x for x in dnadiff_output_extensions]:
+            os.unlink(filename)
+
+        os.unlink(ref_fa)
+        os.unlink(qry_fa)
