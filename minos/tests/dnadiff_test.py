@@ -10,7 +10,7 @@ from cluster_vcf_records import vcf_record
 from minos import dnadiff
 
 
-def write_test_fasta_files(ref_fa, qry_fa):
+def write_fasta_files(ref_fa, qry_fa):
     random.seed(1)
     nucleotides = ['A', 'C', 'G', 'T']
     ref_seq = [random.choice(nucleotides) for _ in range(5000)]
@@ -141,7 +141,7 @@ class TestDnadiff(unittest.TestCase):
         # output of dnadiff (manually checking that it's "close enough").
         ref_fa = 'tmp.test_load_qdiff_file.ref.fa'
         qry_fa = 'tmp.test_load_qdiff_file.qry.fa'
-        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_test_fasta_files(ref_fa, qry_fa)
+        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_fasta_files(ref_fa, qry_fa)
 
         outprefix = 'tmp.test_load_qdiff_file.dnadiff'
         dnadiff.Dnadiff._run_dnadiff(ref_fa, qry_fa, outprefix)
@@ -160,7 +160,7 @@ class TestDnadiff(unittest.TestCase):
         '''test _load_snps_file'''
         ref_fa = 'tmp.test_load_snps_file.ref.fa'
         qry_fa = 'tmp.test_load_snps_file.qry.fa'
-        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_test_fasta_files(ref_fa, qry_fa)
+        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_fasta_files(ref_fa, qry_fa)
         outprefix = 'tmp.test_load_snps_file.dnadiff'
         dnadiff.Dnadiff._run_dnadiff(ref_fa, qry_fa, outprefix)
         got = dnadiff.Dnadiff._load_snps_file(outprefix + '.snps', qry_seqs)
@@ -214,7 +214,7 @@ class TestDnadiff(unittest.TestCase):
         '''test run'''
         ref_fa = 'tmp.test_load_snps_file.ref.fa'
         qry_fa = 'tmp.test_load_snps_file.qry.fa'
-        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_test_fasta_files(ref_fa, qry_fa)
+        ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_fasta_files(ref_fa, qry_fa)
         outprefix = 'tmp.test_load_snps_file.dnadiff'
         dnadiffer = dnadiff.Dnadiff(ref_fa, qry_fa, outprefix)
         dnadiffer.run()
