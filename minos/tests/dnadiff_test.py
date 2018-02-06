@@ -5,6 +5,7 @@ import shutil
 import unittest
 
 import pyfastaq
+from cluster_vcf_records import vcf_record
 
 from minos import dnadiff
 
@@ -48,17 +49,28 @@ def write_test_fasta_files(ref_fa, qry_fa):
     # but instead in .snps file)
     random.seed(4)
     ref_seq = [random.choice(nucleotides) for _ in range(500)]
-    ref_seq[100] = 'A'
+    ref_seq[99] = 'A'
     qry_seq = ref_seq[:195] + ref_seq[200:400] + list('ACGT') + ref_seq[400:]
-    ref_seq[100] = 'G'
+    ref_seq[99] = 'G'
     ref_seqs['ref.snp_indel'] = pyfastaq.sequences.Fasta('ref.snp_indel', ''.join(ref_seq))
     qry_seqs['qry.snp_indel'] = pyfastaq.sequences.Fasta('qry.snp_indel', ''.join(qry_seq))
 
+    # Another pair of sequences with a SNP. Just to check that
+    # the dictionary made by _load_snps_file is OK
+    random.seed(5)
+    ref_seq = [random.choice(nucleotides) for _ in range(500)]
+    ref_seq[249] = 'A'
+    qry_seq = copy.copy(ref_seq)
+    ref_seq[249] = 'G'
+    ref_seqs['ref.snp_indel.2'] = pyfastaq.sequences.Fasta('ref.snp_indel.2', ''.join(ref_seq))
+    qry_seqs['qry.snp_indel.2'] = pyfastaq.sequences.Fasta('qry.snp_indel.2', ''.join(qry_seq))
 
     with open(ref_fa, 'w') as f:
             print(*ref_seqs.values(), sep='\n', file=f)
     with open(qry_fa, 'w') as f:
             print(*qry_seqs.values(), sep='\n', file=f)
+
+    return ref_seqs, qry_seqs
 
 
 dnadiff_output_extensions = [
@@ -109,7 +121,7 @@ class TestDnadiff(unittest.TestCase):
         write_test_fasta_files(ref_fa, qry_fa)
 
         outprefix = 'tmp.test_load_qdiff_file.dnadiff'
-        dnadiff.Dnadiff.run_dnadiff(ref_fa, qry_fa, outprefix)
+        dnadiff.Dnadiff._run_dnadiff(ref_fa, qry_fa, outprefix)
         qdiff_file = outprefix + '.qdiff'
         got_regions = dnadiff.Dnadiff._load_qdiff_file(qdiff_file)
         expected_regions = {
@@ -130,4 +142,25 @@ class TestDnadiff(unittest.TestCase):
 
         os.unlink(ref_fa)
         os.unlink(qry_fa)
+
+
+    def test_load_snps_file(self):
+        '''test _load_snps_file'''
+        ref_fa = 'tmp.test_load_snps_file.ref.fa'
+        qry_fa = 'tmp.test_load_snps_file.qry.fa'
+        ref_seqs, query_seqs = write_test_fasta_files(ref_fa, qry_fa)
+        outprefix = 'tmp.test_load_snps_file.dnadiff'
+        dnadiff.Dnadiff._run_dnadiff(ref_fa, qry_fa, outprefix)
+        got = dnadiff.Dnadiff._load_snps_file(outprefix + '.snps', query_seqs)
+        expected = {
+            'qry.snp_indel': [
+                vcf_record.VcfRecord('qry.snp_indel\t100\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP'),
+                vcf_record.VcfRecord('qry.snp_indel\t194\t.\tC\tCGATTC\t.\t.\tSVTYPE=DNADIFF_INS'),
+                vcf_record.VcfRecord('qry.snp_indel\t395\t.\tAACGT\tA\t.\t.\tSVTYPE=DNADIFF_DEL'),
+            ],
+            'qry.snp_indel.2': [
+                vcf_record.VcfRecord('qry.snp_indel.2\t250\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP'),
+            ],
+        }
+        self.assertEqual(expected, got)
 
