@@ -223,10 +223,10 @@ class TestDnadiff(unittest.TestCase):
 
     def test_run(self):
         '''test run'''
-        ref_fa = 'tmp.test_load_snps_file.ref.fa'
-        qry_fa = 'tmp.test_load_snps_file.qry.fa'
+        ref_fa = 'tmp.test_run_file.ref.fa'
+        qry_fa = 'tmp.test_run_file.qry.fa'
         ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_fasta_files(ref_fa, qry_fa)
-        outprefix = 'tmp.test_load_snps_file.dnadiff'
+        outprefix = 'tmp.test_run_file.dnadiff'
         dnadiffer = dnadiff.Dnadiff(ref_fa, qry_fa, outprefix)
         dnadiffer.run()
         self.assertEqual(expected_vcf_records, dnadiffer.variants)
