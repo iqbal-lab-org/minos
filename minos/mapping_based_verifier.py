@@ -113,11 +113,12 @@ class MappingBasedVerifier:
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
         Adds validation info to each VCF record. Returns a dict of stats that
-        has keys => values:
+        has counts up the values in MINOS_CHECK_GENOTYPE in the output file:
             total => total number of VCF records
-            ref_pass => number of records where REF allele found in reference
-            alt_pass => number of records where (at least) one ALT allele found in reference'''
-        stats = {x: 0 for x in ['total', 'ref_pass', 'alt_pass']}
+            HET => number of records with a heterozygous call
+            'gt_wrong' => number of records where genotype is incorrect
+            'gt_correct' => number of records where genotype is correct'''
+        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT']}
         sreader = sam_reader(infile)
 
         for sam_list in sreader:
@@ -188,11 +189,12 @@ class MappingBasedVerifier:
                 vcf_record.set_format_key_value(key, ','.join(results[key]))
 
             MappingBasedVerifier._check_called_genotype(vcf_record)
+            stats[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']] += 1
 
-            if '1' in results['MINOS_CHECK_PASS'][1:]:
-                stats['alt_pass'] += 1
-            if results['MINOS_CHECK_PASS'][0] == '1':
-                stats['ref_pass'] += 1
+        stats['gt_wrong'] = stats['0']
+        del stats['0']
+        stats['gt_correct'] = stats['1']
+        del stats['1']
         return stats
 
 
@@ -212,7 +214,7 @@ class MappingBasedVerifier:
                     print(v, file=f)
 
         with open(self.stats_out, 'w') as f:
-            keys = ['total', 'ref_pass', 'alt_pass']
+            keys = ['total', 'gt_correct', 'gt_wrong', 'HET', 'UNKNOWN_NO_GT']
             print(*keys, sep='\t', file=f)
             print(*[stats[x] for x in keys], sep='\t', file=f)
 

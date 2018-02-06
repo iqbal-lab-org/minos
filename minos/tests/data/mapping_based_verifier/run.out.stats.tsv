@@ -1,2 +1,2 @@
-total	ref_pass	alt_pass
-5	1	4
+total	gt_correct	gt_wrong	HET	UNKNOWN_NO_GT
+5	3	2	0	0
