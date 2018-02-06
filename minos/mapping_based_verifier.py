@@ -46,7 +46,7 @@ class MappingBasedVerifier:
     outprefix.stats.tsv = summary stats (see dict output by
                           _parse_sam_file_and_update_vcf_records_and_gather_stats()
                           for a description)'''
-    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31):
+    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31, expected_variants_vcf=None, run_dnadiff=True):
         self.vcf_file_in = os.path.abspath(vcf_file_in)
         self.vcf_reference_file = os.path.abspath(vcf_reference_file)
         self.verify_reference_file = os.path.abspath(verify_reference_file)
@@ -55,6 +55,10 @@ class MappingBasedVerifier:
         self.seqs_out = os.path.abspath(outprefix + '.fa')
         self.stats_out = os.path.abspath(outprefix + '.stats.tsv')
         self.flank_length = flank_length
+        self.expected_variants_vcf = expected_variants_vcf
+        self.run_dnadiff = run_dnadiff
+        if self.run_dnadiff and self.expected_variants_vcf is not None:
+            raise Error('Error! Incompatible options. expected_variants_vcf file provided, and run_dnadiff is True')
 
 
     @classmethod
