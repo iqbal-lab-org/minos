@@ -74,7 +74,7 @@ def write_fasta_files(ref_fa, qry_fa):
     expected_vcf_records = {
         'qry.snp_indel': [
             vcf_record.VcfRecord('qry.snp_indel\t100\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP\tGT\t1/1'),
-            vcf_record.VcfRecord('qry.snp_indel\t194\t.\tC\tCGATTC\t.\t.\tSVTYPE=DNADIFF_INS\tGT\t1/1'),
+            vcf_record.VcfRecord('qry.snp_indel\t195\t.\tA\tAGATTC\t.\t.\tSVTYPE=DNADIFF_INS\tGT\t1/1'),
             vcf_record.VcfRecord('qry.snp_indel\t395\t.\tAACGT\tA\t.\t.\tSVTYPE=DNADIFF_DEL\tGT\t1/1'),
         ],
         'qry.snp_indel.2': [
