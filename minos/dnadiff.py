@@ -135,8 +135,8 @@ class Dnadiff:
                     variant.qry_name,
                     str(variant.qry_start),
                     '.',
-                    query_seqs[variant.qry_name][variant.qry_start] + variant.qry_base,
-                    query_seqs[variant.qry_name][variant.qry_start],
+                    query_seqs[variant.qry_name][variant.qry_start - 1] + variant.qry_base,
+                    query_seqs[variant.qry_name][variant.qry_start - 1],
                     '.',
                     '.',
                     'SVTYPE=DNADIFF_DEL',
@@ -145,6 +145,8 @@ class Dnadiff:
                 ]))
             else:
                 raise Error('Unknown variant type: ' + str(variant))
+
+            assert new_record.REF == query_seqs[new_record.CHROM][new_record.POS:new_record.POS + len(new_record.REF)]
 
             if new_record.CHROM not in vcf_records:
                 vcf_records[new_record.CHROM] = []
