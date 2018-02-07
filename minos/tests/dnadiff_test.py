@@ -5,7 +5,7 @@ import shutil
 import unittest
 
 import pyfastaq
-from cluster_vcf_records import vcf_record
+from cluster_vcf_records import vcf_file_read, vcf_record
 
 from minos import dnadiff
 
@@ -169,19 +169,22 @@ class TestDnadiff(unittest.TestCase):
         os.unlink(qry_fa)
 
 
-    def test_load_snps_file(self):
-        '''test _load_snps_file'''
-        ref_fa = 'tmp.test_load_snps_file.ref.fa'
-        qry_fa = 'tmp.test_load_snps_file.qry.fa'
+    def test_snps_file_file_to_unmerged_vcf(self):
+        '''test _snps_file_file_to_unmerged_vcf'''
+        ref_fa = 'tmp.test_snps_file_file_to_unmerged_vcf.ref.fa'
+        qry_fa = 'tmp.test_snps_file_file_to_unmerged_vcf.qry.fa'
         ref_seqs, qry_seqs, expected_vcf_records, expected_regions = write_fasta_files(ref_fa, qry_fa)
-        outprefix = 'tmp.test_load_snps_file.dnadiff'
+        outprefix = 'tmp.test_snps_file_file_to_unmerged_vcf.dnadiff'
+        vcf_out = outprefix + '.out.vcf'
         dnadiff.Dnadiff._run_dnadiff(ref_fa, qry_fa, outprefix)
-        got = dnadiff.Dnadiff._load_snps_file(outprefix + '.snps', qry_seqs)
-        self.assertEqual(expected_vcf_records, got)
+        dnadiff.Dnadiff._snps_file_file_to_unmerged_vcf(outprefix + '.snps', qry_seqs, vcf_out)
+        header, got = vcf_file_read.vcf_file_to_dict(vcf_out)
+        self.assertTrue(expected_vcf_records, got)
 
         dnadiff.Dnadiff.clean_dnadiff_files(outprefix)
         os.unlink(ref_fa)
         os.unlink(qry_fa)
+        os.unlink(vcf_out)
 
 
     def test_make_all_variants_intervals(self):
@@ -236,3 +239,5 @@ class TestDnadiff(unittest.TestCase):
         dnadiff.Dnadiff.clean_dnadiff_files(outprefix)
         os.unlink(ref_fa)
         os.unlink(qry_fa)
+        os.unlink(dnadiffer.unmerged_vcf)
+        os.unlink(dnadiffer.merged_vcf)

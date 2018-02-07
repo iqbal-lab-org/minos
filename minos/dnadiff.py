@@ -4,7 +4,7 @@ import os
 
 import pyfastaq
 import pymummer
-from cluster_vcf_records import vcf_record
+from cluster_vcf_records import vcf_clusterer, vcf_file_read, vcf_record
 
 from minos import utils
 
@@ -87,11 +87,11 @@ class Dnadiff:
 
 
     @classmethod
-    def _load_snps_file(cls, snps_file, query_seqs):
+    def _snps_file_file_to_unmerged_vcf(cls, snps_file, query_seqs, outfile):
         '''Loads the .snps file made by dnadiff.
         query_seqs = dictionary of the query sequences.
         ref_seqs, qry_seqs = dictionaries of the genome sequences.
-        Returns a dictionary of qry name -> list of VCF records'''
+        Writes a new VCF file unmerged records.'''
         vcf_records = {}
         variants = pymummer.snp_file.get_all_variants(snps_file)
 
@@ -154,13 +154,16 @@ class Dnadiff:
         for vcf_list in vcf_records.values():
             vcf_list.sort(key=attrgetter('POS'))
 
-        return vcf_records
+        with open(outfile, 'w') as f:
+            for key, vcf_list in sorted(vcf_records.items()):
+                for record in vcf_list:
+                    print(record, file=f)
 
 
     @classmethod
     def _make_all_variants_intervals(cls, variants, big_variant_intervals):
         '''Makes union of all positions where there are variants,
-        by combining output of _load_qdiff_file() and _load_snps_file()'''
+        by combining output of _load_qdiff_file() and variants from merged VCF file'''
         all_ref_seqs = set(variants.keys()).union(set(big_variant_intervals.keys()))
         intervals = {x: [] for x in all_ref_seqs}
 
@@ -183,6 +186,8 @@ class Dnadiff:
     def run(self):
         snps_file = self.outprefix + '.snps'
         qdiff_file = self.outprefix + '.qdiff'
+        self.unmerged_vcf = self.outprefix + '.raw.vcf'
+        self.merged_vcf = self.outprefix + '.merged.vcf'
         for filename in [snps_file, qdiff_file]:
             if os.path.exists(filename):
                 os.unlink(filename)
@@ -202,7 +207,10 @@ class Dnadiff:
             os.unlink(ref_fasta)
             os.unlink(query_fasta)
 
-        self.variants = Dnadiff._load_snps_file(self.outprefix + '.snps', self.query_seqs)
+        Dnadiff._snps_file_file_to_unmerged_vcf(self.outprefix + '.snps', self.query_seqs, self.unmerged_vcf)
+        clusterer = vcf_clusterer.VcfClusterer([self.unmerged_vcf], self.query_fasta, self.merged_vcf, merge_method='simple')
+        clusterer.run()
+        header, self.variants = vcf_file_read.vcf_file_to_dict(self.merged_vcf, remove_useless_start_nucleotides=True)
         self.big_variant_intervals = Dnadiff._load_qdiff_file(self.outprefix + '.qdiff')
         self.all_variant_intervals = Dnadiff._make_all_variants_intervals(self.variants, self.big_variant_intervals)
 
