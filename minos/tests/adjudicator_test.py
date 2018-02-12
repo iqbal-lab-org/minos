@@ -18,7 +18,7 @@ class TestAdjudicator(unittest.TestCase):
         ref_fasta = os.path.join(data_dir, 'run.ref.fa')
         reads_file = os.path.join(data_dir, 'run.bwa.bam')
         vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.1.vcf', 'run.calls.2.vcf']]
-        adj = adjudicator.Adjudicator(outdir, ref_fasta, reads_file, vcf_files)
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files)
         adj.run()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(adj.log_file))
