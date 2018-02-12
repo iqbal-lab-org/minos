@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='minos',
+    name='bio-minos',
     version='0.0.1',
     description='Variant call adjudication',
     packages = find_packages(),
