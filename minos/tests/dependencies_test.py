@@ -35,6 +35,16 @@ class TestDependencies(unittest.TestCase):
         self.assertIsNotNone(version_regex.search(got))
 
 
+    def test_get_version_of_program_dnadiff(self):
+        '''test get_version_of_program dnadiff'''
+        # We don't know what the version might be, so just
+        # check that we got something that has numbers and dots
+        got = dependencies.get_version_of_program('dnadiff')
+        self.assertIsNotNone(got)
+        version_regex = re.compile(r'^[0-9\.]+$')
+        self.assertIsNotNone(version_regex.search(got))
+
+
     def test_find_python_packages(self):
         '''test find_python_packages'''
         # We don't know what the versions will be.
@@ -50,7 +60,7 @@ class TestDependencies(unittest.TestCase):
         # We don't know what the vetsions will be.
         # Just check we don't get None
         got = dependencies.find_binaries_and_versions()
-        self.assertEqual(['bwa', 'gramtools'], sorted(list(got.keys())))
+        self.assertEqual(['bwa', 'dnadiff', 'gramtools'], sorted(list(got.keys())))
         for version, path in got.items():
             self.assertIsNotNone(version)
             self.assertIsNotNone(path)

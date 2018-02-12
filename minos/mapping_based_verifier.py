@@ -5,7 +5,7 @@ import pysam
 
 from cluster_vcf_records import vcf_file_read
 
-from minos import dependencies, utils
+from minos import dependencies, dnadiff, utils
 
 class Error (Exception): pass
 
@@ -46,7 +46,7 @@ class MappingBasedVerifier:
     outprefix.stats.tsv = summary stats (see dict output by
                           _parse_sam_file_and_update_vcf_records_and_gather_stats()
                           for a description)'''
-    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31):
+    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31, expected_variants_vcf=None, run_dnadiff=True):
         self.vcf_file_in = os.path.abspath(vcf_file_in)
         self.vcf_reference_file = os.path.abspath(vcf_reference_file)
         self.verify_reference_file = os.path.abspath(verify_reference_file)
@@ -55,6 +55,12 @@ class MappingBasedVerifier:
         self.seqs_out = os.path.abspath(outprefix + '.fa')
         self.stats_out = os.path.abspath(outprefix + '.stats.tsv')
         self.flank_length = flank_length
+        self.expected_variants_vcf = expected_variants_vcf
+        self.run_dnadiff = run_dnadiff
+        if self.run_dnadiff and self.expected_variants_vcf is not None:
+            raise Error('Error! Incompatible options. expected_variants_vcf file provided, and run_dnadiff is True')
+        self.dnadiff_outprefix = os.path.abspath(outprefix + '.dnadiff')
+        self.vcf_false_negatives_file_out = os.path.abspath(outprefix + '.false_negatives.vcf')
 
 
     @classmethod
@@ -91,15 +97,30 @@ class MappingBasedVerifier:
 
 
     @classmethod
+    def _check_called_genotype(cls, vcf_record):
+        if 'GT' in vcf_record.FORMAT:
+            called_alts = list(set(vcf_record.FORMAT['GT'].split('/')))
+            if len(called_alts) > 1:
+                vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE', 'HET')
+            else:
+                called_alt = int(called_alts[0])
+                pass_per_alt = vcf_record.FORMAT['MINOS_CHECK_PASS'].split(',')
+                vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE',pass_per_alt[called_alt])
+        else:
+            vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE', 'UNKNOWN_NO_GT')
+
+
+    @classmethod
     def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records):
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
         Adds validation info to each VCF record. Returns a dict of stats that
-        has keys => values:
+        has counts up the values in MINOS_CHECK_GENOTYPE in the output file:
             total => total number of VCF records
-            ref_pass => number of records where REF allele found in reference
-            alt_pass => number of records where (at least) one ALT allele found in reference'''
-        stats = {x: 0 for x in ['total', 'ref_pass', 'alt_pass']}
+            HET => number of records with a heterozygous call
+            'gt_wrong' => number of records where genotype is incorrect
+            'gt_correct' => number of records where genotype is correct'''
+        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT']}
         sreader = sam_reader(infile)
 
         for sam_list in sreader:
@@ -169,14 +190,69 @@ class MappingBasedVerifier:
             for key in sorted(results):
                 vcf_record.set_format_key_value(key, ','.join(results[key]))
 
-            if '1' in results['MINOS_CHECK_PASS'][1:]:
-                stats['alt_pass'] += 1
-            if results['MINOS_CHECK_PASS'][0] == '1':
-                stats['ref_pass'] += 1
+            MappingBasedVerifier._check_called_genotype(vcf_record)
+            stats[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']] += 1
+
+        stats['gt_wrong'] = stats['0']
+        del stats['0']
+        stats['gt_correct'] = stats['1']
+        del stats['1']
         return stats
 
+
+
+    @classmethod
+    def _get_missing_vcf_records(cls, called_vcfs, expected_vcfs):
+        missing_records = {}
+
+        for ref_seq in expected_vcfs:
+            if ref_seq not in called_vcfs:
+                missing_records[ref_seq] = expected_vcfs[ref_seq]
+                continue
+
+            i = 0
+            called_vcf_list = called_vcfs[ref_seq]
+            missing_records[ref_seq] = []
+
+            for expected_record in expected_vcfs[ref_seq]:
+                while i < len(called_vcf_list) and called_vcf_list[i].ref_end_pos() < expected_record.POS:
+                    i += 1
+
+                if i == len(called_vcf_list):
+                    missing_records[ref_seq].append(expected_record)
+                else:
+                    expected_alts = expected_record.called_alts_from_genotype()
+                    called_alts = called_vcf_list[i].called_alts_from_genotype()
+                    if expected_record.POS != called_vcf_list[i].POS or None in [expected_alts, called_alts] or expected_alts != called_alts:
+                        missing_records[ref_seq].append(expected_record)
+
+        return missing_records
+
+
+    @classmethod
+    def _get_total_length_of_expected_regions_called(cls, expected_regions, called_vcf_records):
+        '''Returns total length of expected regions, and total length that was called'''
+        total_length = 0
+        called_length = 0
+
+        for ref_seq, expected_list in expected_regions.items():
+            if ref_seq in called_vcf_records:
+                called_list = [pyfastaq.intervals.Interval(x.POS, x.ref_end_pos()) for x in called_vcf_records[ref_seq]]
+                pyfastaq.intervals.merge_overlapping_in_list(called_list)
+                total_length += pyfastaq.intervals.length_sum_from_list(expected_list)
+                intersect_regions = pyfastaq.intervals.intersection(called_list, expected_list)
+                called_length += pyfastaq.intervals.length_sum_from_list(intersect_regions)
+            else:
+                total_length += pyfastaq.intervals.length_sum_from_list(expected_list)
+
+        return total_length, called_length
+
+
     def run(self):
-        vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_file_in, sort=True)
+        vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_file_in, sort=True, remove_useless_start_nucleotides=True)
+        sample_from_header = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
+        if sample_from_header is None:
+            sample_from_header = 'sample'
         vcf_ref_seqs = {}
         pyfastaq.tasks.file_to_dict(self.vcf_reference_file, vcf_ref_seqs)
         MappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out, vcf_records, vcf_ref_seqs, self.flank_length)
@@ -190,8 +266,40 @@ class MappingBasedVerifier:
                 for v in vcf_records[r]:
                     print(v, file=f)
 
+        # false negative stats, if possible
+        stats['variant_regions_total'] = 'NA'
+        stats['called_variant_regions'] = 'NA'
+
+        if self.run_dnadiff:
+            dnadiffer = dnadiff.Dnadiff(
+                self.verify_reference_file,
+                self.vcf_reference_file,
+                self.dnadiff_outprefix,
+            )
+            dnadiffer.run()
+            stats['variant_regions_total'], stats['called_variant_regions'] = MappingBasedVerifier._get_total_length_of_expected_regions_called(dnadiffer.all_variant_intervals, vcf_records)
+            expected_variants = dnadiffer.variants
+        elif self.expected_variants_vcf is not None:
+            header, expected_variants = vcf_file_read.vcf_file_to_dict(self.expected_variants_vcf, sort=True, remove_useless_start_nucleotides=True)
+        else:
+            expected_variants = None
+
+        if expected_variants is None:
+            stats['false_negatives'] = 'NA'
+        else:
+            missed_vcf_records = MappingBasedVerifier._get_missing_vcf_records(vcf_records, expected_variants)
+            stats['false_negatives'] = 0
+            with open(self.vcf_false_negatives_file_out, 'w') as f:
+                print('##fileformat=VCFv4.2', file=f)
+                print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_from_header, sep='\t', file=f)
+                for vcf_list in missed_vcf_records.values():
+                    stats['false_negatives'] += len(vcf_list)
+                    print(*vcf_list, sep='\n', file=f)
+
+        # write stats file
         with open(self.stats_out, 'w') as f:
-            keys = ['total', 'ref_pass', 'alt_pass']
+            keys = ['total', 'gt_correct', 'gt_wrong', 'HET', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
             print(*keys, sep='\t', file=f)
             print(*[stats[x] for x in keys], sep='\t', file=f)
+
 

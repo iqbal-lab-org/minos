@@ -37,6 +37,16 @@ def get_version_of_program(program, binary=None, allow_fail=False):
                     return None
                 return version
         return None
+    elif program == 'dnadiff':
+        dnadiff_process = utils.syscall(binary + ' --version', allow_fail=True)
+        for line in dnadiff_process.stderr.split('\n'):
+            if line.strip().startswith('DNAdiff version'):
+                try:
+                    version = line.rstrip().split()[-1]
+                except:
+                    return None
+                return version
+        return None
     else:
         raise Error('Program name "' + program + '" not recognised. Cannot continue')
 
@@ -47,7 +57,7 @@ def find_python_packages():
     package_name => (version, path).
     Values will be None if package not found'''
     packages = {}
-    for package in ['minos', 'pyfastaq', 'pysam']:
+    for package in ['minos', 'pyfastaq', 'pymummer', 'pysam']:
         try:
             exec('import ' + package)
             version = eval(package + '.__version__')
@@ -68,7 +78,7 @@ def find_binaries_and_versions(programs=None):
     data = {}
 
     if programs is None:
-        programs = ['bwa', 'gramtools']
+        programs = ['bwa', 'dnadiff', 'gramtools']
 
     for program in programs:
         binary = find_binary(program, allow_fail=True)
@@ -96,7 +106,7 @@ def dependencies_report(programs=None):
     lines = ['minos ' + __version__]
 
     if programs is None:
-        programs = ['bwa', 'gramtools']
+        programs = ['bwa', 'dnadiff', 'gramtools']
     programs_data = find_binaries_and_versions(programs=programs)
 
     for program in programs:

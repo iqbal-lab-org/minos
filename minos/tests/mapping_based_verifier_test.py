@@ -52,6 +52,99 @@ class TestMappingBasedVerifier(unittest.TestCase):
         os.unlink(tmp_out)
 
 
+    def test_check_called_genotype(self):
+        '''test _check_called_genotype'''
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:0,0,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:0,0,0:0')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:0,0,1')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:0,0,1:0')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:1,0,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:1,0,0:1')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/1:1,0,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/1:1,0,0:HET')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t1/1:0,1,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t1/1:0,1,0:1')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tMINOS_CHECK_PASS\t0,0,0')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tMINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0,0,0:UNKNOWN_NO_GT')
+        mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
+        self.assertEqual(expect_vcf, vcf)
+
+
+    def test_get_missing_vcf_records(self):
+        '''test _get_missing_vcf_records'''
+        vcfs_should_find = {
+            'ref.1': [
+                vcf_record.VcfRecord('ref.1\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t1/1'),
+                vcf_record.VcfRecord('ref.1\t100\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+                vcf_record.VcfRecord('ref.1\t200\t.\tC\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+            ],
+            'ref.2': [
+                vcf_record.VcfRecord('ref.2\t50\t.\tT\tA\t42.0\t.\tDP4=42\tGT\t1/1'),
+            ],
+        }
+
+        vcfs_to_check = {
+            'ref.1': [
+                vcf_record.VcfRecord('ref.1\t12\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t1/1'),
+                vcf_record.VcfRecord('ref.1\t42\t.\tT\tG,A\t42.0\t.\tDP4=42\tGT\t2/2'),
+                vcf_record.VcfRecord('ref.1\t200\t.\tC\tA,G\t42.0\t.\tDP4=42\tGT\t1/1'),
+            ],
+            'ref.3': [
+                vcf_record.VcfRecord('ref.3\t25\t.\tA\tT\t42.0\t.\tDP4=42\tGT\t1/1'),
+            ],
+        }
+
+        expected = {
+            'ref.1': [
+                vcf_record.VcfRecord('ref.1\t100\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+                vcf_record.VcfRecord('ref.1\t200\t.\tC\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+            ],
+            'ref.2': [
+                vcf_record.VcfRecord('ref.2\t50\t.\tT\tA\t42.0\t.\tDP4=42\tGT\t1/1'),
+            ],
+        }
+        got = mapping_based_verifier.MappingBasedVerifier._get_missing_vcf_records(vcfs_to_check, vcfs_should_find)
+        self.assertEqual(expected, got)
+
+
+    def test_get_total_length_of_expected_regions_called(self):
+        '''test _get_total_length_of_expected_regions_called'''
+        expected_regions = {
+            'ref.1': [
+                pyfastaq.intervals.Interval(101, 200), # 100 long, 92 get called
+                pyfastaq.intervals.Interval(251, 260), # 10 long, none get called
+            ],
+            'ref.2': [
+                pyfastaq.intervals.Interval(42,43), # 2 long, none get called
+            ],
+        }
+
+        called_vcf_records = {
+            'ref.1': [
+                vcf_record.VcfRecord('ref.1\t100\t.\tACGTACTGTA\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
+            ],
+        }
+
+        got_all, got_called  = mapping_based_verifier.MappingBasedVerifier._get_total_length_of_expected_regions_called(expected_regions, called_vcf_records)
+        self.assertEqual(112, got_all)
+        self.assertEqual(8, got_called)
+
+
     def test_run(self):
         '''test run'''
         vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')
@@ -61,7 +154,7 @@ class TestMappingBasedVerifier(unittest.TestCase):
         verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31)
         verifier.run()
         expected_out = os.path.join(data_dir, 'run.out')
-        for suffix in ['.stats.tsv', '.vcf']:
+        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf']:
             expected_file = expected_out + suffix
             got_file = tmp_out + suffix
             self.assertTrue(filecmp.cmp(expected_file, got_file, shallow=False))
@@ -69,6 +162,8 @@ class TestMappingBasedVerifier(unittest.TestCase):
         samfile = tmp_out + '.sam'
         self.assertTrue(os.path.exists(samfile))
         os.unlink(samfile)
+        for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps']:
+            os.unlink(tmp_out + suffix)
 
 
 class TestOther(unittest.TestCase):

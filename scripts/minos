@@ -47,6 +47,8 @@ subparser_check_with_ref = subparsers.add_parser(
     description='Checks each record in a VCF file, by taking a provided reference as the "truth". Maps each allele plus flanking sequence to the truth genome. Writes 3 files: annotated VCF, SAM file of seqs+flanks mapped to truth_ref, and basic stats of how many good/bad variants identified',
 )
 
+subparser_check_with_ref.add_argument('--expected_variants_vcf', help='File of all expected variants that we expect to see, relative to the vcf_ref file. Incompatible with --run_dnadiff')
+subparser_check_with_ref.add_argument('--run_dnadiff', action='store_true', help='Run dnadiff to get all expected variants we should see in vcf_file. Incompatible with --expected_variants_vcf')
 subparser_check_with_ref.add_argument('--flank_length', type=int, help='Number of nucleotides to use before and after each allele for mapping [%(default)s]', default=31, metavar='INT')
 subparser_check_with_ref.add_argument('vcf_file', help='Name of VCF file to be checked')
 subparser_check_with_ref.add_argument('vcf_ref', help='Reference FASTA file used to make VCF (must match VCF file)')
