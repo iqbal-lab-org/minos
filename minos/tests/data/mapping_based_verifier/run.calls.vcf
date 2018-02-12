@@ -1,6 +1,6 @@
 ##fileformat=VCFv4.2
 ##FILTER=<ID=PASS,Description="All filters passed">
-##samtoolsVersion=1.3.1+htslib-1.3.2
+##samtoolsVersion=1.3.1+htslib-1.3.1
 ##samtoolsCommand=samtools mpileup -ugf run.ref.fa run.bwa.bam
 ##reference=file://run.ref.fa
 ##contig=<ID=ref.1,length=1000>
@@ -26,11 +26,13 @@
 ##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
 ##INFO=<ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-forward , ref-reverse, alt-forward and alt-reverse bases">
 ##INFO=<ID=MQ,Number=1,Type=Integer,Description="Average mapping quality">
-##bcftools_callVersion=1.3.1+htslib-1.3.2
+##bcftools_callVersion=1.3.1+htslib-1.3.1
 ##bcftools_callCommand=call -vm -O v -o run.calls.vcf
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	run.bwa.bam
 ref.1	100	.	T	A	58	.	DP=11;VDB=0.40105;SGB=-0.616816;RPB=0.279932;MQB=0.503877;BQB=1.00775;MQ0F=0.636364;AC=2;AN=2;DP4=4,0,6,0;MQ=12	GT:PL	1/1:85,6,0
-ref.1	298	.	TAAA	TA	228	.	INDEL;IDV=30;IMF=0.967742;DP=31;VDB=0.258769;SGB=-0.693097;MQSB=0.998031;MQ0F=0.0322581;AC=2;AN=2;DP4=0,0,17,13;MQ=58	GT:PL	1/1:255,90,0
+ref.1	297	.	TTA	T	228	.	INDEL;IDV=30;IMF=0.967742;DP=31;VDB=0.258769;SGB=-0.693097;MQSB=0.998031;MQ0F=0.0322581;AC=2;AN=2;DP4=0,0,17,13;MQ=59	GT:PL	1/1:255,90,0
 ref.1	501	.	A	AAGTC	228	.	INDEL;IDV=19;IMF=0.791667;DP=24;VDB=0.733669;SGB=-0.692352;MQSB=1;MQ0F=0;AC=2;AN=2;DP4=0,0,11,10;MQ=60	GT:PL	1/1:255,63,0
 ref.1	700	.	AC	AGC,AGT	228	.	INDEL;IDV=20;IMF=0.869565;DP=23;VDB=0.27151;SGB=-0.692067;MQSB=1;MQ0F=0;AC=2;AN=2;DP4=0,0,9,11;MQ=60	GT:PL	1/1:255,60,0
-ref.1	900	.	G	C	42	.	DP=11;VDB=0.40105;SGB=-0.616816;RPB=0.279932;MQB=0.503877;BQB=1.00775;MQ0F=0.636364;AC=2;AN=2;DP4=4,0,6,0;MQ=12	GT:PL	1/1:85,6,0
+ref.1	900	.	T	C	42	.	DP=11;VDB=0.40105;SGB=-0.616816;RPB=0.279932;MQB=0.503877;BQB=1.00775;MQ0F=0.636364;AC=2;AN=2;DP4=4,0,6,0;MQ=12	GT:PL	1/1:85,6,0
+ref.1	950	.	T	A,C	42	.	DP=11	GT:PL	1/2:85,6,0
+ref.1	975	.	T	C	42	.	DP=11

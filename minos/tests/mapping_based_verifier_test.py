@@ -154,7 +154,7 @@ class TestMappingBasedVerifier(unittest.TestCase):
         verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31)
         verifier.run()
         expected_out = os.path.join(data_dir, 'run.out')
-        for suffix in ['.stats.tsv', '.vcf']:
+        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf']:
             expected_file = expected_out + suffix
             got_file = tmp_out + suffix
             self.assertTrue(filecmp.cmp(expected_file, got_file, shallow=False))
@@ -162,6 +162,8 @@ class TestMappingBasedVerifier(unittest.TestCase):
         samfile = tmp_out + '.sam'
         self.assertTrue(os.path.exists(samfile))
         os.unlink(samfile)
+        for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps']:
+            os.unlink(tmp_out + suffix)
 
 
 class TestOther(unittest.TestCase):

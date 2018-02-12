@@ -5,7 +5,7 @@ import pysam
 
 from cluster_vcf_records import vcf_file_read
 
-from minos import dependencies, utils
+from minos import dependencies, dnadiff, utils
 
 class Error (Exception): pass
 
@@ -59,6 +59,8 @@ class MappingBasedVerifier:
         self.run_dnadiff = run_dnadiff
         if self.run_dnadiff and self.expected_variants_vcf is not None:
             raise Error('Error! Incompatible options. expected_variants_vcf file provided, and run_dnadiff is True')
+        self.dnadiff_outprefix = os.path.abspath(outprefix + '.dnadiff')
+        self.vcf_false_negatives_file_out = os.path.abspath(outprefix + '.false_negatives.vcf')
 
 
     @classmethod
@@ -247,7 +249,10 @@ class MappingBasedVerifier:
 
 
     def run(self):
-        vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_file_in, sort=True)
+        vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_file_in, sort=True, remove_useless_start_nucleotides=True)
+        sample_from_header = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
+        if sample_from_header is None:
+            sample_from_header = 'sample'
         vcf_ref_seqs = {}
         pyfastaq.tasks.file_to_dict(self.vcf_reference_file, vcf_ref_seqs)
         MappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out, vcf_records, vcf_ref_seqs, self.flank_length)
@@ -261,8 +266,40 @@ class MappingBasedVerifier:
                 for v in vcf_records[r]:
                     print(v, file=f)
 
+        # false negative stats, if possible
+        stats['variant_regions_total'] = 'NA'
+        stats['called_variant_regions'] = 'NA'
+
+        if self.run_dnadiff:
+            dnadiffer = dnadiff.Dnadiff(
+                self.verify_reference_file,
+                self.vcf_reference_file,
+                self.dnadiff_outprefix,
+            )
+            dnadiffer.run()
+            stats['variant_regions_total'], stats['called_variant_regions'] = MappingBasedVerifier._get_total_length_of_expected_regions_called(dnadiffer.all_variant_intervals, vcf_records)
+            expected_variants = dnadiffer.variants
+        elif self.expected_variants_vcf is not None:
+            header, expected_variants = vcf_file_read.vcf_file_to_dict(self.expected_variants_vcf, sort=True, remove_useless_start_nucleotides=True)
+        else:
+            expected_variants = None
+
+        if expected_variants is None:
+            stats['false_negatives'] = 'NA'
+        else:
+            missed_vcf_records = MappingBasedVerifier._get_missing_vcf_records(vcf_records, expected_variants)
+            stats['false_negatives'] = 0
+            with open(self.vcf_false_negatives_file_out, 'w') as f:
+                print('##fileformat=VCFv4.2', file=f)
+                print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_from_header, sep='\t', file=f)
+                for vcf_list in missed_vcf_records.values():
+                    stats['false_negatives'] += len(vcf_list)
+                    print(*vcf_list, sep='\n', file=f)
+
+        # write stats file
         with open(self.stats_out, 'w') as f:
-            keys = ['total', 'gt_correct', 'gt_wrong', 'HET', 'UNKNOWN_NO_GT']
+            keys = ['total', 'gt_correct', 'gt_wrong', 'HET', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
             print(*keys, sep='\t', file=f)
             print(*[stats[x] for x in keys], sep='\t', file=f)
+
 
