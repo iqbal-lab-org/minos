@@ -5,6 +5,7 @@ import os
 from cluster_vcf_records import vcf_file_read
 
 from minos import dependencies, genotyper, utils
+from minos import __version__ as minos_version
 
 class Error (Exception): pass
 
@@ -123,7 +124,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, a
 
     with open(outfile, 'w') as f:
         print('##fileformat=VCFv4.2', file=f)
-        print('##source=minos', file=f)
+        print('##source=minos, version', minos_version, file=f)
         print('##fileDate=', datetime.date.today(), sep='', file=f)
         print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_name, sep='\t', file=f)
 
