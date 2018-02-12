@@ -11,7 +11,7 @@ class Adjudicator:
     def __init__(self,
         outdir,
         ref_fasta,
-        reads_file,
+        reads_files,
         vcf_files,
         max_read_length=150,
         read_error_rate=None,
@@ -20,7 +20,7 @@ class Adjudicator:
         max_ref_len=1000,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
-        self.reads_file = os.path.abspath(reads_file)
+        self.reads_files = [os.path.abspath(x) for x in reads_files]
         self.vcf_files = [os.path.abspath(x) for x in vcf_files]
         self.max_read_length = max_read_length
         self.overwrite_outdir = overwrite_outdir
@@ -35,7 +35,7 @@ class Adjudicator:
         self.perl_generated_vcf = os.path.join(self.gramtools_outdir, 'perl_generated_vcf')
 
         if read_error_rate is None:
-            self.read_error_rate = utils.estimate_read_error_rate_from_qual_scores(self.reads_file)
+            self.read_error_rate = utils.estimate_read_error_rate_from_qual_scores(self.reads_files[0])
         else:
             self.read_error_rate = read_error_rate
 
@@ -65,7 +65,7 @@ class Adjudicator:
             self.gramtools_outdir,
             self.clustered_vcf,
             self.ref_fasta,
-            self.reads_file,
+            self.reads_files,
             self.max_read_length,
         )
 

@@ -61,6 +61,25 @@ class TestGramtools(unittest.TestCase):
         shutil.rmtree(tmp_out)
 
 
+    def test_run_gramtools_two_reads_files(self):
+        '''test run_gramtools'''
+        tmp_out = 'tmp.run_gramtools.out'
+        if os.path.exists(tmp_out):
+            shutil.rmtree(tmp_out)
+        vcf_file = os.path.join(data_dir, 'run_gramtools.calls.vcf')
+        ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
+        reads_file1 = os.path.join(data_dir, 'run_gramtools.reads_1.fq')
+        reads_file2 = os.path.join(data_dir, 'run_gramtools.reads_2.fq')
+        got_dir = gramtools.run_gramtools(tmp_out, vcf_file, ref_file, [reads_file1, reads_file2], 150)
+        # We don't really know what the directory will be, so just check it exists
+        # We're trusing gramtools output for this test. The point here is to check
+        # that gramtools can run. Parsing its output is checked elsewhere.
+        self.assertTrue(os.path.exists(got_dir))
+        self.assertTrue(os.path.exists(os.path.join(got_dir, 'allele_base_coverage.json')))
+        self.assertTrue(os.path.exists(os.path.join(got_dir, 'grouped_allele_counts_coverage.json')))
+        shutil.rmtree(tmp_out)
+
+
     def test_load_gramtools_vcf_and_allele_coverage_files(self):
         '''test load_gramtools_vcf_and_allele_coverage_files'''
         vcf_file = os.path.join(data_dir, 'load_gramtools_vcf_and_allele_coverage.vcf')

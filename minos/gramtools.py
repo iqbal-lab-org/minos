@@ -27,8 +27,13 @@ def _get_quasimap_out_dir(gramtools_dir):
     return os.path.join(quasimap_outputs, subdirs[0])
 
 
-def run_gramtools(output_dir, vcf_file, ref_file, reads_file, max_read_length):
-    '''Runs gramtools build and quasimap. Returns quasimap output directory'''
+def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
+    '''Runs gramtools build and quasimap. Returns quasimap output directory.
+    "reads" can be one filename, or a list of filenames.'''
+    if type(reads) is not list:
+        assert type(reads) is str
+        reads = [reads]
+
     gramtools_exe = dependencies.find_binary('gramtools')
     build_command = ' '.join([
         gramtools_exe,
@@ -44,7 +49,7 @@ def run_gramtools(output_dir, vcf_file, ref_file, reads_file, max_read_length):
         gramtools_exe,
         'quasimap',
         '--gram-directory', output_dir,
-        '--reads', reads_file,
+        ' '.join(['--reads ' + x for x in reads]),
         "| grep -v '^Reads processed'",
     ])
     utils.syscall(quasimap_command)
