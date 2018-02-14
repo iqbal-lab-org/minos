@@ -111,21 +111,44 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length):
+    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None):
         if sam_record.is_unmapped:
             return False
 
+        # don't allow too many soft clipped bases
+        if (sam_record.cigartuples[0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
+            return False
+
+        if query_sequence is None:
+            query_sequence = sam_record.query_sequence
+        assert query_sequence is not None
+
         assert sam_record.reference_name in ref_seqs
         ref_seq = ref_seqs[sam_record.reference_name][sam_record.reference_start:sam_record.reference_end]
-        alt_seq_start = flank_length
-        alt_seq_end = sam_record.query_length - flank_length - 1
+
+        # if the query is short, which happens when the variant we
+        # are checking is too near the start or end of the ref sequence
+        if len(query_sequence) < 2 * flank_length + 1:
+            # This is an edge case. We don't really know which part
+            # of the query seq we're looking for, so guess
+            length_diff = 2 * flank_length - len(query_sequence)
+
+            if sam_record.query_alignment_start < 5:
+                alt_seq_end = len(query_sequence) - flank_length - 1
+                alt_seq_start = min(alt_seq_end, flank_length - length_diff)
+            else:
+                alt_seq_start = flank_length
+                alt_seq_end = max(alt_seq_start, length_diff + len(query_sequence) - flank_length - 1)
+        else:
+            alt_seq_start = flank_length
+            alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
         wanted_aligned_pairs = []
         current_pos = 0
 
         i = 0
-        while i < sam_record.query_length:
+        while i < len(query_sequence):
             if aligned_pairs[i][0] is None:
                 if alt_seq_start - 1 <= current_pos <= alt_seq_end + 1:
                     wanted_aligned_pairs.append(aligned_pairs[i])
@@ -141,14 +164,14 @@ class MappingBasedVerifier:
         assert len(wanted_aligned_pairs) > 0
 
         for pair in wanted_aligned_pairs:
-            if None in pair or sam_record.query_sequence[pair[0]] != ref_seq[pair[1]]:
+            if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
                 return False
 
         return True
 
 
     @classmethod
-    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length):
+    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length, ref_seqs):
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
         Adds validation info to each VCF record. Returns a dict of stats that
@@ -182,45 +205,17 @@ class MappingBasedVerifier:
             expected_start = int(expected_start) - 1
             vcf_record_index = int(vcf_record_index)
             results = {x: [] for x in ['MINOS_CHECK_PASS', 'MINOS_CHECK_BEST_HITS', 'MINOS_CHECK_NM', 'MINOS_CHECK_CIGAR', 'MINOS_CHECK_MD']}
+            results = {x: [] for x in ['MINOS_CHECK_PASS']}
 
             for allele_sam_list in sam_records_by_allele:
-                indexes_with_matched_flanks = []
-                results['MINOS_CHECK_PASS'].append('0')
+                # Important! only the first hit actually has the sequence!
+                # So give that to MappingBasedVerifier._check_if_sam_match_is_good()
+                indexes_of_good_matches = [i for i in range(len(allele_sam_list)) if MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence)]
 
-                for i, hit in enumerate(allele_sam_list):
-                    if hit.is_unmapped:
-                        continue
-
-                    try:
-                        rs = hit.get_reference_sequence().upper()
-                        start_ok = rs[:flank_length]==hit.query_sequence[:flank_length]
-                        end_ok = rs[-flank_length:]==hit.query_sequence[-flank_length:]
-                    except:
-                        continue
-
-                    if start_ok and end_ok:
-                        indexes_with_matched_flanks.append(i)
-
-                if len(indexes_with_matched_flanks) > 0:
-                    min_nm = min([allele_sam_list[i].get_tag('NM') for i in indexes_with_matched_flanks])
-                    best_nm_hits_indexes = [i for i in indexes_with_matched_flanks if allele_sam_list[i].get_tag('NM') == min_nm]
-
-                    for i in best_nm_hits_indexes:
-                        if allele_sam_list[i].query_alignment_length == allele_sam_list[i].infer_query_length() and min_nm == 0:
-                            results['MINOS_CHECK_PASS'][-1] = '1'
-                            break
-
-                    results['MINOS_CHECK_BEST_HITS'].append(str(len(best_nm_hits_indexes)))
-                    results['MINOS_CHECK_NM'].append(str(min_nm))
-                    cigars = '_'.join([allele_sam_list[i].cigarstring for i in best_nm_hits_indexes])
-                    results['MINOS_CHECK_CIGAR'].append(cigars)
-                    md = '_'.join([allele_sam_list[i].get_tag('MD') for i in best_nm_hits_indexes])
-                    results['MINOS_CHECK_MD'].append(md)
+                if len(indexes_of_good_matches) > 0:
+                    results['MINOS_CHECK_PASS'].append('1')
                 else:
-                    results['MINOS_CHECK_BEST_HITS'].append('0')
-                    results['MINOS_CHECK_NM'].append('NA')
-                    results['MINOS_CHECK_CIGAR'].append('NA')
-                    results['MINOS_CHECK_MD'].append('NA')
+                    results['MINOS_CHECK_PASS'].append('0')
 
             vcf_record = vcf_records[ref_name][vcf_record_index]
 
@@ -235,7 +230,6 @@ class MappingBasedVerifier:
         stats['gt_correct'] = stats['1']
         del stats['1']
         return stats
-
 
 
     @classmethod
@@ -292,10 +286,13 @@ class MappingBasedVerifier:
             sample_from_header = 'sample'
         vcf_ref_seqs = {}
         pyfastaq.tasks.file_to_dict(self.vcf_reference_file, vcf_ref_seqs)
+        verify_ref_seqs = {}
+        pyfastaq.tasks.file_to_dict(self.verify_reference_file, verify_ref_seqs)
+
         MappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out, vcf_records, vcf_ref_seqs, self.flank_length)
         MappingBasedVerifier._map_seqs_to_ref(self.seqs_out, self.verify_reference_file, self.sam_file_out)
         os.unlink(self.seqs_out)
-        stats = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length)
+        stats = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs)
 
         with open(self.vcf_file_out, 'w') as f:
             print(*vcf_header, sep='\n', file=f)
