@@ -111,6 +111,43 @@ class MappingBasedVerifier:
 
 
     @classmethod
+    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length):
+        if sam_record.is_unmapped:
+            return False
+
+        assert sam_record.reference_name in ref_seqs
+        ref_seq = ref_seqs[sam_record.reference_name][sam_record.reference_start:sam_record.reference_end]
+        alt_seq_start = flank_length
+        alt_seq_end = sam_record.query_length - flank_length - 1
+
+        aligned_pairs = sam_record.get_aligned_pairs()
+        wanted_aligned_pairs = []
+        current_pos = 0
+
+        i = 0
+        while i < sam_record.query_length:
+            if aligned_pairs[i][0] is None:
+                if alt_seq_start - 1 <= current_pos <= alt_seq_end + 1:
+                    wanted_aligned_pairs.append(aligned_pairs[i])
+            elif current_pos > alt_seq_end:
+                break
+            else:
+                current_pos = aligned_pairs[i][0]
+                if alt_seq_start - 1 <= current_pos <= alt_seq_end + 1:
+                    wanted_aligned_pairs.append(aligned_pairs[i])
+
+            i += 1
+
+        assert len(wanted_aligned_pairs) > 0
+
+        for pair in wanted_aligned_pairs:
+            if None in pair or sam_record.query_sequence[pair[0]] != ref_seq[pair[1]]:
+                return False
+
+        return True
+
+
+    @classmethod
     def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records):
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
