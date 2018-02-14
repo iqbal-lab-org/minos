@@ -51,7 +51,6 @@ def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
         'quasimap',
         '--gram-directory', output_dir,
         ' '.join(['--reads ' + x for x in reads]),
-        "| grep -v '^Reads processed'",
     ])
     utils.syscall(quasimap_command)
     return _get_quasimap_out_dir(output_dir)
