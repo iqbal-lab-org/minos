@@ -124,7 +124,6 @@ class MappingBasedVerifier:
         assert query_sequence is not None
 
         assert sam_record.reference_name in ref_seqs
-        ref_seq = ref_seqs[sam_record.reference_name][sam_record.reference_start:sam_record.reference_end]
 
         # if the query is short, which happens when the variant we
         # are checking is too near the start or end of the ref sequence

@@ -98,7 +98,6 @@ class Genotyper:
         List is sorted from most to least likely'''
         self.likelihoods = []
         total_depth = sum(self.allele_combination_cov.values())
-        number_of_alleles = len(self.allele_per_base_cov)
 
         for allele_number, per_base_cov in enumerate(self.allele_per_base_cov):
             allele_depth = Genotyper._coverage_of_one_haploid_allele(allele_number, self.allele_combination_cov, self.allele_groups_dict)
