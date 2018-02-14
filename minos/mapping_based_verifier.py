@@ -148,7 +148,7 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records):
+    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length):
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
         Adds validation info to each VCF record. Returns a dict of stats that
@@ -193,8 +193,8 @@ class MappingBasedVerifier:
 
                     try:
                         rs = hit.get_reference_sequence().upper()
-                        start_ok = rs[:31]==hit.query_sequence[:31]
-                        end_ok = rs[-31:]==hit.query_sequence[-31:]
+                        start_ok = rs[:flank_length]==hit.query_sequence[:flank_length]
+                        end_ok = rs[-flank_length:]==hit.query_sequence[-flank_length:]
                     except:
                         continue
 
@@ -295,7 +295,7 @@ class MappingBasedVerifier:
         MappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out, vcf_records, vcf_ref_seqs, self.flank_length)
         MappingBasedVerifier._map_seqs_to_ref(self.seqs_out, self.verify_reference_file, self.sam_file_out)
         os.unlink(self.seqs_out)
-        stats = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records)
+        stats = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length)
 
         with open(self.vcf_file_out, 'w') as f:
             print(*vcf_header, sep='\n', file=f)
