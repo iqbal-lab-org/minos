@@ -1,7 +1,6 @@
 from minos import adjudicator
 
 def run(options):
-    print(options.reads)
     adj = adjudicator.Adjudicator(
         options.outdir,
         options.ref_fasta,
