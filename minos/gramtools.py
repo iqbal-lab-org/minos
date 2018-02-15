@@ -51,7 +51,6 @@ def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
         'quasimap',
         '--gram-directory', output_dir,
         ' '.join(['--reads ' + x for x in reads]),
-        "| grep -v '^Reads processed'",
     ])
     utils.syscall(quasimap_command)
     return _get_quasimap_out_dir(output_dir)
@@ -68,7 +67,6 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     all_allele_coverage, allele_groups = load_allele_files(allele_base_counts_file, grouped_allele_counts_file)
     vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
     total_coverage = 0
-    vcf_line_index = 0
 
     if len(all_allele_coverage) != len(vcf_lines):
         raise Error('Number of records in VCF (' + str(len(vcf_lines)) + ') does not match number output from gramtools.(' + str(len(all_allele_coverage)) + '). Cannot continue')
@@ -87,7 +85,6 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
     The REF allele must also be in the dict.
     So keys of dict must be equal to REF + ALTs sequences.
     This also changes all columns from QUAL onwards'''
-    all_alleles_from_vcf_record = set(vcf_record.ALT).union(set([vcf_record.REF]))
     gtyper = genotyper.Genotyper(mean_depth, read_error_rate, allele_combination_cov, allele_per_base_cov, allele_groups_dict)
     gtyper.run()
     genotype_indexes = set()

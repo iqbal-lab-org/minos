@@ -3,6 +3,7 @@ import os
 import unittest
 
 from cluster_vcf_records import vcf_record
+import pysam
 import pyfastaq
 
 from minos import mapping_based_verifier
@@ -50,6 +51,18 @@ class TestMappingBasedVerifier(unittest.TestCase):
         # trust the mapping. Just check output was written
         self.assertTrue(os.path.exists(tmp_out))
         os.unlink(tmp_out)
+
+
+    def test_check_if_sam_match_is_good(self):
+        '''test _check_if_sam_match_is_good'''
+        ref_fasta = os.path.join(data_dir, 'check_if_sam_match_is_good.ref.fa')
+        ref_seqs = {}
+        pyfastaq.tasks.file_to_dict(ref_fasta, ref_seqs)
+        sam_in = os.path.join(data_dir, 'check_if_sam_match_is_good.ref.sam')
+        samfile = pysam.AlignmentFile(sam_in, "r")
+        for sam_record in samfile.fetch(until_eof=True):
+            expected = {'yes': True, 'no': False}[sam_record.query_name.split('.')[-1]]
+            self.assertEqual(expected, mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29))
 
 
     def test_check_called_genotype(self):
