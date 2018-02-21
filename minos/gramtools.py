@@ -131,6 +131,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, a
         print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_name, sep='\t', file=f)
 
         for i in range(len(vcf_records)):
+            logging.debug('Genotyping: ' + str(vcf_records[i]))
             update_vcf_record_using_gramtools_allele_depths(vcf_records[i], all_allele_coverage[i][0], all_allele_coverage[i][1], allele_groups, mean_depth, read_error_rate)
             print(vcf_records[i], file=f)
 
