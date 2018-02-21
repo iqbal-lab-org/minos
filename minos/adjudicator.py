@@ -54,6 +54,7 @@ class Adjudicator:
         fh.setFormatter(formatter)
         log.addHandler(fh)
         dependencies.check_and_report_dependencies(programs=['gramtools'])
+        logging.info('Dependencies look OK')
 
         clusterer = vcf_clusterer.VcfClusterer(
             self.vcf_files,
@@ -64,6 +65,8 @@ class Adjudicator:
         )
         clusterer.run()
 
+        logging.info('Clustered VCF files, to make one VCF input file for gramtools')
+
         quasimap_dir = gramtools.run_gramtools(
             self.gramtools_outdir,
             self.clustered_vcf,
@@ -72,9 +75,12 @@ class Adjudicator:
             self.max_read_length,
         )
 
+        logging.info('Loading gramtools quasimap output files ' + quasimap_dir)
         mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(self.perl_generated_vcf, quasimap_dir)
+        logging.info('Finished loading gramtools files')
         sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
         assert sample_name is not None
+        logging.info('Writing VCf output file ' + self.final_vcf)
         gramtools.write_vcf_annotated_using_coverage_from_gramtools(
             mean_depth,
             vcf_records,
@@ -85,3 +91,4 @@ class Adjudicator:
             sample_name=sample_name,
         )
 
+        logging.info('All done! Thank you for using minos :)')
