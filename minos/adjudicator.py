@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 
@@ -47,7 +48,12 @@ class Adjudicator:
         except:
             raise Error('Error making output directory ' + self.outdir)
 
-        dependencies.check_and_report_dependencies(self.log_file, programs=['gramtools'])
+        fh = logging.FileHandler(self.log_file, mode='w')
+        log = logging.getLogger()
+        formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+        fh.setFormatter(formatter)
+        log.addHandler(fh)
+        dependencies.check_and_report_dependencies(programs=['gramtools'])
 
         clusterer = vcf_clusterer.VcfClusterer(
             self.vcf_files,
