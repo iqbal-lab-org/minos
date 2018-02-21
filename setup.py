@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='bio-minos',
-    version='0.0.2',
+    version='0.1.0',
     description='Variant call adjudication',
     packages = find_packages(),
     author='Martin Hunt',
@@ -14,7 +14,7 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose >= 1.3'],
     install_requires=[
-        'cluster_vcf_records >= 0.2.0',
+        'cluster_vcf_records >= 0.3.0',
         'gramtools',
         'pyfastaq >= 3.14.0',
         'pymummer >= 0.10.3',
