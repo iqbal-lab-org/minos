@@ -88,7 +88,7 @@ class TestDependencies(unittest.TestCase):
         tmpfile = 'tmp.check_and_report_dependencies.out'
         if os.path.exists(tmpfile):
             os.unlink(tmpfile)
-        dependencies.check_and_report_dependencies(tmpfile)
+        dependencies.check_and_report_dependencies(outfile=tmpfile)
         # We don't inow what the versions etc will be, so just
         # check file got written
         self.assertTrue(os.path.exists(tmpfile))
@@ -96,7 +96,7 @@ class TestDependencies(unittest.TestCase):
 
         os.environ['MINOS_BWA'] = 'oops_this_is_wrong'
         with self.assertRaises(dependencies.Error):
-            dependencies.check_and_report_dependencies(tmpfile)
+            dependencies.check_and_report_dependencies(outfile=tmpfile)
         del os.environ['MINOS_BWA']
         self.assertTrue(os.path.exists(tmpfile))
         os.unlink(tmpfile)
