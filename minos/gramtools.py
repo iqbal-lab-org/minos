@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import os
 
 from cluster_vcf_records import vcf_file_read
@@ -44,7 +45,9 @@ def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
         '--reference', ref_file,
         '--max-read-length', str(max_read_length),
     ])
+    logging.info('Running gramtools build: ' + build_command)
     utils.syscall(build_command)
+    logging.info('Finished running gramtools build')
 
     quasimap_command = ' '.join([
         gramtools_exe,
@@ -52,7 +55,9 @@ def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
         '--gram-directory', output_dir,
         ' '.join(['--reads ' + x for x in reads]),
     ])
+    logging.info('Running gramtools quasimap: ' + quasimap_command)
     utils.syscall(quasimap_command)
+    logging.info('Finished running gramtools quasimap')
     return _get_quasimap_out_dir(output_dir)
 
 
@@ -126,6 +131,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, a
         print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_name, sep='\t', file=f)
 
         for i in range(len(vcf_records)):
+            logging.debug('Genotyping: ' + str(vcf_records[i]))
             update_vcf_record_using_gramtools_allele_depths(vcf_records[i], all_allele_coverage[i][0], all_allele_coverage[i][1], allele_groups, mean_depth, read_error_rate)
             print(vcf_records[i], file=f)
 

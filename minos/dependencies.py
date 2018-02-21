@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 
@@ -123,14 +124,18 @@ def dependencies_report(programs=None):
     return all_ok, lines
 
 
-def check_and_report_dependencies(outfile, programs=None):
+def check_and_report_dependencies(outfile=None, programs=None):
     '''Writes report of depndencies to file (could be stdout).
     Raises error if any depndency not found'''
     all_ok, report_lines = dependencies_report(programs=programs)
-    f = pyfastaq.utils.open_file_write(outfile)
-    print(*report_lines, sep='\n', file=f)
-    print('All ok:', all_ok, file=f)
-    pyfastaq.utils.close(f)
+    if outfile is not None:
+        f = pyfastaq.utils.open_file_write(outfile)
+        print(*report_lines, sep='\n', file=f)
+        print('All ok:', all_ok, file=f)
+        pyfastaq.utils.close(f)
+    else:
+        for line in report_lines:
+            logging.info('Depencency check: ' + line)
     if not all_ok:
         raise Error('At least one dependency not found')
 

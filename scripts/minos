@@ -11,9 +11,7 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument('--version', action='version', version=minos.__version__)
-log_group = parser.add_mutually_exclusive_group()
-log_group.add_argument( '-d', '--debug', help="Show debugging info (incompatible with --verbose)", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.WARNING)
-log_group.add_argument( '-v', '--verbose', help="Be verbose (incompatible with --debug)", action="store_const", dest="loglevel", const=logging.INFO)
+parser.add_argument('--debug', help="More verbose logging", action='store_true')
 
 
 subparsers = parser.add_subparsers(title='Available commands', help='', metavar='')
@@ -84,7 +82,13 @@ subparser_versions.set_defaults(func=minos.tasks.versions.run)
 
 
 args = parser.parse_args()
-logging.basicConfig(level=args.loglevel, format='[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+
+log = logging.getLogger()
+if args.debug:
+    log.setLevel(logging.DEBUG)
+else:
+    log.setLevel(logging.INFO)
+
 
 if hasattr(args, 'func'):
     args.func(args)
