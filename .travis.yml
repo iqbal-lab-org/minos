@@ -1,0 +1,17 @@
+dist: artful
+language: python
+addons:
+  apt:
+    packages:
+      - cmake
+      - libboost-all-dev
+      - python3-pip
+      - zlib1g-dev
+python:
+  - "3.4"
+sudo: false
+script:
+  - pip3 install git+https://github.com/iqbal-lab-org/gramtools
+  - python setup.py test
+
+
