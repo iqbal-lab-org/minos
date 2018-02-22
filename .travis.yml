@@ -3,10 +3,10 @@ language: python
 addons:
   apt:
     packages:
-      cmake
-      libboost-all-dev
-      python3-pip
-      zlib1g-dev
+      - cmake
+      - libboost-all-dev
+      - python3-pip
+      - zlib1g-dev
 python:
   - "3.4"
 sudo: false
