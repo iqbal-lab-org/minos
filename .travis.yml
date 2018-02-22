@@ -1,0 +1,15 @@
+dist: artful
+language: python
+addons:
+  apt:
+    packages:
+      cmake
+      python3-pip
+python:
+  - "3.4"
+sudo: false
+script:
+  - pip3 install git+https://github.com/iqbal-lab-org/gramtools
+  - python setup.py test
+
+
