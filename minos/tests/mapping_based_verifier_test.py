@@ -168,15 +168,15 @@ class TestMappingBasedVerifier(unittest.TestCase):
         self.assertEqual(8, got_called)
 
 
-    def test_run(self):
-        '''test run'''
+    def test_run_no_filter_cluster(self):
+        '''test run without filtering and clustering'''
         vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')
         vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
         verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
         tmp_out = 'tmp.mapping_based_verifier.out'
-        verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31)
+        verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=False)
         verifier.run()
-        expected_out = os.path.join(data_dir, 'run.out')
+        expected_out = os.path.join(data_dir, 'run.out.no_filter_cluster')
         for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf']:
             expected_file = expected_out + suffix
             got_file = tmp_out + suffix
@@ -186,6 +186,27 @@ class TestMappingBasedVerifier(unittest.TestCase):
         self.assertTrue(os.path.exists(samfile))
         os.unlink(samfile)
         for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps']:
+            os.unlink(tmp_out + suffix)
+
+
+    def test_run_with_filter_cluster(self):
+        '''test run with filtering and clustering'''
+        vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')
+        vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
+        verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
+        tmp_out = 'tmp.mapping_based_verifier.out'
+        verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=True)
+        verifier.run()
+        expected_out = os.path.join(data_dir, 'run.out.with_filter_cluster')
+        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf']:
+            expected_file = expected_out + suffix
+            got_file = tmp_out + suffix
+            self.assertTrue(filecmp.cmp(expected_file, got_file, shallow=False))
+            os.unlink(got_file)
+        samfile = tmp_out + '.sam'
+        self.assertTrue(os.path.exists(samfile))
+        os.unlink(samfile)
+        for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps', '.filter.vcf', '.filter.cluster.vcf']:
             os.unlink(tmp_out + suffix)
 
 

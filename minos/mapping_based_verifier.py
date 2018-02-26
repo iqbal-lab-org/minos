@@ -1,9 +1,10 @@
+import logging
 import os
 
 import pyfastaq
 import pysam
 
-from cluster_vcf_records import vcf_file_read
+from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
 from minos import dependencies, dnadiff, utils
 
@@ -46,12 +47,14 @@ class MappingBasedVerifier:
     outprefix.stats.tsv = summary stats (see dict output by
                           _parse_sam_file_and_update_vcf_records_and_gather_stats()
                           for a description)'''
-    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31, expected_variants_vcf=None, run_dnadiff=True):
+    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31, expected_variants_vcf=None, run_dnadiff=True, filter_and_cluster_vcf=True):
         self.vcf_file_in = os.path.abspath(vcf_file_in)
         self.vcf_reference_file = os.path.abspath(vcf_reference_file)
         self.verify_reference_file = os.path.abspath(verify_reference_file)
         self.vcf_file_out = os.path.abspath(outprefix + '.vcf')
         self.sam_file_out = os.path.abspath(outprefix + '.sam')
+        self.filtered_vcf = os.path.abspath(outprefix + '.filter.vcf')
+        self.clustered_vcf = os.path.abspath(outprefix + '.filter.cluster.vcf')
         self.seqs_out = os.path.abspath(outprefix + '.fa')
         self.stats_out = os.path.abspath(outprefix + '.stats.tsv')
         self.flank_length = flank_length
@@ -61,6 +64,12 @@ class MappingBasedVerifier:
             raise Error('Error! Incompatible options. expected_variants_vcf file provided, and run_dnadiff is True')
         self.dnadiff_outprefix = os.path.abspath(outprefix + '.dnadiff')
         self.vcf_false_negatives_file_out = os.path.abspath(outprefix + '.false_negatives.vcf')
+        self.filter_and_cluster_vcf = filter_and_cluster_vcf
+
+        if self.filter_and_cluster_vcf:
+            self.vcf_to_check = self.clustered_vcf
+        else:
+            self.vcf_to_check = self.vcf_file_in
 
 
     @classmethod
@@ -68,10 +77,15 @@ class MappingBasedVerifier:
         header_lines, vcf_records = vcf_file_read.vcf_file_to_dict(infile, sort=True, homozygous_only=False, remove_asterisk_alts=True, remove_useless_start_nucleotides=True)
 
         with open(outfile, 'w') as f:
+            print(*header_lines, sep='\n', file=f)
             for ref_name in vcf_records:
                 for vcf_record in vcf_records[ref_name]:
                     if vcf_record.FILTER == 'MISMAPPED_UNPLACEABLE':
                         continue
+                    if vcf_record.FORMAT is None or 'GT' not in vcf_record.FORMAT:
+                        logging.warning('No GT in vcf record:' + str(vcf_record))
+                        continue
+
                     genotype = vcf_record.FORMAT['GT']
                     genotypes = genotype.split('/')
                     called_alleles = set(genotypes)
@@ -304,7 +318,12 @@ class MappingBasedVerifier:
 
 
     def run(self):
-        vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_file_in, sort=True, remove_useless_start_nucleotides=True)
+        if self.filter_and_cluster_vcf:
+            MappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file_in, self.filtered_vcf)
+            clusterer = vcf_clusterer.VcfClusterer([self.filtered_vcf], self.vcf_reference_file, self.clustered_vcf, merge_method='simple', max_distance_between_variants=self.flank_length)
+            clusterer.run()
+
+        vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_to_check, sort=True, remove_useless_start_nucleotides=True)
         sample_from_header = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
         if sample_from_header is None:
             sample_from_header = 'sample'
