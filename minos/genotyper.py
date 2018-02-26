@@ -17,7 +17,7 @@ class Genotyper:
         self.likelihoods = None
         self.genotype = None
         self.genotype_confidence = None
-        self.singleton_alleles_cov = None
+        self.singleton_alleles_cov = {}
 
 
     @classmethod
@@ -141,8 +141,12 @@ class Genotyper:
 
 
     def run(self):
-        self._calculate_log_likelihoods()
-        assert self.likelihoods is not None and len(self.likelihoods) > 1
-        self.genotype, best_log_likelihood = self.likelihoods[0]
-        self.genotype_confidence = round(best_log_likelihood - self.likelihoods[1][1], 2)
+        if len(self.allele_combination_cov) == 0 or Genotyper._total_coverage(self.allele_combination_cov) == 0:
+            self.genotype = {'.'}
+            self.genotype_confidence = 0.0
+        else:
+            self._calculate_log_likelihoods()
+            assert self.likelihoods is not None and len(self.likelihoods) > 1
+            self.genotype, best_log_likelihood = self.likelihoods[0]
+            self.genotype_confidence = round(best_log_likelihood - self.likelihoods[1][1], 2)
 

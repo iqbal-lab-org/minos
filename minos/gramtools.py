@@ -94,17 +94,20 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
     gtyper.run()
     genotype_indexes = set()
 
-    if 0 in gtyper.genotype:
-        genotype_indexes.add(0)
-    for i in range(len(vcf_record.ALT)):
-        if i + 1 in gtyper.genotype:
-            genotype_indexes.add(i+1)
-
-    if len(genotype_indexes) == 1:
-        genotype_index = genotype_indexes.pop()
-        genotype = str(genotype_index) + '/' + str(genotype_index)
+    if '.' in gtyper.genotype:
+        genotype = './.'
     else:
-        genotype = '/'.join([str(x) for x in sorted(list(genotype_indexes))])
+        if 0 in gtyper.genotype:
+            genotype_indexes.add(0)
+        for i in range(len(vcf_record.ALT)):
+            if i + 1 in gtyper.genotype:
+                genotype_indexes.add(i+1)
+
+        if len(genotype_indexes) == 1:
+            genotype_index = genotype_indexes.pop()
+            genotype = str(genotype_index) + '/' + str(genotype_index)
+        else:
+            genotype = '/'.join([str(x) for x in sorted(list(genotype_indexes))])
 
     cov_string = ','.join([str(gtyper.singleton_alleles_cov.get(x, 0)) for x in range(1 + len(vcf_record.ALT))])
     vcf_record.QUAL = None

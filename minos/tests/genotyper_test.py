@@ -96,3 +96,17 @@ class TestGenotyper(unittest.TestCase):
             self.assertEqual(expected[i][0], gtyper.likelihoods[i][0])
             self.assertAlmostEqual(expected[i][1], gtyper.likelihoods[i][1], places=2)
 
+
+    def test_run_zero_coverage(self):
+        '''test run when all alleles have zero coverage'''
+        mean_depth = 20
+        error_rate = 0.01
+        allele_combination_cov = {}
+        allele_groups_dict = {'1': {0}, '2': {1}, '3': {0,1}, '4': {2}}
+        allele_per_base_cov = [[0], [0,0]]
+        gtyper = genotyper.Genotyper(mean_depth, error_rate, allele_combination_cov, allele_per_base_cov, allele_groups_dict)
+        gtyper.run()
+        self.assertEqual({'.'}, gtyper.genotype)
+        self.assertEqual(0.0, gtyper.genotype_confidence)
+
+
