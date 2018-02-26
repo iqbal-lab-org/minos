@@ -64,6 +64,31 @@ class MappingBasedVerifier:
 
 
     @classmethod
+    def _filter_vcf_for_clustering(cls, infile, outfile):
+        header_lines, vcf_records = vcf_file_read.vcf_file_to_dict(infile, sort=True, homozygous_only=False, remove_asterisk_alts=True, remove_useless_start_nucleotides=True)
+
+        with open(outfile, 'w') as f:
+            for ref_name in vcf_records:
+                for vcf_record in vcf_records[ref_name]:
+                    if vcf_record.FILTER == 'MISMAPPED_UNPLACEABLE':
+                        continue
+                    genotype = vcf_record.FORMAT['GT']
+                    genotypes = genotype.split('/')
+                    called_alleles = set(genotypes)
+                    if len(called_alleles) != 1 or called_alleles == {'0'} or '.' in called_alleles:
+                        continue
+
+                    vcf_record.set_format_key_value('GT', '1/1')
+
+                    try:
+                        vcf_record.ALT = [vcf_record.ALT[int(genotypes[0]) - 1]]
+                    except:
+                        raise Error('BAD VCf line:' + str(vcf_record))
+
+                    print(vcf_record, file=f)
+
+
+    @classmethod
     def _write_vars_plus_flanks_to_fasta(cls, outfile, vcf_records, ref_seqs, flank_length):
         '''Given a dict of vcf records made by vcf_file_read.vcf_file_to_dict(),
         and its correcsponding file of reference sequences, writes a new fasta file

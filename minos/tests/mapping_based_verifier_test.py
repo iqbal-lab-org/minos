@@ -13,6 +13,16 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'mapping_based_verifier')
 
 
 class TestMappingBasedVerifier(unittest.TestCase):
+    def test_filter_vcf_for_clustering(self):
+        '''test _filter_vcf_for_clustering'''
+        vcf_in = os.path.join(data_dir, 'filter_vcf_for_clustering.in.vcf')
+        expected_vcf = os.path.join(data_dir, 'filter_vcf_for_clustering.expect.vcf')
+        tmp_out = 'tmp.filter_vcf_for_clustering.out.vcf'
+        mapping_based_verifier.MappingBasedVerifier._filter_vcf_for_clustering(vcf_in, tmp_out)
+        self.assertTrue(filecmp.cmp(expected_vcf, tmp_out, shallow=False))
+        os.unlink(tmp_out)
+
+
     def test_write_vars_plus_flanks_to_fasta(self):
         '''test _write_vars_plus_flanks_to_fasta'''
         ref_seqs = {
