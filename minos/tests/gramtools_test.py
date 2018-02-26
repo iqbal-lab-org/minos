@@ -62,6 +62,24 @@ class TestGramtools(unittest.TestCase):
         shutil.rmtree(tmp_out)
 
 
+    def test_run_gramtools_fails(self):
+        '''test run_gramtools when fails'''
+        # Don't trust error code. Instead, we check
+        # that gramtools wrote the quesimap files we expected, as this
+        # is a good proxy for success. One way to stop these files
+        # from being written is to have no variants in the input VCF,
+        # so that's what we do here
+        tmp_out = 'tmp.run_gramtools.fail.out'
+        if os.path.exists(tmp_out):
+            shutil.rmtree(tmp_out)
+        vcf_file = os.path.join(data_dir, 'run_gramtools.empty.vcf')
+        ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
+        reads_file = os.path.join(data_dir, 'run_gramtools.reads.fq')
+        with self.assertRaises(gramtools.Error):
+            gramtools.run_gramtools(tmp_out, vcf_file, ref_file, reads_file, 150)
+        shutil.rmtree(tmp_out)
+
+
     def test_run_gramtools_two_reads_files(self):
         '''test run_gramtools'''
         tmp_out = 'tmp.run_gramtools.out'
