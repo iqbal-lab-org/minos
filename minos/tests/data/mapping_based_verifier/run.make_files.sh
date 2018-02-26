@@ -18,3 +18,8 @@ rm run.reads* run.bwa.bam run.false_call_vcf.vcf
 # leave the old one so hits has >1 ALT, which
 # we also want to test.
 sed -i 's/700\t.\tA\tAG/700\t.\tAC\tAGC,AGT/' run.calls.vcf
+
+# Add GT_CONF
+awk -F"\t" '/^#/ {print} !/^#/ {OFS="\t"; $9=$9":GT_CONF"; $10=$10":"NR; print $0}' run.calls.vcf > run.calls.vcf.tmp.$$
+mv run.calls.vcf.tmp.$$ run.calls.vcf
+

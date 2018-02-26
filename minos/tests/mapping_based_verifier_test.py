@@ -173,11 +173,11 @@ class TestMappingBasedVerifier(unittest.TestCase):
         vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')
         vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
         verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
-        tmp_out = 'tmp.mapping_based_verifier.out'
+        tmp_out = 'tmp.mapping_based_verifier.out.no_filter_cluster'
         verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=False)
         verifier.run()
         expected_out = os.path.join(data_dir, 'run.out.no_filter_cluster')
-        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf']:
+        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf', '.gt_conf_hist.TP.tsv', '.gt_conf_hist.FP.tsv']:
             expected_file = expected_out + suffix
             got_file = tmp_out + suffix
             self.assertTrue(filecmp.cmp(expected_file, got_file, shallow=False))
@@ -194,11 +194,11 @@ class TestMappingBasedVerifier(unittest.TestCase):
         vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')
         vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
         verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
-        tmp_out = 'tmp.mapping_based_verifier.out'
+        tmp_out = 'tmp.mapping_based_verifier.out.with_filter_cluster'
         verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=True)
         verifier.run()
         expected_out = os.path.join(data_dir, 'run.out.with_filter_cluster')
-        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf']:
+        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf', '.gt_conf_hist.TP.tsv', '.gt_conf_hist.FP.tsv']:
             expected_file = expected_out + suffix
             got_file = tmp_out + suffix
             self.assertTrue(filecmp.cmp(expected_file, got_file, shallow=False))

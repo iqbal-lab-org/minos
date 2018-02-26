@@ -57,6 +57,10 @@ class MappingBasedVerifier:
         self.clustered_vcf = os.path.abspath(outprefix + '.filter.cluster.vcf')
         self.seqs_out = os.path.abspath(outprefix + '.fa')
         self.stats_out = os.path.abspath(outprefix + '.stats.tsv')
+        self.gt_conf_hists_filenames = {
+            'TP': os.path.abspath(outprefix + '.gt_conf_hist.TP.tsv'),
+            'FP': os.path.abspath(outprefix + '.gt_conf_hist.FP.tsv'),
+        }
         self.flank_length = flank_length
         self.expected_variants_vcf = expected_variants_vcf
         self.run_dnadiff = run_dnadiff
@@ -219,6 +223,7 @@ class MappingBasedVerifier:
             'gt_wrong' => number of records where genotype is incorrect
             'gt_correct' => number of records where genotype is correct'''
         stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT']}
+        gt_conf_hists = {'TP': {}, 'FP': {}}
         sreader = sam_reader(infile)
 
         for sam_list in sreader:
@@ -242,7 +247,6 @@ class MappingBasedVerifier:
             ref_name, expected_start, vcf_record_index = ref_info_tuples.pop()
             expected_start = int(expected_start) - 1
             vcf_record_index = int(vcf_record_index)
-            results = {x: [] for x in ['MINOS_CHECK_PASS', 'MINOS_CHECK_BEST_HITS', 'MINOS_CHECK_NM', 'MINOS_CHECK_CIGAR', 'MINOS_CHECK_MD']}
             results = {x: [] for x in ['MINOS_CHECK_PASS']}
 
             for allele_sam_list in sam_records_by_allele:
@@ -263,11 +267,16 @@ class MappingBasedVerifier:
             MappingBasedVerifier._check_called_genotype(vcf_record)
             stats[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']] += 1
 
+            if 'GT_CONF' in vcf_record.FORMAT and vcf_record.FORMAT['MINOS_CHECK_GENOTYPE'] in {'0', '1'}:
+                tp_or_fp = {'1': 'TP', '0': 'FP'}[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']]
+                gt_conf = int(vcf_record.FORMAT['GT_CONF'])
+                gt_conf_hists[tp_or_fp][gt_conf] = gt_conf_hists[tp_or_fp].get(gt_conf, 0) + 1
+
         stats['gt_wrong'] = stats['0']
         del stats['0']
         stats['gt_correct'] = stats['1']
         del stats['1']
-        return stats
+        return stats, gt_conf_hists
 
 
     @classmethod
@@ -335,7 +344,7 @@ class MappingBasedVerifier:
         MappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out, vcf_records, vcf_ref_seqs, self.flank_length)
         MappingBasedVerifier._map_seqs_to_ref(self.seqs_out, self.verify_reference_file, self.sam_file_out)
         os.unlink(self.seqs_out)
-        stats = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs)
+        stats, gt_conf_hists = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs)
 
         with open(self.vcf_file_out, 'w') as f:
             print(*vcf_header, sep='\n', file=f)
@@ -373,10 +382,17 @@ class MappingBasedVerifier:
                     stats['false_negatives'] += len(vcf_list)
                     print(*vcf_list, sep='\n', file=f)
 
-        # write stats file
+        # write stats file
         with open(self.stats_out, 'w') as f:
             keys = ['total', 'gt_correct', 'gt_wrong', 'HET', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
             print(*keys, sep='\t', file=f)
             print(*[stats[x] for x in keys], sep='\t', file=f)
 
+
+        # write GT_CONG histogram files
+        for key, filename in self.gt_conf_hists_filenames.items():
+            with open(filename, 'w') as f:
+                print('GT_CONF\tCount', file=f)
+                for gt_conf, count in sorted(gt_conf_hists[key].items()):
+                    print(gt_conf, count, sep='\t', file=f)
 
