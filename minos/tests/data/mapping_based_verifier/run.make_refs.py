@@ -56,7 +56,7 @@ with open('run.false_call_vcf.vcf', 'w') as f:
     print(line, file=f)
 
     # add a line with no genotype call
-    line = 'ref.1\t975\t.\t' + seq1[974] + '\t' + mutated_nucleotide(seq1[974]) + '\t42\t.\tDP=11'
+    line = 'ref.1\t975\t.\t' + seq1[974] + '\t' + mutated_nucleotide(seq1[974]) + '\t42\t.\tDP=11\tFOO\tBAR'
     print(line, file=f)
 
 

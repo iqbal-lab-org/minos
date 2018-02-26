@@ -9,6 +9,7 @@ def run(options):
         flank_length=options.flank_length,
         expected_variants_vcf=options.expected_variants_vcf,
         run_dnadiff=options.run_dnadiff,
+        filter_and_cluster_vcf=not options.no_filter_cluster,
     )
     verifier.run()
 
