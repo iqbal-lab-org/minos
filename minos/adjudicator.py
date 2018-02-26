@@ -67,6 +67,11 @@ class Adjudicator:
 
         logging.info('Clustered VCF files, to make one VCF input file for gramtools')
 
+        if not vcf_file_read.vcf_file_has_at_least_one_record(self.clustered_vcf):
+            error_message = 'No VCF records. Cannot continue. Please check that the input VCF files contained at least one variant'
+            logging.error(error_message)
+            raise Error(error_message)
+
         quasimap_dir = gramtools.run_gramtools(
             self.gramtools_outdir,
             self.clustered_vcf,
