@@ -1,0 +1,5 @@
+##header1
+##header2
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
+ref	30	.	AGCTA	A	44.44	.	DP=44	GT	1/1
+ref	40	.	AGCTAC	G	45.45	.	DP=45	GT	1/1

@@ -14,6 +14,7 @@ __all__ = [
     'mapping_based_verifier',
     'tasks',
     'utils',
+    'vcf_file_split_deletions',
 ]
 
 from minos import *
