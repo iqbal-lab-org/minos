@@ -10,13 +10,24 @@ class MultiSamplePipeline:
     def __init__(self,
         input_data_tsv,
         output_dir,
-        nextflow_config_file,
+        nextflow_config_file=None,
         min_large_ref_length=50,
+        nextflow_work_dir=None,
+        force=False
     ):
-        self.input_data_tsv = os.apth.abspath(input_data_tsv)
+        self.input_data_tsv = os.path.abspath(input_data_tsv)
         self.output_dir = os.path.abspath(output_dir)
         self.nextflow_config_file = None if nextflow_config_file is None else os.path.abspath(nextflow_config_file)
         self.min_large_ref_length = min_large_ref_length
+
+        if nextflow_work_dir is None:
+            self.nextflow_work_dir = os.path.join(self.output_dir, 'nextflow_work')
+        else:
+            self.nextflow_work_dir = os.path.abspath(nextflow_work_dir)
+
+        self.force = force
+        self.nextflow_input_tsv = os.path.join(self.output_dir, 'nextflow_input.tsv')
+        self.nextflow_script = os.path.join(self.output_dir, 'pipeline_script.nf')
 
 
     @classmethod
@@ -51,13 +62,19 @@ class MultiSamplePipeline:
 
 
     def _write_nextflow_script(self):
-        pass
+        with open(self.nextflow_script, 'w') as f:
+            pass
 
 
     def _prepare_nextflow_input_files(self):
-        # parse input_data_tsv
-        # check files exist
-        # make files for input to nextflow
-        pass
+        if os.path.exists(self.output_dir):
+            if self.force:
+                shutil.rmtree(self.output_dir)
+            else:
+                raise Error('Error! Output directory already exists. ' + self.output_dir)
 
+        os.mkdir(self.output_dir)
+        input_data = MultiSamplePipeline._load_input_data_tsv(self.input_data_tsv)
+        MultiSamplePipeline._write_nextflow_data_tsv(input_data, self.nextflow_input_tsv)
+        self._write_nextflow_script()
 

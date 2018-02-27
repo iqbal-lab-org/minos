@@ -68,3 +68,27 @@ class TestMultiSamplePipeline(unittest.TestCase):
         self.assertTrue(filecmp.cmp(expected_file, outfile, shallow=False))
         os.unlink(outfile)
 
+
+    def test_prepare_nextflow_input_files(self):
+        '''test _prepare_nextflow_input_files'''
+        # Contents of the files is checked elsewhere.
+        # We';ll just check that the files exist
+        outdir = 'tmp.prepare_nextflow_input_files.outdir'
+        data_tsv = 'tmp.prepare_nextflow_input_files.in.tsv'
+        vcf_file = 'tmp.prepare_nextflow_input_files.in.vcf1'
+        reads_file = 'tmp.prepare_nextflow_input_files.in.reads1'
+        with open(data_tsv, 'w') as f:
+            print(vcf_file, reads_file, sep='\t', file=f)
+        with open(vcf_file, 'w'), open(reads_file, 'w'):
+            pass
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+        pipeline = multi_sample_pipeline.MultiSamplePipeline(data_tsv, outdir)
+        pipeline._prepare_nextflow_input_files()
+        self.assertTrue(os.path.exists(outdir))
+        self.assertTrue(os.path.exists(pipeline.nextflow_input_tsv))
+        self.assertTrue(os.path.exists(pipeline.nextflow_script))
+        shutil.rmtree(outdir)
+        os.unlink(data_tsv)
+        os.unlink(vcf_file)
+        os.unlink(reads_file)
