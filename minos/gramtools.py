@@ -11,36 +11,14 @@ from minos import __version__ as minos_version
 class Error (Exception): pass
 
 
-def _get_quasimap_out_dir(gramtools_dir):
-    '''When quasimap is run, it makes a new dir like gramtools.out/quasimap_outputs/1510738443_ksize15.
-       This function returns that directory. Dies if finds more than one directory in quasimap_outputs/'''
-    if not os.path.exists(gramtools_dir):
-        raise Error('Gramtools directory not found "' + gramtools_dir + '"')
-    quasimap_outputs = os.path.join(gramtools_dir, 'quasimap_outputs')
-    if not os.path.exists(quasimap_outputs):
-        raise Error('quasimap outputs directory not found "' + quasimap_outputs + '"')
-
-    subdirs = [x for x in os.listdir(quasimap_outputs) if os.path.isdir(os.path.join(quasimap_outputs, x))]
-    if len(subdirs) == 0:
-        raise Error('No directories found in quasimap outputs directory "' + quasimap_outputs + '"')
-    elif len(subdirs) > 1:
-        raise Error(str(len(subdirs)) + ' directories found in quasimap outputs directory "' + quasimap_outputs + '"')
-
-    return os.path.join(quasimap_outputs, subdirs[0])
-
-
-def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
-    '''Runs gramtools build and quasimap. Returns quasimap output directory.
-    "reads" can be one filename, or a list of filenames.'''
-    if type(reads) is not list:
-        assert type(reads) is str
-        reads = [reads]
-
+def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length):
+    '''Runs gramtools build. Makes new directory called 'outdir' for
+    the output'''
     gramtools_exe = dependencies.find_binary('gramtools')
     build_command = ' '.join([
         gramtools_exe,
         'build',
-        '--gram-directory', output_dir,
+        '--gram-directory', outdir,
         '--vcf', vcf_file,
         '--reference', ref_file,
         '--max-read-length', str(max_read_length),
@@ -49,16 +27,33 @@ def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
     utils.syscall(build_command)
     logging.info('Finished running gramtools build')
 
+
+def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_length):
+    '''If build_dir does not exist, runs runs gramtools build and quasimap.
+    Otherwise, just runs quasimap. quasimap output is in new
+    directory called quasimap_dir.
+    "reads" can be one filename, or a list of filenames.
+    Raises Error if either of the expected json coverage 
+    files made by quasimap are not found.'''
+    gramtools_exe = dependencies.find_binary('gramtools')
+    if not os.path.exists(build_dir):
+        run_gramtools_build(build_dir, vcf_file, ref_file, max_read_length)
+
+    if type(reads) is not list:
+        assert type(reads) is str
+        reads = [reads]
+
     quasimap_command = ' '.join([
         gramtools_exe,
         'quasimap',
-        '--gram-directory', output_dir,
+        '--gram-directory', build_dir,
+        '--run-directory', quasimap_dir,
         ' '.join(['--reads ' + x for x in reads]),
     ])
     logging.info('Running gramtools quasimap: ' + quasimap_command)
     utils.syscall(quasimap_command)
     logging.info('Finished running gramtools quasimap')
-    quasimap_dir = _get_quasimap_out_dir(output_dir)
+
     allele_base_counts_file = os.path.join(quasimap_dir, 'allele_base_coverage.json')
     grouped_allele_counts_file = os.path.join(quasimap_dir, 'grouped_allele_counts_coverage.json')
     files_ok = True
@@ -71,8 +66,6 @@ def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
         error_message = 'Looks like something went wrong duing gramtools run. At least one output file not present. Cannot continue.'
         logging.error(error_message)
         raise Error(error_message)
-
-    return quasimap_dir
 
 
 def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):

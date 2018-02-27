@@ -13,53 +13,38 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'gramtools')
 
 
 class TestGramtools(unittest.TestCase):
-    def test_get_quasimap_out_dir(self):
-        '''test _get_quasimap_out_dir'''
-        tmp_dir = 'tmp.gramtools.get_quasimap_out_dir'
-        quasimap_dir = os.path.join(tmp_dir, 'quasimap_outputs')
-        first_dir = os.path.join(quasimap_dir, 'dir1')
-        second_dir = os.path.join(quasimap_dir, 'dir2')
-
-        if os.path.exists(tmp_dir):
-            shutil.rmtree(tmp_dir)
-
-        with self.assertRaises(gramtools.Error):
-            gramtools._get_quasimap_out_dir(tmp_dir)
-
-        os.mkdir(tmp_dir)
-        with self.assertRaises(gramtools.Error):
-            gramtools._get_quasimap_out_dir(tmp_dir)
-
-        os.mkdir(quasimap_dir)
-        with self.assertRaises(gramtools.Error):
-            gramtools._get_quasimap_out_dir(tmp_dir)
-
-        os.mkdir(first_dir)
-        self.assertEqual(first_dir, gramtools._get_quasimap_out_dir(tmp_dir))
-
-        os.mkdir(second_dir)
-        with self.assertRaises(gramtools.Error):
-            gramtools._get_quasimap_out_dir(tmp_dir)
-
-        shutil.rmtree(tmp_dir)
+    def test_run_gramtools_build(self):
+        '''test run_gramtools_build'''
+        tmp_out_build = 'tmp.run_gramtools.out.build'
+        if os.path.exists(tmp_out_build):
+            shutil.rmtree(tmp_out_build)
+        vcf_file = os.path.join(data_dir, 'run_gramtools.calls.vcf')
+        ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
+        gramtools.run_gramtools_build(tmp_out_build, vcf_file, ref_file, 150)
+        self.assertTrue(os.path.exists(tmp_out_build))
+        shutil.rmtree(tmp_out_build)
 
 
     def test_run_gramtools(self):
         '''test run_gramtools'''
-        tmp_out = 'tmp.run_gramtools.out'
-        if os.path.exists(tmp_out):
-            shutil.rmtree(tmp_out)
+        tmp_out_build = 'tmp.run_gramtools.out.build'
+        tmp_out_quasimap = 'tmp.run_gramtools.out.quasimap'
+        if os.path.exists(tmp_out_build):
+            shutil.rmtree(tmp_out_build)
+        if os.path.exists(tmp_out_quasimap):
+            shutil.rmtree(tmp_quasimap)
         vcf_file = os.path.join(data_dir, 'run_gramtools.calls.vcf')
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
         reads_file = os.path.join(data_dir, 'run_gramtools.reads.fq')
-        got_dir = gramtools.run_gramtools(tmp_out, vcf_file, ref_file, reads_file, 150)
-        # We don't really know what the directory will be, so just check it exists
+        gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150)
         # We're trusing gramtools output for this test. The point here is to check
         # that gramtools can run. Parsing its output is checked elsewhere.
-        self.assertTrue(os.path.exists(got_dir))
-        self.assertTrue(os.path.exists(os.path.join(got_dir, 'allele_base_coverage.json')))
-        self.assertTrue(os.path.exists(os.path.join(got_dir, 'grouped_allele_counts_coverage.json')))
-        shutil.rmtree(tmp_out)
+        self.assertTrue(os.path.exists(tmp_out_build))
+        self.assertTrue(os.path.exists(tmp_out_quasimap))
+        self.assertTrue(os.path.exists(os.path.join(tmp_out_quasimap, 'allele_base_coverage.json')))
+        self.assertTrue(os.path.exists(os.path.join(tmp_out_quasimap, 'grouped_allele_counts_coverage.json')))
+        shutil.rmtree(tmp_out_build)
+        shutil.rmtree(tmp_out_quasimap)
 
 
     def test_run_gramtools_fails(self):
@@ -69,34 +54,42 @@ class TestGramtools(unittest.TestCase):
         # is a good proxy for success. One way to stop these files
         # from being written is to have no variants in the input VCF,
         # so that's what we do here
-        tmp_out = 'tmp.run_gramtools.fail.out'
-        if os.path.exists(tmp_out):
-            shutil.rmtree(tmp_out)
+        tmp_out_build = 'tmp.run_gramtools.fail.out.build'
+        tmp_out_quasimap = 'tmp.run_gramtools.fail.out.quasimap'
+        if os.path.exists(tmp_out_build):
+            shutil.rmtree(tmp_out_build)
+        if os.path.exists(tmp_out_quasimap):
+            shutil.rmtree(tmp_quasimap)
         vcf_file = os.path.join(data_dir, 'run_gramtools.empty.vcf')
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
         reads_file = os.path.join(data_dir, 'run_gramtools.reads.fq')
         with self.assertRaises(gramtools.Error):
-            gramtools.run_gramtools(tmp_out, vcf_file, ref_file, reads_file, 150)
-        shutil.rmtree(tmp_out)
+            gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150)
+        shutil.rmtree(tmp_out_build)
+        shutil.rmtree(tmp_out_quasimap)
 
 
     def test_run_gramtools_two_reads_files(self):
         '''test run_gramtools'''
-        tmp_out = 'tmp.run_gramtools.out'
-        if os.path.exists(tmp_out):
-            shutil.rmtree(tmp_out)
+        tmp_out_build = 'tmp.run_gramtools.2files.out.build'
+        tmp_out_quasimap = 'tmp.run_gramtools.2files.out.quasimap'
+        if os.path.exists(tmp_out_build):
+            shutil.rmtree(tmp_out_build)
+        if os.path.exists(tmp_out_quasimap):
+            shutil.rmtree(tmp_quasimap)
         vcf_file = os.path.join(data_dir, 'run_gramtools.calls.vcf')
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
         reads_file1 = os.path.join(data_dir, 'run_gramtools.reads_1.fq')
         reads_file2 = os.path.join(data_dir, 'run_gramtools.reads_2.fq')
-        got_dir = gramtools.run_gramtools(tmp_out, vcf_file, ref_file, [reads_file1, reads_file2], 150)
-        # We don't really know what the directory will be, so just check it exists
+        gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, [reads_file1, reads_file2], 150)
         # We're trusing gramtools output for this test. The point here is to check
         # that gramtools can run. Parsing its output is checked elsewhere.
-        self.assertTrue(os.path.exists(got_dir))
-        self.assertTrue(os.path.exists(os.path.join(got_dir, 'allele_base_coverage.json')))
-        self.assertTrue(os.path.exists(os.path.join(got_dir, 'grouped_allele_counts_coverage.json')))
-        shutil.rmtree(tmp_out)
+        self.assertTrue(os.path.exists(tmp_out_build))
+        self.assertTrue(os.path.exists(tmp_out_quasimap))
+        self.assertTrue(os.path.exists(os.path.join(tmp_out_quasimap, 'allele_base_coverage.json')))
+        self.assertTrue(os.path.exists(os.path.join(tmp_out_quasimap, 'grouped_allele_counts_coverage.json')))
+        shutil.rmtree(tmp_out_build)
+        shutil.rmtree(tmp_out_quasimap)
 
 
     def test_load_gramtools_vcf_and_allele_coverage_files(self):
