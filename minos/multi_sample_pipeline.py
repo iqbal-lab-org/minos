@@ -41,6 +41,14 @@ class MultiSamplePipeline:
         return data
 
 
+    @classmethod
+    def _write_nextflow_data_tsv(cls, data, outfile):
+        with open(outfile, 'w') as f:
+            print('sample_id', 'vcf_file', 'reads_file', sep='\t', file=f)
+            for i, (vcf_file, reads_file) in enumerate(data):
+                print(i, vcf_file, reads_file, sep='\t', file=f)
+
+
     def _write_nextflow_script(self):
         pass
 
