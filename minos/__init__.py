@@ -12,6 +12,7 @@ __all__ = [
     'genotyper',
     'gramtools',
     'mapping_based_verifier',
+    'multi_sample_pipeline',
     'tasks',
     'utils',
     'vcf_file_split_deletions',
