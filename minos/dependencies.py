@@ -47,6 +47,17 @@ def get_version_of_program(program, binary=None, allow_fail=False):
                 except:
                     return None
                 return version
+    elif program == 'nextflow':
+        nextflow_process = utils.syscall(binary + ' -version', allow_fail=True)
+        # example line that we want to capture;
+        #       version 0.27.6 build 4775
+        for line in nextflow_process.stdout.split('\n'):
+            if line.strip().startswith('version'):
+                try:
+                    version = line.rstrip().split(maxsplit=1)[1]
+                except:
+                    return None
+                return version
         return None
     else:
         raise Error('Program name "' + program + '" not recognised. Cannot continue')
@@ -79,7 +90,7 @@ def find_binaries_and_versions(programs=None):
     data = {}
 
     if programs is None:
-        programs = ['bwa', 'dnadiff', 'gramtools']
+        programs = ['bwa', 'dnadiff', 'gramtools', 'nextflow']
 
     for program in programs:
         binary = find_binary(program, allow_fail=True)
@@ -107,7 +118,7 @@ def dependencies_report(programs=None):
     lines = ['minos ' + __version__]
 
     if programs is None:
-        programs = ['bwa', 'dnadiff', 'gramtools']
+        programs = ['bwa', 'dnadiff', 'gramtools', 'nextflow']
     programs_data = find_binaries_and_versions(programs=programs)
 
     for program in programs:
