@@ -23,7 +23,8 @@ class TestAdjudicator(unittest.TestCase):
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(adj.log_file))
         self.assertTrue(os.path.exists(adj.final_vcf))
-        self.assertTrue(os.path.exists(adj.gramtools_outdir))
+        self.assertTrue(os.path.exists(adj.gramtools_build_dir))
+        self.assertTrue(os.path.exists(adj.gramtools_quasimap_dir))
         self.assertTrue(os.path.exists(adj.clustered_vcf))
         shutil.rmtree(outdir)
 
@@ -43,6 +44,7 @@ class TestAdjudicator(unittest.TestCase):
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(adj.log_file))
         self.assertFalse(os.path.exists(adj.final_vcf))
-        self.assertFalse(os.path.exists(adj.gramtools_outdir))
+        self.assertFalse(os.path.exists(adj.gramtools_build_dir))
+        self.assertFalse(os.path.exists(adj.gramtools_quasimap_dir))
         self.assertTrue(os.path.exists(adj.clustered_vcf))
         shutil.rmtree(outdir)

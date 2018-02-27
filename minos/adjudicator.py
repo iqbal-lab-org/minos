@@ -30,8 +30,9 @@ class Adjudicator:
         self.log_file = os.path.join(self.outdir, 'log.txt')
         self.clustered_vcf = os.path.join(self.outdir, 'gramtools.in.vcf')
         self.final_vcf = os.path.join(self.outdir, 'final.vcf')
-        self.gramtools_outdir = os.path.join(self.outdir, 'gramtools.out')
-        self.perl_generated_vcf = os.path.join(self.gramtools_outdir, 'perl_generated_vcf')
+        self.gramtools_build_dir = os.path.join(self.outdir, 'gramtools.build')
+        self.gramtools_quasimap_dir = os.path.join(self.outdir, 'gramtools.quasimap')
+        self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
 
         if read_error_rate is None:
             self.read_error_rate = utils.estimate_read_error_rate_from_qual_scores(self.reads_files[0])
@@ -72,16 +73,17 @@ class Adjudicator:
             logging.error(error_message)
             raise Error(error_message)
 
-        quasimap_dir = gramtools.run_gramtools(
-            self.gramtools_outdir,
+        gramtools.run_gramtools(
+            self.gramtools_build_dir,
+            self.gramtools_quasimap_dir,
             self.clustered_vcf,
             self.ref_fasta,
             self.reads_files,
             self.max_read_length,
         )
 
-        logging.info('Loading gramtools quasimap output files ' + quasimap_dir)
-        mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(self.perl_generated_vcf, quasimap_dir)
+        logging.info('Loading gramtools quasimap output files ' + self.gramtools_quasimap_dir)
+        mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(self.perl_generated_vcf, self.gramtools_quasimap_dir)
         logging.info('Finished loading gramtools files')
         sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
         assert sample_name is not None
