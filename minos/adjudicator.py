@@ -18,6 +18,7 @@ class Adjudicator:
         read_error_rate=None,
         overwrite_outdir=False,
         max_alleles_per_cluster=5000,
+        gramtools_build_dir=None
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -25,12 +26,18 @@ class Adjudicator:
         self.max_read_length = max_read_length
         self.overwrite_outdir = overwrite_outdir
         self.max_alleles_per_cluster = max_alleles_per_cluster
-
         self.outdir = os.path.abspath(outdir)
         self.log_file = os.path.join(self.outdir, 'log.txt')
         self.clustered_vcf = os.path.join(self.outdir, 'gramtools.in.vcf')
         self.final_vcf = os.path.join(self.outdir, 'final.vcf')
-        self.gramtools_build_dir = os.path.join(self.outdir, 'gramtools.build')
+
+        if gramtools_build_dir is None:
+            self.gramtools_build_dir = os.path.join(self.outdir, 'gramtools.build')
+        else:
+            self.gramtools_build_dir = os.path.abspath(gramtools_build_dir)
+            if not os.path.exists(self.gramtools_build_dir):
+                raise Error('Error! gramtools_build_dir=' + self.gramtools_build_dir + ' used, but directory not found on disk. Cannot continue')
+
         self.gramtools_quasimap_dir = os.path.join(self.outdir, 'gramtools.quasimap')
         self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
 
@@ -38,6 +45,7 @@ class Adjudicator:
             self.read_error_rate = utils.estimate_read_error_rate_from_qual_scores(self.reads_files[0])
         else:
             self.read_error_rate = read_error_rate
+
 
 
     def run(self):

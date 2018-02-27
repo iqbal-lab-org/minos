@@ -26,7 +26,28 @@ class TestAdjudicator(unittest.TestCase):
         self.assertTrue(os.path.exists(adj.gramtools_build_dir))
         self.assertTrue(os.path.exists(adj.gramtools_quasimap_dir))
         self.assertTrue(os.path.exists(adj.clustered_vcf))
+
+        # Now we've run the adjudicator, we have a gramtools
+        # build directory. Rerun, but this time use the build
+        # directory, so we test the gramtools_build_dir option
+        outdir2 = 'tmp.adjudicator.out.2'
+        gramtools_build_dir = adj.gramtools_build_dir
+        if os.path.exists(outdir2):
+            shutil.rmtree(outdir2)
+        ref_fasta = os.path.join(data_dir, 'run.ref.fa')
+        reads_file = os.path.join(data_dir, 'run.bwa.bam')
+        vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.1.vcf', 'run.calls.2.vcf']]
+        adj = adjudicator.Adjudicator(outdir2, ref_fasta, [reads_file], vcf_files, gramtools_build_dir=gramtools_build_dir)
+        adj.run()
+        self.assertTrue(os.path.exists(outdir2))
+        self.assertTrue(os.path.exists(adj.log_file))
+        self.assertTrue(os.path.exists(adj.final_vcf))
+        self.assertTrue(os.path.exists(adj.gramtools_build_dir))
+        self.assertTrue(os.path.exists(adj.gramtools_quasimap_dir))
+        self.assertTrue(os.path.exists(adj.clustered_vcf))
+        self.assertFalse(os.path.exists(os.path.join(outdir2, 'gramtools.build')))
         shutil.rmtree(outdir)
+        shutil.rmtree(outdir2)
 
 
     def test_run_empty_vcf_input_files(self):
