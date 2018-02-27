@@ -17,9 +17,12 @@ class TestMultiSamplePipeline(unittest.TestCase):
         tsv_file = prefix + '.data.tsv'
         vcf1 = prefix + '.sample1.vcf'
         vcf2 = prefix + '.sample2.vcf'
+        vcf3 = prefix + '.sample3.vcf'
         reads1 = prefix + '.sample1.reads'
         reads2 = prefix + '.sample2.reads'
-        for filename in [tsv_file, vcf1, vcf2, reads1, reads2]:
+        reads3_1 = prefix + '.sample3_1.reads'
+        reads3_2 = prefix + '.sample3_2.reads'
+        for filename in [tsv_file, vcf1, vcf2, reads1, reads2, reads3_1, reads3_2]:
             try:
                 os.unlink(filename)
             except:
@@ -28,8 +31,9 @@ class TestMultiSamplePipeline(unittest.TestCase):
         with open(tsv_file, 'w') as f:
             print(vcf1, reads1, sep='\t', file=f)
             print(vcf2, reads2, sep='\t', file=f)
+            print(vcf3, reads3_1, reads3_2, sep='\t', file=f)
 
-        for filename in [vcf1, vcf2, reads1]:
+        for filename in [vcf1, vcf2, vcf3, reads1, reads3_1, reads3_2]:
             with open(filename, 'w'):
                 pass
             with self.assertRaises(multi_sample_pipeline.Error):
@@ -40,13 +44,14 @@ class TestMultiSamplePipeline(unittest.TestCase):
 
         got = multi_sample_pipeline.MultiSamplePipeline._load_input_data_tsv(tsv_file)
         expected = [
-            (os.path.abspath(vcf1), os.path.abspath(reads1)),
-            (os.path.abspath(vcf2), os.path.abspath(reads2)),
+            (os.path.abspath(vcf1), [os.path.abspath(reads1)]),
+            (os.path.abspath(vcf2), [os.path.abspath(reads2)]),
+            (os.path.abspath(vcf3), [os.path.abspath(reads3_1), os.path.abspath(reads3_2)]),
         ]
 
         self.assertEqual(expected, got)
 
-        for filename in [tsv_file, vcf1, vcf2, reads1, reads2]:
+        for filename in [tsv_file, vcf1, vcf2, vcf3, reads1, reads2, reads3_1, reads3_2]:
             os.unlink(filename)
 
 
@@ -55,8 +60,8 @@ class TestMultiSamplePipeline(unittest.TestCase):
         outfile = 'tmp.multi_sample_pipeline_test_write_nextflow_data_tsv'
         expected_file = os.path.join(data_dir, 'write_nextflow_data_tsv.expect.tsv')
         data = [
-            ('vcf1', 'reads1'),
-            ('vcf2', 'reads2'),
+            ('vcf1', ['reads1']),
+            ('vcf2', ['reads2.1', 'reads2.2']),
         ]
 
         multi_sample_pipeline.MultiSamplePipeline._write_nextflow_data_tsv(data, outfile)

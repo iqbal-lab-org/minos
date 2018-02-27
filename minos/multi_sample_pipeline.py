@@ -26,16 +26,17 @@ class MultiSamplePipeline:
         with open(infile) as f:
             for line in f:
                 try:
-                    vcf_file, reads_file = line.rstrip().split('\t')
+                    vcf_file, *reads_files = line.rstrip().split('\t')
                 except:
                     raise Error('Bad line in input TSV file: ' + line.rstrip())
 
                 if not(os.path.exists(vcf_file)):
                     raise Error('VCF file not found: ' + vcf_file)
-                if not(os.path.exists(reads_file)):
-                    raise Error('Reads file not found: ' + vcf_file)
+                for reads_file in reads_files:
+                    if not(os.path.exists(reads_file)):
+                        raise Error('Reads file not found: ' + reads_file)
 
-                data.append((os.path.abspath(vcf_file), os.path.abspath(reads_file)))
+                data.append((os.path.abspath(vcf_file), [os.path.abspath(x) for x in reads_files]))
 
         logging.info('Finish reading file ' + infile + '. Loaded ' + str(len(data)) + 'samples')
         return data
@@ -44,9 +45,9 @@ class MultiSamplePipeline:
     @classmethod
     def _write_nextflow_data_tsv(cls, data, outfile):
         with open(outfile, 'w') as f:
-            print('sample_id', 'vcf_file', 'reads_file', sep='\t', file=f)
-            for i, (vcf_file, reads_file) in enumerate(data):
-                print(i, vcf_file, reads_file, sep='\t', file=f)
+            print('sample_id', 'vcf_file', 'reads_files', sep='\t', file=f)
+            for i, (vcf_file, reads_files) in enumerate(data):
+                print(i, vcf_file, ' '.join(reads_files), sep='\t', file=f)
 
 
     def _write_nextflow_script(self):
