@@ -14,6 +14,7 @@ class MultiSamplePipeline:
         input_data_tsv,
         output_dir,
         min_large_ref_length=50,
+        gramtools_max_read_length=200,
         nextflow_config_file=None,
         nextflow_work_dir=None,
         force=False,
@@ -29,6 +30,7 @@ class MultiSamplePipeline:
         self.output_dir = os.path.abspath(output_dir)
         self.nextflow_config_file = None if nextflow_config_file is None else os.path.abspath(nextflow_config_file)
         self.min_large_ref_length = min_large_ref_length
+        self.gramtools_max_read_length = gramtools_max_read_length
 
         if nextflow_work_dir is None:
             self.nextflow_work_dir = os.path.join(self.output_dir, 'nextflow.work')
@@ -77,6 +79,7 @@ class MultiSamplePipeline:
             print(r'''params.data_in_tsv = ""
 params.ref_fasta = ""
 params.min_large_ref_length = 0
+params.gramtools_max_read_length = 0
 
 
 data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
@@ -94,6 +97,9 @@ if (params.min_large_ref_length < 1) {
     exit 1, "Must use option --min_large_ref_length -- aborting"
 }
 
+if (params.gramtools_max_read_length < 1) {
+    exit 1, "Must use option --max_read_length -- aborting"
+}
 
 split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
 
@@ -120,7 +126,7 @@ process cluster_small_vars_vcf {
     val(file_list) from split_vcf_file_out_small.collect()
 
     output:
-    file 'small_vars_clustered.vcf'
+    file('small_vars_clustered.vcf') into cluster_small_vars_vcf_out
 
     """
     #!/usr/bin/env python3
@@ -130,6 +136,22 @@ process cluster_small_vars_vcf {
     clusterer.run()
     """
 }
+
+
+process gramtools_build_small_vars {
+    input:
+    file('small_vars_clustered.vcf') from cluster_small_vars_vcf_out
+
+    output:
+    file('small_vars_clustered.gramtools.build')
+
+    """
+    #!/usr/bin/env python3
+    from minos import gramtools
+    gramtools.run_gramtools_build("small_vars_clustered.gramtools.build", "small_vars_clustered.vcf", "${params.ref_fasta}", ${params.gramtools_max_read_length})
+    """
+}
+
 
 ''', file=f)
 
@@ -162,6 +184,7 @@ process cluster_small_vars_vcf {
             '--ref_fasta', self.ref_fasta,
             '--data_in_tsv', self.nextflow_input_tsv,
             '--min_large_ref_length', str(self.min_large_ref_length),
+            '--gramtools_max_read_length', str(self.gramtools_max_read_length),
         ])
         logging.info('Start running nextflow: ' + nextflow_command)
         utils.syscall(nextflow_command)
