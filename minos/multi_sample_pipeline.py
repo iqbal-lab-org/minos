@@ -111,6 +111,7 @@ process split_vcf_file {
     output:
     file("small_vars.${tsv_fields['sample_id']}.vcf") into split_vcf_file_out_small
     set(val(tsv_fields), file("big_vars.${tsv_fields['sample_id']}.vcf")) into merge_small_and_large_vars_in
+    val(tsv_fields) into minos_all_small_vars_tsv_in
 
     """
     #!/usr/bin/env python3
@@ -143,7 +144,7 @@ process gramtools_build_small_vars {
     file('small_vars_clustered.vcf') from cluster_small_vars_vcf_out
 
     output:
-    file('small_vars_clustered.gramtools.build')
+    set(file('small_vars_clustered.vcf'), file('small_vars_clustered.gramtools.build')) into gramtools_build_small_vars_out
 
     """
     #!/usr/bin/env python3
@@ -151,6 +152,22 @@ process gramtools_build_small_vars {
     gramtools.run_gramtools_build("small_vars_clustered.gramtools.build", "small_vars_clustered.vcf", "${params.ref_fasta}", ${params.gramtools_max_read_length})
     """
 }
+
+
+process minos_all_small_vars {
+    input:
+    set(file('small_vars_clustered.vcf'), file('small_vars_clustered.gramtools.build')) from gramtools_build_small_vars_out
+    val(tsv_fields) from minos_all_small_vars_tsv_in
+
+    output:
+    file("small_vars.minos.${tsv_fields['sample_id']}")
+
+    """
+    minos adjudicate --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} small_vars.minos.${tsv_fields['sample_id']} ${ref_fasta} "small_vars_clustered.vcf"
+    """
+
+}
+
 
 
 ''', file=f)
