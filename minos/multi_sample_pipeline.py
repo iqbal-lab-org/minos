@@ -94,14 +94,16 @@ if (params.min_large_ref_length < 1) {
     exit 1, "Must use option --min_large_ref_length -- aborting"
 }
 
+
 split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
+
 
 process split_vcf_file {
     input:
     val tsv_fields from split_tsv
 
     output:
-    set(val(tsv_fields), file("small_vars.${tsv_fields['sample_id']}.vcf")) into cluster_vcf_in
+    file("small_vars.${tsv_fields['sample_id']}.vcf") into split_vcf_file_out_small
     set(val(tsv_fields), file("big_vars.${tsv_fields['sample_id']}.vcf")) into merge_small_and_large_vars_in
 
     """
@@ -112,6 +114,22 @@ process split_vcf_file {
     """
 }
 
+
+process cluster_small_vars_vcf {
+    input:
+    val(file_list) from split_vcf_file_out_small.collect()
+
+    output:
+    file 'small_vars_clustered.vcf'
+
+    """
+    #!/usr/bin/env python3
+    from cluster_vcf_records import vcf_clusterer
+    file_list = ["${file_list.join('", "')}"]
+    clusterer = vcf_clusterer.VcfClusterer(file_list, "${ref_fasta}", "small_vars_clustered.vcf")
+    clusterer.run()
+    """
+}
 
 ''', file=f)
 
