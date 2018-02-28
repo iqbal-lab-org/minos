@@ -4,30 +4,40 @@ import shutil
 
 from cluster_vcf_records import vcf_file_read
 
+from minos import utils
+
 class Error (Exception): pass
 
 class MultiSamplePipeline:
     def __init__(self,
+        ref_fasta,
         input_data_tsv,
         output_dir,
-        nextflow_config_file=None,
         min_large_ref_length=50,
+        nextflow_config_file=None,
         nextflow_work_dir=None,
-        force=False
+        force=False,
     ):
+        self.ref_fasta = os.path.abspath(ref_fasta)
+        if not os.path.exists(self.ref_fasta):
+            raise Error('Reference FASTA file not found: ' + ref_fasta)
+
         self.input_data_tsv = os.path.abspath(input_data_tsv)
+        if not os.path.exists(self.input_data_tsv):
+            raise Error('Data TSV file not found: ' + input_data_tsv)
+
         self.output_dir = os.path.abspath(output_dir)
         self.nextflow_config_file = None if nextflow_config_file is None else os.path.abspath(nextflow_config_file)
         self.min_large_ref_length = min_large_ref_length
 
         if nextflow_work_dir is None:
-            self.nextflow_work_dir = os.path.join(self.output_dir, 'nextflow_work')
+            self.nextflow_work_dir = os.path.join(self.output_dir, 'nextflow.work')
         else:
             self.nextflow_work_dir = os.path.abspath(nextflow_work_dir)
 
         self.force = force
-        self.nextflow_input_tsv = os.path.join(self.output_dir, 'nextflow_input.tsv')
-        self.nextflow_script = os.path.join(self.output_dir, 'pipeline_script.nf')
+        self.nextflow_input_tsv = os.path.join(self.output_dir, 'nextflow.input.tsv')
+        self.nextflow_script = os.path.join(self.output_dir, 'pipeline.script.nf')
 
 
     @classmethod
@@ -61,9 +71,49 @@ class MultiSamplePipeline:
                 print(i, vcf_file, ' '.join(reads_files), sep='\t', file=f)
 
 
-    def _write_nextflow_script(self):
-        with open(self.nextflow_script, 'w') as f:
-            pass
+    @classmethod
+    def _write_nextflow_script(cls, outfile):
+        with open(outfile, 'w') as f:
+            print(r'''params.data_in_tsv = ""
+params.ref_fasta = ""
+params.min_large_ref_length = 0
+
+
+data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
+ref_fasta = file(params.ref_fasta).toAbsolutePath()
+
+if (!data_in_tsv.exists()) {
+    exit 1, "Input data TSV file not found: ${params.data_in_tsv} -- aborting"
+}
+
+if (!ref_fasta.exists()) {
+    exit 1, "Reference FASTA file not found: ${params.ref_fasta} -- aborting"
+}
+
+if (params.min_large_ref_length < 1) {
+    exit 1, "Must use option --min_large_ref_length -- aborting"
+}
+
+split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
+
+process split_vcf_file {
+    input:
+    val tsv_fields from split_tsv
+
+    output:
+    set(val(tsv_fields), file("small_vars.vcf")) into cluster_vcf_in
+    set(val(tsv_fields), file("big_vars.vcf")) into merge_small_and_large_vars_in
+
+    """
+    #!/usr/bin/env python3
+    from minos import vcf_file_split_deletions
+    splitter = vcf_file_split_deletions.VcfFileSplitDeletions("${tsv_fields.vcf_file}", "small_vars.vcf", "big_vars.vcf", min_large_ref_length=${params.min_large_ref_length})
+    splitter.run()
+    """
+}
+
+
+''', file=f)
 
 
     def _prepare_nextflow_input_files(self):
@@ -76,5 +126,26 @@ class MultiSamplePipeline:
         os.mkdir(self.output_dir)
         input_data = MultiSamplePipeline._load_input_data_tsv(self.input_data_tsv)
         MultiSamplePipeline._write_nextflow_data_tsv(input_data, self.nextflow_input_tsv)
-        self._write_nextflow_script()
 
+
+    def run(self):
+        self._prepare_nextflow_input_files()
+        original_dir = os.getcwd()
+        os.chdir(self.output_dir)
+        nextflow_script = 'run_pipeline.nf'
+        MultiSamplePipeline._write_nextflow_script(nextflow_script)
+        logging.info('Prepared nextflow files. cd ' + self.output_dir)
+        nextflow_command = ' '.join([
+            'nextflow run',
+            '-work-dir', self.nextflow_work_dir,
+            '-with-dag', 'nextflow.out.dag.pdf',
+            '-with-trace', 'newxtflow.out.trace.txt',
+            nextflow_script,
+            '--ref_fasta', self.ref_fasta,
+            '--data_in_tsv', self.nextflow_input_tsv,
+            '--min_large_ref_length', str(self.min_large_ref_length),
+        ])
+        logging.info('Start running nextflow: ' + nextflow_command)
+        utils.syscall(nextflow_command)
+        logging.info('Finish running nextflow. cd ' + original_dir)
+        os.chdir(original_dir)

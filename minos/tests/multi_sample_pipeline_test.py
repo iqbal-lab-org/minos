@@ -72,7 +72,8 @@ class TestMultiSamplePipeline(unittest.TestCase):
     def test_prepare_nextflow_input_files(self):
         '''test _prepare_nextflow_input_files'''
         # Contents of the files is checked elsewhere.
-        # We';ll just check that the files exist
+        # We'll just check that the files exist
+        ref_fasta = 'tmp.prepare_nextflow_input_files.in.ref.fa'
         outdir = 'tmp.prepare_nextflow_input_files.outdir'
         data_tsv = 'tmp.prepare_nextflow_input_files.in.tsv'
         vcf_file = 'tmp.prepare_nextflow_input_files.in.vcf1'
@@ -83,12 +84,33 @@ class TestMultiSamplePipeline(unittest.TestCase):
             pass
         if os.path.exists(outdir):
             shutil.rmtree(outdir)
-        pipeline = multi_sample_pipeline.MultiSamplePipeline(data_tsv, outdir)
+        pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, data_tsv, outdir)
         pipeline._prepare_nextflow_input_files()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(pipeline.nextflow_input_tsv))
         self.assertTrue(os.path.exists(pipeline.nextflow_script))
         shutil.rmtree(outdir)
+        os.unlink(ref_fasta)
         os.unlink(data_tsv)
         os.unlink(vcf_file)
         os.unlink(reads_file)
+
+
+    def test_run(self):
+        '''test run'''
+        input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
+        ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
+        with open(input_tsv, 'w') as f:
+            for i in '1', '2':
+                reads1 = os.path.join(data_dir, 'run.reads.' + i + '.1.fq')
+                reads2 = os.path.join(data_dir, 'run.reads.' + i + '.2.fq')
+                vcf = os.path.join(data_dir, 'run.calls.' + i + '.vcf')
+                print(vcf, reads1, reads2, sep='\t', file=f)
+
+        outdir = 'tmp.multi_sample_pipeline.run.out'
+
+        pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, input_tsv, outdir, min_large_ref_length=10)
+        pipeline.run()
+
+        shutil.rmtree(outdir)
+        os.unlink(input_tsv)
