@@ -111,13 +111,18 @@ process split_vcf_file {
     output:
     file("small_vars.${tsv_fields['sample_id']}.vcf") into split_vcf_file_out_small
     set(val(tsv_fields), file("big_vars.${tsv_fields['sample_id']}.vcf")) into merge_small_and_large_vars_in
-    val(tsv_fields) into minos_all_small_vars_tsv_in
+    set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) into minos_all_small_vars_tsv_in
 
     """
     #!/usr/bin/env python3
     from minos import vcf_file_split_deletions
+    from cluster_vcf_records import vcf_file_read
     splitter = vcf_file_split_deletions.VcfFileSplitDeletions("${tsv_fields.vcf_file}", "small_vars.${tsv_fields['sample_id']}.vcf", "big_vars.${tsv_fields['sample_id']}.vcf", min_large_ref_length=${params.min_large_ref_length})
     splitter.run()
+    with open("sample_name.${tsv_fields['sample_id']}", "w") as f:
+        sample_name = vcf_file_read.get_sample_name_from_vcf_file("${tsv_fields.vcf_file}")
+        assert sample_name is not None
+        print(sample_name, file=f)
     """
 }
 
@@ -157,18 +162,16 @@ process gramtools_build_small_vars {
 process minos_all_small_vars {
     input:
     set(file('small_vars_clustered.vcf'), file('small_vars_clustered.gramtools.build')) from gramtools_build_small_vars_out
-    val(tsv_fields) from minos_all_small_vars_tsv_in
+    set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) from minos_all_small_vars_tsv_in
 
     output:
     file("small_vars.minos.${tsv_fields['sample_id']}")
 
     """
-    minos adjudicate --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} small_vars.minos.${tsv_fields['sample_id']} ${ref_fasta} "small_vars_clustered.vcf"
+    sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
+    minos adjudicate --sample_name \$sample_name --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} small_vars.minos.${tsv_fields['sample_id']} ${ref_fasta} "small_vars_clustered.vcf"
     """
-
 }
-
-
 
 ''', file=f)
 
