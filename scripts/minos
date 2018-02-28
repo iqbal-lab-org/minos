@@ -31,6 +31,7 @@ subparser_adjudicate.add_argument('--max_read_length', type=int, help='Maximum r
 subparser_adjudicate.add_argument('--read_error_rate', type=float, help='Read error rate. If not given, is estimated from quality scores of first 10,000 reads', metavar='FLOAT')
 subparser_adjudicate.add_argument('--max_alleles_per_cluster', type=int, help='Maximum allowed alleles in one cluster. If there are too many alleles then combinations of SNPs are not generated [%(default)s]', metavar='INT', default=5000)
 subparser_adjudicate.add_argument('--force', action='store_true', help='Replace outdir, if it already exists')
+subparser_adjudicate.add_argument('--sample_name', help='Sample name to put in final VCF output file. Default is to use first sample name found in input VCF file(s)', metavar='STRING')
 subparser_adjudicate.add_argument('--reads', action='append', required=True, help='REQUIRED. Reads file. Can be any format compatible with htslib. Use this option more than once for >1 reads files', metavar='FILENAME')
 subparser_adjudicate.add_argument('outdir', help='Name of output directory')
 subparser_adjudicate.add_argument('ref_fasta', help='Reference FASTA filename (must match VCF file(s))')

@@ -18,7 +18,8 @@ class Adjudicator:
         read_error_rate=None,
         overwrite_outdir=False,
         max_alleles_per_cluster=5000,
-        gramtools_build_dir=None
+        gramtools_build_dir=None,
+        sample_name=None,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -26,6 +27,7 @@ class Adjudicator:
         self.max_read_length = max_read_length
         self.overwrite_outdir = overwrite_outdir
         self.max_alleles_per_cluster = max_alleles_per_cluster
+        self.sample_name = sample_name
         self.outdir = os.path.abspath(outdir)
         self.log_file = os.path.join(self.outdir, 'log.txt')
         self.clustered_vcf = os.path.join(self.outdir, 'gramtools.in.vcf')
@@ -93,7 +95,10 @@ class Adjudicator:
         logging.info('Loading gramtools quasimap output files ' + self.gramtools_quasimap_dir)
         mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(self.perl_generated_vcf, self.gramtools_quasimap_dir)
         logging.info('Finished loading gramtools files')
-        sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
+        if self.sample_name is None:
+            sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
+        else:
+            sample_name = self.sample_name
         assert sample_name is not None
         logging.info('Writing VCf output file ' + self.final_vcf)
         gramtools.write_vcf_annotated_using_coverage_from_gramtools(

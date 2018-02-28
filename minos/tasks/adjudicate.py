@@ -11,6 +11,7 @@ def run(options):
         overwrite_outdir=options.force,
         max_alleles_per_cluster=options.max_alleles_per_cluster,
         gramtools_build_dir=options.gramtools_build_dir,
+        sample_name=options.sample_name,
     )
     adj.run()
 
