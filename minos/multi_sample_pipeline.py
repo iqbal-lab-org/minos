@@ -101,13 +101,13 @@ process split_vcf_file {
     val tsv_fields from split_tsv
 
     output:
-    set(val(tsv_fields), file("small_vars.vcf")) into cluster_vcf_in
-    set(val(tsv_fields), file("big_vars.vcf")) into merge_small_and_large_vars_in
+    set(val(tsv_fields), file("small_vars.${tsv_fields['sample_id']}.vcf")) into cluster_vcf_in
+    set(val(tsv_fields), file("big_vars.${tsv_fields['sample_id']}.vcf")) into merge_small_and_large_vars_in
 
     """
     #!/usr/bin/env python3
     from minos import vcf_file_split_deletions
-    splitter = vcf_file_split_deletions.VcfFileSplitDeletions("${tsv_fields.vcf_file}", "small_vars.vcf", "big_vars.vcf", min_large_ref_length=${params.min_large_ref_length})
+    splitter = vcf_file_split_deletions.VcfFileSplitDeletions("${tsv_fields.vcf_file}", "small_vars.${tsv_fields['sample_id']}.vcf", "big_vars.${tsv_fields['sample_id']}.vcf", min_large_ref_length=${params.min_large_ref_length})
     splitter.run()
     """
 }
