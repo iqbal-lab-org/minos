@@ -14,7 +14,7 @@ class Adjudicator:
         ref_fasta,
         reads_files,
         vcf_files,
-        max_read_length=150,
+        max_read_length=None,
         read_error_rate=None,
         overwrite_outdir=False,
         max_alleles_per_cluster=5000,
@@ -24,7 +24,6 @@ class Adjudicator:
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
         self.vcf_files = [os.path.abspath(x) for x in vcf_files]
-        self.max_read_length = max_read_length
         self.overwrite_outdir = overwrite_outdir
         self.max_alleles_per_cluster = max_alleles_per_cluster
         self.sample_name = sample_name
@@ -43,11 +42,14 @@ class Adjudicator:
         self.gramtools_quasimap_dir = os.path.join(self.outdir, 'gramtools.quasimap')
         self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
 
-        if read_error_rate is None:
-            read_length, self.read_error_rate = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(self.reads_files[0])
-        else:
-            self.read_error_rate = read_error_rate
+        if read_error_rate is None or max_read_length is None:
+            logging.info('One or both of read_error_rate and max_read_length not known. Estimate from first 10,000 reads...')
+            estimated_read_length, estimated_read_error_rate = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(self.reads_files[0])
+            logging.info('Estaimted max_read_length=' + str(estimated_read_length) + ' and read_error_rate=' + str(estimated_read_length))
 
+        self.read_error_rate = estimated_read_error_rate if read_error_rate is None else read_error_rate
+        self.max_read_length = estimated_read_length if max_read_length is None else max_read_length
+        logging.info('Using max_read_length=' + str(self.max_read_length) + ' and read_error_rate=' + str(self.read_error_rate))
 
 
     def run(self):
