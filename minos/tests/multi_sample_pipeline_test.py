@@ -64,10 +64,11 @@ class TestMultiSamplePipeline(unittest.TestCase):
         out_small = 'tmp.nextflow_helper_process_input_vcf_file.out.small.vcf'
         out_big = 'tmp.nextflow_helper_process_input_vcf_file.out.big.vcf'
         out_sample = 'tmp.nextflow_helper_process_input_vcf_file.out.sample.txt'
-        multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(infile, out_small, out_big, out_sample, 5)
-        self.assertTrue(expect_small, out_small)
-        self.assertTrue(expect_big, out_big)
-        self.assertTrue(expect_sample, out_sample)
+        got_read_length = multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(infile, out_small, out_big, out_sample, 5)
+        self.assertEqual(201, got_read_length)
+        self.assertTrue(filecmp.cmp(expect_small, out_small, shallow=False))
+        self.assertTrue(filecmp.cmp(expect_big, out_big, shallow=False))
+        self.assertTrue(filecmp.cmp(expect_sample, out_sample, shallow=False))
         os.unlink(out_small)
         os.unlink(out_big)
         os.unlink(out_sample)

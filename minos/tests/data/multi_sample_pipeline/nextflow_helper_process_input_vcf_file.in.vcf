@@ -4,6 +4,7 @@
 ##samtoolsCommand=samtools mpileup -ugf run.ref.0.fa tmp.8068.bam
 ##reference=file://run.ref.0.fa
 ##contig=<ID=ref.0,length=1000>
+##minos_max_read_length=201
 ##ALT=<ID=*,Description="Represents allele(s) other than observed.">
 ##INFO=<ID=INDEL,Number=0,Type=Flag,Description="Indicates that the variant is an INDEL.">
 ##INFO=<ID=IDV,Number=1,Type=Integer,Description="Maximum number of reads supporting an indel">

@@ -69,10 +69,20 @@ class MultiSamplePipeline:
     def _nextflow_helper_process_input_vcf_file(cls, infile, out_small_vars, out_big_vars, out_sample_name, min_large_ref_length):
         splitter = vcf_file_split_deletions.VcfFileSplitDeletions(infile, out_small_vars, out_big_vars, min_large_ref_length=min_large_ref_length)
         splitter.run()
+        header_lines = vcf_file_read.get_header_lines_from_vcf_file(infile)
+        sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(header_lines)
+        assert sample_name is not None
+        max_read_length = None
+        for line in header_lines:
+            if line.startswith('##minos_max_read_length='):
+                max_read_length = int(line.rstrip().split('=')[1])
+
         with open(out_sample_name, "w") as f:
             sample_name = vcf_file_read.get_sample_name_from_vcf_file(infile)
             assert sample_name is not None
             print(sample_name, file=f)
+
+        return max_read_length
 
 
     @classmethod
