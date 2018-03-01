@@ -194,17 +194,24 @@ process minos_all_small_vars {
         nextflow_script = 'run_pipeline.nf'
         MultiSamplePipeline._write_nextflow_script(nextflow_script)
         logging.info('Prepared nextflow files. cd ' + self.output_dir)
-        nextflow_command = ' '.join([
+        nextflow_command = [
             'nextflow run',
             '-work-dir', self.nextflow_work_dir,
             '-with-dag', 'nextflow.out.dag.pdf',
             '-with-trace', 'newxtflow.out.trace.txt',
+        ]
+
+        if self.nextflow_config_file is not None:
+            nextflow_command.extend(['-c', self.nextflow_config_file])
+
+        nextflow_command += [
             nextflow_script,
             '--ref_fasta', self.ref_fasta,
             '--data_in_tsv', self.nextflow_input_tsv,
             '--min_large_ref_length', str(self.min_large_ref_length),
             '--gramtools_max_read_length', str(self.gramtools_max_read_length),
-        ])
+        ]
+        nextflow_command = ' '.join(nextflow_command)
         logging.info('Start running nextflow: ' + nextflow_command)
         utils.syscall(nextflow_command)
         logging.info('Finish running nextflow. cd ' + original_dir)
