@@ -39,6 +39,7 @@ class MultiSamplePipeline:
 
         self.force = force
         self.nextflow_input_tsv = os.path.join(self.output_dir, 'nextflow.input.tsv')
+        self.log_file = os.path.join(self.output_dir, 'log.txt')
 
 
     @classmethod
@@ -175,19 +176,29 @@ process minos_all_small_vars {
 ''', file=f)
 
 
-    def _prepare_nextflow_input_files(self):
+    def _make_output_dir(self):
         if os.path.exists(self.output_dir):
             if self.force:
                 shutil.rmtree(self.output_dir)
             else:
                 raise Error('Error! Output directory already exists. ' + self.output_dir)
-
         os.mkdir(self.output_dir)
+
+
+    def _prepare_nextflow_input_files(self):
         input_data = MultiSamplePipeline._load_input_data_tsv(self.input_data_tsv)
         MultiSamplePipeline._write_nextflow_data_tsv(input_data, self.nextflow_input_tsv)
 
 
     def run(self):
+        self._make_output_dir()
+        fh = logging.FileHandler(self.log_file, mode='w')
+        log = logging.getLogger()
+        formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+        fh.setFormatter(formatter)
+        log.addHandler(fh)
+        logging.info('TESTING')
+
         self._prepare_nextflow_input_files()
         original_dir = os.getcwd()
         os.chdir(self.output_dir)
