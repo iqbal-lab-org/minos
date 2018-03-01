@@ -1,0 +1,76 @@
+{
+    "start_time": "1519904217",
+    "end_time": "1519904217",
+    "total_runtime": 0,
+    "kmer_size": 42,
+    "max_read_length": 150,
+    "prg_build_report": {
+        "command": "perl /usr/local/lib/python3.6/dist-packages/gramtools/utils/vcf_to_linear_prg.pl --outfile ZZZ/prg --vcf /home/vagrant/minos/minos/tests/data/gramtools/run_gramtools.calls.vcf --ref /home/vagrant/minos/minos/tests/data/gramtools/run_gramtools.ref.fa",
+        "return_value_is_0": true,
+        "stdout": [
+            "Finished printing linear PRG. Final number in alphabet is  14"
+        ]
+    },
+    "gramtools_cpp_build": {
+        "command": "/usr/local/lib/python3.6/dist-packages/gramtools/bin/gram build --gram ZZZ --kmer-size 15 --max-read-size 150 --max-threads 1",
+        "return_value_is_0": true,
+        "stdout": [
+            "maximum thread count: 1",
+            "Executing build command",
+            "Generating integer encoded PRG",
+            "Number of charecters in integer encoded linear PRG: 3098",
+            "Generating FM-Index",
+            "Generating PRG masks",
+            "Generating kmer index",
+            "Total number of unique kmers: 1029",
+            "",
+            "",
+            "Timer report:",
+            "                       seconds",
+            "         Encoded PRG         0",
+            "   Generate FM-Index      0.07",
+            "Generating PRG masks      0.01",
+            " Generate kmer index      0.01",
+            "",
+            "Total elapsed time: 0.09"
+        ]
+    },
+    "current_working_directory": "/home/vagrant/minos/minos/tests/data/gramtools",
+    "paths": {
+        "project": "ZZZ",
+        "vcf": "/home/vagrant/minos/minos/tests/data/gramtools/run_gramtools.calls.vcf",
+        "reference": "/home/vagrant/minos/minos/tests/data/gramtools/run_gramtools.ref.fa",
+        "prg": "ZZZ/prg",
+        "encoded_prg": "ZZZ/encoded_prg",
+        "variant_site_mask": "ZZZ/variant_site_mask",
+        "allele_mask": "ZZZ/allele_mask",
+        "fm_index": "ZZZ/fm_index",
+        "kmer_index": "ZZZ/kmers/kmer_index_15",
+        "perl_generated_vcf": "ZZZ/perl_generated_vcf",
+        "perl_generated_fa": "ZZZ/perl_generated_fa",
+        "build_report": "ZZZ/build_report.json"
+    },
+    "path_hashes": {
+        "vcf": "5032976fe13bdd7434910ae7b6266c61d37d65c50735da4e21e419ad2e8f6ec8",
+        "reference": "82ca14bbbbfb09c258c463ca9501e1546300895c8072e6da43333961e6b1b0af",
+        "prg": "57d2e863fae1103f14c4e482b5342eaff15d953990869bea9e06e23ff79fed6a",
+        "encoded_prg": "7618d1c1832539a877fa3ad1a4ac072bbeb86176337118bb2897e3e51bfbfb90",
+        "variant_site_mask": "f5ff3dda18767eeb352434c330aa43b5897ec1087f82df9e39c5d31b9b1da33c",
+        "allele_mask": "8667e99c4bfd76a292188d472bda4f060514dc1a33032532c0e661b5e80eb7e7",
+        "fm_index": "7c5f3a01cd10287f4cb55048f4563f859ff3c9408e16784c2ca2b539cf2f24b6",
+        "perl_generated_vcf": "6fef7cf142e9f4db19c780d2bbb9403bdb00bf21ef523007a8f1091802e33ff5",
+        "perl_generated_fa": "1656e6823214cb9c73df6236065704c3121074dd23ac727d82721945c372bb8b"
+    },
+    "version_report": {
+        "version_number": "0.5.0",
+        "last_git_commit_hash": "97b3a4950ce463cce07155beb962ae5deb25921c",
+        "current_git_branch": "master",
+        "truncated_git_commits": [
+            "97b3a49 - Robyn Ffrancon, 3 hours ago : added parameters for setting the maximum thread count",
+            "15fafea - Robyn Ffrancon, 4 hours ago : default maximum thread count set to 1",
+            "2f4093c - Robyn Ffrancon, 19 hours ago : remove unused code",
+            "f22a395 - Robyn Ffrancon, 19 hours ago : functionality for parsing and dumping serialized kmer index in parts",
+            "3ab38ce - Robyn Ffrancon, 2 days ago : WIP: implemented functionality for parsing serialized variant site path elements"
+        ]
+    }
+}
