@@ -39,7 +39,6 @@ class MultiSamplePipeline:
 
         self.force = force
         self.nextflow_input_tsv = os.path.join(self.output_dir, 'nextflow.input.tsv')
-        self.nextflow_script = os.path.join(self.output_dir, 'pipeline.script.nf')
 
 
     @classmethod

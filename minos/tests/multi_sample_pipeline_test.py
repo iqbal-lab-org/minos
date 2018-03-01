@@ -76,8 +76,10 @@ class TestMultiSamplePipeline(unittest.TestCase):
         ref_fasta = 'tmp.prepare_nextflow_input_files.in.ref.fa'
         outdir = 'tmp.prepare_nextflow_input_files.outdir'
         data_tsv = 'tmp.prepare_nextflow_input_files.in.tsv'
-        vcf_file = 'tmp.prepare_nextflow_input_files.in.vcf1'
-        reads_file = 'tmp.prepare_nextflow_input_files.in.reads1'
+        vcf_file = 'tmp.prepare_nextflow_input_files.in.vcf'
+        reads_file = 'tmp.prepare_nextflow_input_files.in.reads'
+        with open(ref_fasta, 'w') as f:
+            pass
         with open(data_tsv, 'w') as f:
             print(vcf_file, reads_file, sep='\t', file=f)
         with open(vcf_file, 'w'), open(reads_file, 'w'):
@@ -88,7 +90,6 @@ class TestMultiSamplePipeline(unittest.TestCase):
         pipeline._prepare_nextflow_input_files()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(pipeline.nextflow_input_tsv))
-        self.assertTrue(os.path.exists(pipeline.nextflow_script))
         shutil.rmtree(outdir)
         os.unlink(ref_fasta)
         os.unlink(data_tsv)
