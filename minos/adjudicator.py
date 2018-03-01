@@ -136,8 +136,9 @@ class Adjudicator:
             allele_groups,
             self.read_error_rate,
             self.final_vcf,
+            self.gramtools_kmer_size,
             sample_name=sample_name,
-            kmer_size=self.gramtools_kmer_size,
+            max_read_length=self.max_read_length,
         )
 
         logging.info('All done! Thank you for using minos :)')
