@@ -117,10 +117,6 @@ if (params.min_large_ref_length < 1) {
     exit 1, "Must use option --min_large_ref_length -- aborting"
 }
 
-if (params.gramtools_max_read_length < 1) {
-    exit 1, "Must use option --max_read_length -- aborting"
-}
-
 split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
 
 
@@ -132,17 +128,22 @@ process process_input_vcf_file {
     file("small_vars.${tsv_fields['sample_id']}.vcf") into process_input_vcf_file_out_small
     set(val(tsv_fields), file("big_vars.${tsv_fields['sample_id']}.vcf")) into merge_small_and_large_vars_in
     set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) into minos_all_small_vars_tsv_in
+    stdout into max_read_lengths
 
     """
     #!/usr/bin/env python3
     from minos import multi_sample_pipeline
-    multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
+    max_read_length = multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
         "${tsv_fields.vcf_file}",
         "small_vars.${tsv_fields['sample_id']}.vcf",
         "big_vars.${tsv_fields['sample_id']}.vcf",
         "sample_name.${tsv_fields['sample_id']}",
         ${params.min_large_ref_length}
     )
+    if max_read_length is None:
+        print(0, end='')
+    else:
+        print(max_read_length, end='')
     """
 }
 
@@ -167,14 +168,25 @@ process cluster_small_vars_vcf {
 process gramtools_build_small_vars {
     input:
     file('small_vars_clustered.vcf') from cluster_small_vars_vcf_out
+    val(max_read_length) from max_read_lengths.max()
 
     output:
     set(file('small_vars_clustered.vcf'), file('small_vars_clustered.gramtools.build')) into gramtools_build_small_vars_out
 
     """
     #!/usr/bin/env python3
+    import sys
     from minos import gramtools
-    gramtools.run_gramtools_build("small_vars_clustered.gramtools.build", "small_vars_clustered.vcf", "${params.ref_fasta}", ${params.gramtools_max_read_length})
+    if ${params.gramtools_max_read_length} == 0:
+        max_read_length = ${max_read_length}
+    else:
+        max_read_length = ${params.gramtools_max_read_length}
+
+    if max_read_length == 0:
+        print('Error! max read length could not be inferred from input VCF files. Must use option --gramtools_max_read_length')
+        sys.exit(1)
+
+    gramtools.run_gramtools_build("small_vars_clustered.gramtools.build", "small_vars_clustered.vcf", "${params.ref_fasta}", max_read_length)
     """
 }
 

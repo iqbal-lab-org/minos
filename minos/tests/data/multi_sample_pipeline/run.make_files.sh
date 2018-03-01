@@ -18,4 +18,5 @@ done
 rm $ref.*
 rm $pre.ref.{1,2}.fa
 
-
+awk '/^#CHROM/ {print "##minos_max_read_length=242"} 1' $pre.calls.1.vcf > tmp.$$
+mv tmp.$$ $pre.calls.1.vcf
