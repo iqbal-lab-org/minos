@@ -60,7 +60,7 @@ class MultiSamplePipeline:
 
                 data.append((os.path.abspath(vcf_file), [os.path.abspath(x) for x in reads_files]))
 
-        logging.info('Finish reading file ' + infile + '. Loaded ' + str(len(data)) + 'samples')
+        logging.info('Finish reading file ' + infile + '. Loaded ' + str(len(data)) + ' samples')
         return data
 
 
