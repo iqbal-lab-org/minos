@@ -11,7 +11,7 @@ from minos import __version__ as minos_version
 class Error (Exception): pass
 
 
-def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_length=15):
+def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=15):
     '''Runs gramtools build. Makes new directory called 'outdir' for
     the output'''
     gramtools_exe = dependencies.find_binary('gramtools')
@@ -22,14 +22,14 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_length
         '--vcf', vcf_file,
         '--reference', ref_file,
         '--max-read-length', str(max_read_length),
-        '--kmer-size', str(kmer_length),
+        '--kmer-size', str(kmer_size),
     ])
     logging.info('Running gramtools build: ' + build_command)
     utils.syscall(build_command)
     logging.info('Finished running gramtools build')
 
 
-def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_length, kmer_length=15):
+def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_length, kmer_size=15):
     '''If build_dir does not exist, runs runs gramtools build and quasimap.
     Otherwise, just runs quasimap. quasimap output is in new
     directory called quasimap_dir.
@@ -38,7 +38,7 @@ def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_l
     files made by quasimap are not found.'''
     gramtools_exe = dependencies.find_binary('gramtools')
     if not os.path.exists(build_dir):
-        run_gramtools_build(build_dir, vcf_file, ref_file, max_read_length, kmer_length=kmer_length)
+        run_gramtools_build(build_dir, vcf_file, ref_file, max_read_length, kmer_size=kmer_size)
 
     if type(reads) is not list:
         assert type(reads) is str
