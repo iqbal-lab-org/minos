@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import shutil
@@ -19,6 +20,7 @@ class Adjudicator:
         overwrite_outdir=False,
         max_alleles_per_cluster=5000,
         gramtools_build_dir=None,
+        gramtools_kmer_size=None,
         sample_name=None,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
@@ -50,6 +52,28 @@ class Adjudicator:
         self.read_error_rate = estimated_read_error_rate if read_error_rate is None else read_error_rate
         self.max_read_length = estimated_read_length if max_read_length is None else max_read_length
         logging.info('Using max_read_length=' + str(self.max_read_length) + ' and read_error_rate=' + str(self.read_error_rate))
+
+
+    @classmethod
+    def _get_gramtools_kmer_size(cls, build_dir, input_kmer_size):
+        if build_dir is not None:
+            json_file = os.path.join(build_dir, 'build_report.json')
+            with open(json_file) as f:
+                json_build_report = json.load(f)
+
+            if 'kmer_size' in json_build_report:
+                kmer_size_from_json = json_build_report['kmer_size']
+            else:
+                raise Error('kmer_size not found in graamtools build report' + json_file)
+
+            if input_kmer_size is not None:
+                logging.warning('gramtools_kmer_size option used, but going to ignore it because gramtools_build_dir used, which means that gramtools build has already been run')
+
+            return kmer_size_from_json
+        elif input_kmer_size is None:
+            return 15
+        else:
+            return input_kmer_size
 
 
     def run(self):
@@ -85,7 +109,7 @@ class Adjudicator:
             logging.error(error_message)
             raise Error(error_message)
 
-        gramtools.run_gramtools(
+        build_report, quasimap_report = gramtools.run_gramtools(
             self.gramtools_build_dir,
             self.gramtools_quasimap_dir,
             self.clustered_vcf,

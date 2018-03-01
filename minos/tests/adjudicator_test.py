@@ -8,6 +8,15 @@ modules_dir = os.path.dirname(os.path.abspath(adjudicator.__file__))
 data_dir = os.path.join(modules_dir, 'tests', 'data', 'adjudicator')
 
 class TestAdjudicator(unittest.TestCase):
+    def test_get_gramtools_kmer_size(self):
+        '''test _get_gramtools_kmer_size'''
+        build_dir = os.path.join(data_dir, 'get_gramtools_kmer_size.build')
+        self.assertEqual(42, adjudicator.Adjudicator._get_gramtools_kmer_size(build_dir, None))
+        self.assertEqual(42, adjudicator.Adjudicator._get_gramtools_kmer_size(build_dir, 20))
+        self.assertEqual(20, adjudicator.Adjudicator._get_gramtools_kmer_size(None, 20))
+        self.assertEqual(15, adjudicator.Adjudicator._get_gramtools_kmer_size(None, None))
+
+
     def test_run(self):
         '''test run'''
         # We're just testing that it doesn't crash.
