@@ -41,6 +41,7 @@ class Adjudicator:
             if not os.path.exists(self.gramtools_build_dir):
                 raise Error('Error! gramtools_build_dir=' + self.gramtools_build_dir + ' used, but directory not found on disk. Cannot continue')
 
+        self.gramtools_kmer_size = Adjudicator._get_gramtools_kmer_size(gramtools_build_dir, gramtools_kmer_size)
         self.gramtools_quasimap_dir = os.path.join(self.outdir, 'gramtools.quasimap')
         self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
 
@@ -116,6 +117,7 @@ class Adjudicator:
             self.ref_fasta,
             self.reads_files,
             self.max_read_length,
+            kmer_size=self.gramtools_kmer_size,
         )
 
         logging.info('Loading gramtools quasimap output files ' + self.gramtools_quasimap_dir)
