@@ -102,7 +102,7 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     return round(total_coverage/len(vcf_lines), 3), vcf_header, vcf_lines, all_allele_coverage, allele_groups
 
 
-def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, read_error_rate):
+def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, read_error_rate, kmer_size):
     '''allele_depths should be a dict of allele -> coverage.
     The REF allele must also be in the dict.
     So keys of dict must be equal to REF + ALTs sequences.
@@ -129,16 +129,17 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
     cov_string = ','.join([str(gtyper.singleton_alleles_cov.get(x, 0)) for x in range(1 + len(vcf_record.ALT))])
     vcf_record.QUAL = None
     vcf_record.FILTER = '.'
-    vcf_record.INFO = {'DP': str(sum(allele_combination_cov.values()))}
-    vcf_record.format_keys = ['GT', 'COV', 'GT_CONF']
+    vcf_record.INFO = {'KMER': str(kmer_size)}
+    vcf_record.format_keys = ['DP', 'GT', 'COV', 'GT_CONF']
     vcf_record.FORMAT = {
+        'DP': str(sum(allele_combination_cov.values())),
         'GT': genotype,
         'COV': cov_string,
         'GT_CONF': str(gtyper.genotype_confidence)
     }
 
 
-def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, sample_name='SAMPLE', max_read_length=None):
+def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, kmer_size, sample_name='SAMPLE', max_read_length=None):
     '''mean_depth, vcf_records, all_allele_coverage, allele_groups should be those
     returned by load_gramtools_vcf_and_allele_coverage_files().
     Writes a new VCF that has allele counts for all the ALTs'''
@@ -156,7 +157,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, a
 
         for i in range(len(vcf_records)):
             logging.debug('Genotyping: ' + str(vcf_records[i]))
-            update_vcf_record_using_gramtools_allele_depths(vcf_records[i], all_allele_coverage[i][0], all_allele_coverage[i][1], allele_groups, mean_depth, read_error_rate)
+            update_vcf_record_using_gramtools_allele_depths(vcf_records[i], all_allele_coverage[i][0], all_allele_coverage[i][1], allele_groups, mean_depth, read_error_rate, kmer_size)
             print(vcf_records[i], file=f)
 
 

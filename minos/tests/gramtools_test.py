@@ -125,10 +125,11 @@ class TestGramtools(unittest.TestCase):
         allele_combination_cov = {'1': 9, '2': 7, '3': 1}
         allele_groups_dict = {'1': {0}, '2': {1}, '3': {1,2}}
         allele_per_base_cov = [[9],[7],[1,0]]
-        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tDP=17\tGT:COV:GT_CONF\t0/1:9,7,0:47.69')
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/1:9,7,0:47.69')
         mean_depth = 15
         error_rate = 0.001
-        gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate)
+        kmer_size = 42
+        gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
         self.assertEqual(expected, record)
 
 
@@ -139,10 +140,11 @@ class TestGramtools(unittest.TestCase):
         allele_combination_cov = {'1': 1, '2': 80}
         allele_groups_dict = {'1': {0}, '2': {1}, '3': {1,2}}
         allele_per_base_cov = [[1],[80],[0,0]]
-        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tDP=81\tGT:COV:GT_CONF\t1/1:1,80,0:44.79')
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:1/1:1,80,0:44.79')
         mean_depth = 85
         error_rate = 0.001
-        gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate)
+        kmer_size = 42
+        gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
         self.assertEqual(expected, record)
 
 
@@ -153,7 +155,8 @@ class TestGramtools(unittest.TestCase):
         mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups  = gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file_in, quasimap_dir)
         tmp_outfile = 'tmp.gramtools.write_vcf_annotated_using_coverage_from_gramtools.vcf'
         error_rate = 0.001
-        gramtools.write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, allele_coverage, allele_groups, error_rate, tmp_outfile, sample_name='sample_42', max_read_length=200)
+        kmer_size = 42
+        gramtools.write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, allele_coverage, allele_groups, error_rate, tmp_outfile, kmer_size, sample_name='sample_42', max_read_length=200)
         expected_vcf = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.out.vcf')
         # Today's date and the verison of minos get added to the header.
         # We'll have to take account
