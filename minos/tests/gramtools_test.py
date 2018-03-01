@@ -36,7 +36,7 @@ class TestGramtools(unittest.TestCase):
         vcf_file = os.path.join(data_dir, 'run_gramtools.calls.vcf')
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
         reads_file = os.path.join(data_dir, 'run_gramtools.reads.fq')
-        gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150)
+        build_report, quasimap_report = gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150)
         # We're trusing gramtools output for this test. The point here is to check
         # that gramtools can run. Parsing its output is checked elsewhere.
         self.assertTrue(os.path.exists(tmp_out_build))
@@ -45,6 +45,8 @@ class TestGramtools(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(tmp_out_quasimap, 'grouped_allele_counts_coverage.json')))
         shutil.rmtree(tmp_out_build)
         shutil.rmtree(tmp_out_quasimap)
+        self.assertIn('prg_build_report', build_report)
+        self.assertIn('gramtools_cpp_quasimap', quasimap_report)
 
 
     def test_run_gramtools_fails(self):

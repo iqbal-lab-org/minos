@@ -55,10 +55,12 @@ def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_l
     utils.syscall(quasimap_command)
     logging.info('Finished running gramtools quasimap')
 
+    build_report = os.path.join(build_dir, 'build_report.json')
+    quasimap_report = os.path.join(quasimap_dir, 'report.json')
     allele_base_counts_file = os.path.join(quasimap_dir, 'allele_base_coverage.json')
     grouped_allele_counts_file = os.path.join(quasimap_dir, 'grouped_allele_counts_coverage.json')
     files_ok = True
-    for filename in allele_base_counts_file, grouped_allele_counts_file:
+    for filename in build_report, quasimap_report, allele_base_counts_file, grouped_allele_counts_file:
         if not(os.path.exists(filename)):
             files_ok = False
             logging.error('gramtools file not found: ' + filename)
@@ -67,6 +69,13 @@ def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_l
         error_message = 'Looks like something went wrong duing gramtools run. At least one output file not present. Cannot continue.'
         logging.error(error_message)
         raise Error(error_message)
+
+    with open(build_report) as f:
+        json_build_report = json.load(f)
+    with open(quasimap_report) as f:
+        json_quasimap_report = json.load(f)
+
+    return json_build_report, json_quasimap_report
 
 
 def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
