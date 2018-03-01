@@ -44,15 +44,9 @@ class Adjudicator:
         self.gramtools_kmer_size = Adjudicator._get_gramtools_kmer_size(gramtools_build_dir, gramtools_kmer_size)
         self.gramtools_quasimap_dir = os.path.join(self.outdir, 'gramtools.quasimap')
         self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
+        self.read_error_rate = read_error_rate
+        self.max_read_length = max_read_length
 
-        if read_error_rate is None or max_read_length is None:
-            logging.info('One or both of read_error_rate and max_read_length not known. Estimate from first 10,000 reads...')
-            estimated_read_length, estimated_read_error_rate = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(self.reads_files[0])
-            logging.info('Estaimted max_read_length=' + str(estimated_read_length) + ' and read_error_rate=' + str(estimated_read_length))
-
-        self.read_error_rate = estimated_read_error_rate if read_error_rate is None else read_error_rate
-        self.max_read_length = estimated_read_length if max_read_length is None else max_read_length
-        logging.info('Using max_read_length=' + str(self.max_read_length) + ' and read_error_rate=' + str(self.read_error_rate))
 
 
     @classmethod
@@ -93,6 +87,16 @@ class Adjudicator:
         log.addHandler(fh)
         dependencies.check_and_report_dependencies(programs=['gramtools'])
         logging.info('Dependencies look OK')
+
+        if self.read_error_rate is None or self.max_read_length is None:
+            logging.info('One or both of read_error_rate and max_read_length not known. Estimate from first 10,000 reads...')
+            estimated_read_length, estimated_read_error_rate = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(self.reads_files[0])
+            logging.info('Estaimted max_read_length=' + str(estimated_read_length) + ' and read_error_rate=' + str(estimated_read_length))
+
+        self.read_error_rate = estimated_read_error_rate if self.read_error_rate is None else self.read_error_rate
+        self.max_read_length = estimated_read_length if self.max_read_length is None else self.max_read_length
+        logging.info('Using max_read_length=' + str(self.max_read_length) + ' and read_error_rate=' + str(self.read_error_rate))
+
 
         clusterer = vcf_clusterer.VcfClusterer(
             self.vcf_files,
