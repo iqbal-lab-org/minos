@@ -149,6 +149,11 @@ def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, a
         print('##fileformat=VCFv4.2', file=f)
         print('##source=minos, version', minos_version, file=f)
         print('##fileDate=', datetime.date.today(), sep='', file=f)
+        print('##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">', file=f)
+        print('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">', file=f)
+        print('##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">', file=f)
+        print('##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">', file=f)
+        print('##INFO=<ID=KMER,Number=1,Type=Integer,Description="Kmer size at which variant was discovered (kmer-size used by gramtools build)">', file=f)
 
         if max_read_length is not None:
             print('##minos_max_read_length=' + str(max_read_length), file=f)
