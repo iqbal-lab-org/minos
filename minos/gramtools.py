@@ -138,7 +138,7 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
     }
 
 
-def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, sample_name='SAMPLE'):
+def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, sample_name='SAMPLE', max_read_length=None):
     '''mean_depth, vcf_records, all_allele_coverage, allele_groups should be those
     returned by load_gramtools_vcf_and_allele_coverage_files().
     Writes a new VCF that has allele counts for all the ALTs'''
@@ -148,6 +148,10 @@ def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, a
         print('##fileformat=VCFv4.2', file=f)
         print('##source=minos, version', minos_version, file=f)
         print('##fileDate=', datetime.date.today(), sep='', file=f)
+
+        if max_read_length is not None:
+            print('##minos_max_read_length=' + str(max_read_length), file=f)
+
         print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_name, sep='\t', file=f)
 
         for i in range(len(vcf_records)):

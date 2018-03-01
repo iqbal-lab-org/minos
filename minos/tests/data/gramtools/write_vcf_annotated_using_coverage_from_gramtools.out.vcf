@@ -1,6 +1,7 @@
 ##fileformat=VCFv4.2
 ##source=minos, version 0.2.0
-##fileDate=2018-02-26
+##fileDate=2018-03-01
+##minos_max_read_length=200
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_42
 ref	1	.	G	T	.	.	DP=11	GT:COV:GT_CONF	1/1:0,10:16.92
 ref	2	.	A	TA,G	.	.	DP=10	GT:COV:GT_CONF	1/2:1,3,5:12.07
