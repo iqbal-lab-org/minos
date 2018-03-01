@@ -18,11 +18,12 @@ def syscall(command, allow_fail=False):
     return completed_process
 
 
-def estimate_read_error_rate_from_qual_scores(infile, number_of_reads=10000):
-    '''Estimates the error rate from a file of reads, using the
+def estimate_max_read_length_and_read_error_rate_from_qual_scores(infile, number_of_reads=10000):
+    '''Estimates the maximum read length, and error rate from a file of reads, using the
     quality scores. Calculated by converting the mean phred quality score
     into the probability (formula is P = 10 ^ (- mean qual / 10)).
-    Returns the error rate, or None if no quality
+    Returns a tuple max_read_length, error_rate.
+    Error rate is None if no quality
     scores found. Uses the first number_of_reads found in the file.
     File type can be BAM, SAM, FASTQ and is auto detected'''
     try:
@@ -37,6 +38,7 @@ def estimate_read_error_rate_from_qual_scores(infile, number_of_reads=10000):
     total = 0
     base_count = 0
     read_count = 0
+    max_read_length = 0
 
     for sequence in f:
         read_count += 1
@@ -44,22 +46,23 @@ def estimate_read_error_rate_from_qual_scores(infile, number_of_reads=10000):
             break
 
         if filetype == 'pysam':
+            max_read_length = max(max_read_length, sequence.query_length)
             if sequence.query_qualities is not None:
                 for qual_score in sequence.query_qualities:
                     total += qual_score
                 base_count += len(sequence.query_qualities)
         else:
-            assert filetype == 'fastaq'
+            max_read_length = max(max_read_length, len(sequence))
             if type(sequence) != pyfastaq.sequences.Fastq:
-                return None
+                continue
 
             for qual_score in [ord(x) - 33 for x in sequence.qual]:
                 total += qual_score
             base_count += len(sequence)
 
     if base_count == 0:
-        return None
+        return max_read_length, None
 
     mean_qual_score = total / base_count
-    return pow(10, -mean_qual_score / 10)
+    return max_read_length, pow(10, -mean_qual_score / 10)
 

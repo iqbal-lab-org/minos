@@ -44,7 +44,7 @@ class Adjudicator:
         self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
 
         if read_error_rate is None:
-            self.read_error_rate = utils.estimate_read_error_rate_from_qual_scores(self.reads_files[0])
+            read_length, self.read_error_rate = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(self.reads_files[0])
         else:
             self.read_error_rate = read_error_rate
 
