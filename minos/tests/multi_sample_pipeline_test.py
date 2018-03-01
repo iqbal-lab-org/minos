@@ -55,6 +55,24 @@ class TestMultiSamplePipeline(unittest.TestCase):
             os.unlink(filename)
 
 
+    def test_nextflow_helper_process_input_vcf_file(self):
+        '''test _nextflow_helper_process_input_vcf_file'''
+        infile = os.path.join(data_dir, 'nextflow_helper_process_input_vcf_file.in.vcf')
+        expect_small = os.path.join(data_dir, 'nextflow_helper_process_input_vcf_file.out.small.vcf')
+        expect_big = os.path.join(data_dir, 'nextflow_helper_process_input_vcf_file.out.big.vcf')
+        expect_sample = os.path.join(data_dir, 'nextflow_helper_process_input_vcf_file.out.sample.txt')
+        out_small = 'tmp.nextflow_helper_process_input_vcf_file.out.small.vcf'
+        out_big = 'tmp.nextflow_helper_process_input_vcf_file.out.big.vcf'
+        out_sample = 'tmp.nextflow_helper_process_input_vcf_file.out.sample.txt'
+        multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(infile, out_small, out_big, out_sample, 5)
+        self.assertTrue(expect_small, out_small)
+        self.assertTrue(expect_big, out_big)
+        self.assertTrue(expect_sample, out_sample)
+        os.unlink(out_small)
+        os.unlink(out_big)
+        os.unlink(out_sample)
+
+
     def test_write_nextflow_data_tsv(self):
         '''test _write_nextflow_data_tsv'''
         outfile = 'tmp.multi_sample_pipeline_test_write_nextflow_data_tsv'
@@ -87,6 +105,7 @@ class TestMultiSamplePipeline(unittest.TestCase):
         if os.path.exists(outdir):
             shutil.rmtree(outdir)
         pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, data_tsv, outdir)
+        pipeline._make_output_dir()
         pipeline._prepare_nextflow_input_files()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(pipeline.nextflow_input_tsv))

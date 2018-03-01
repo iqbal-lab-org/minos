@@ -4,7 +4,7 @@ import shutil
 
 from cluster_vcf_records import vcf_file_read
 
-from minos import utils
+from minos import utils, vcf_file_split_deletions
 
 class Error (Exception): pass
 
@@ -66,6 +66,16 @@ class MultiSamplePipeline:
 
 
     @classmethod
+    def _nextflow_helper_process_input_vcf_file(cls, infile, out_small_vars, out_big_vars, out_sample_name, min_large_ref_length):
+        splitter = vcf_file_split_deletions.VcfFileSplitDeletions(infile, out_small_vars, out_big_vars, min_large_ref_length=min_large_ref_length)
+        splitter.run()
+        with open(out_sample_name, "w") as f:
+            sample_name = vcf_file_read.get_sample_name_from_vcf_file(infile)
+            assert sample_name is not None
+            print(sample_name, file=f)
+
+
+    @classmethod
     def _write_nextflow_data_tsv(cls, data, outfile):
         with open(outfile, 'w') as f:
             print('sample_id', 'vcf_file', 'reads_files', sep='\t', file=f)
@@ -104,32 +114,32 @@ if (params.gramtools_max_read_length < 1) {
 split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
 
 
-process split_vcf_file {
+process process_input_vcf_file {
     input:
     val tsv_fields from split_tsv
 
     output:
-    file("small_vars.${tsv_fields['sample_id']}.vcf") into split_vcf_file_out_small
+    file("small_vars.${tsv_fields['sample_id']}.vcf") into process_input_vcf_file_out_small
     set(val(tsv_fields), file("big_vars.${tsv_fields['sample_id']}.vcf")) into merge_small_and_large_vars_in
     set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) into minos_all_small_vars_tsv_in
 
     """
     #!/usr/bin/env python3
-    from minos import vcf_file_split_deletions
-    from cluster_vcf_records import vcf_file_read
-    splitter = vcf_file_split_deletions.VcfFileSplitDeletions("${tsv_fields.vcf_file}", "small_vars.${tsv_fields['sample_id']}.vcf", "big_vars.${tsv_fields['sample_id']}.vcf", min_large_ref_length=${params.min_large_ref_length})
-    splitter.run()
-    with open("sample_name.${tsv_fields['sample_id']}", "w") as f:
-        sample_name = vcf_file_read.get_sample_name_from_vcf_file("${tsv_fields.vcf_file}")
-        assert sample_name is not None
-        print(sample_name, file=f)
+    from minos import multi_sample_pipeline
+    multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
+        "${tsv_fields.vcf_file}",
+        "small_vars.${tsv_fields['sample_id']}.vcf",
+        "big_vars.${tsv_fields['sample_id']}.vcf",
+        "sample_name.${tsv_fields['sample_id']}",
+        ${params.min_large_ref_length}
+    )
     """
 }
 
 
 process cluster_small_vars_vcf {
     input:
-    val(file_list) from split_vcf_file_out_small.collect()
+    val(file_list) from process_input_vcf_file_out_small.collect()
 
     output:
     file('small_vars_clustered.vcf') into cluster_small_vars_vcf_out
