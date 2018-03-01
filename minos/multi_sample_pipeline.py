@@ -201,7 +201,10 @@ process minos_all_small_vars {
 
     """
     sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
-    minos adjudicate --sample_name \$sample_name --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} small_vars.minos.${tsv_fields['sample_id']} ${ref_fasta} "small_vars_clustered.vcf"
+    minos_outdir=small_vars.minos.${tsv_fields['sample_id']}
+    minos adjudicate --sample_name \$sample_name --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} \$minos_outdir ${ref_fasta} "small_vars_clustered.vcf"
+    bgzip \$minos_outdir/final.vcf
+    tabix -p vcf \$minos_outdir/final.vcf.gz
     """
 }
 
