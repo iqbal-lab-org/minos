@@ -18,7 +18,7 @@ class MultiSamplePipeline:
         nextflow_config_file=None,
         nextflow_work_dir=None,
         force=False,
-        no_run=True,
+        no_run=False,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
