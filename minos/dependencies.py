@@ -22,7 +22,19 @@ def get_version_of_program(program, binary=None, allow_fail=False):
     if binary is None:
         binary = find_binary(program, allow_fail=allow_fail)
 
-    if program == 'gramtools':
+    if program == 'bcftools':
+        bcftools_process = utils.syscall(binary, allow_fail=True)
+        for line in bcftools_process.stderr.split('\n'):
+            # example version line:
+            # Version: 1.3.1 (using htslib 1.3.1)
+            if line.startswith('Version:'):
+                try:
+                    version = line.rstrip().split(maxsplit=1)[1]
+                except:
+                    return None
+                return version
+        return None
+    elif program == 'gramtools':
         gramtools_process = utils.syscall(binary + ' --version')
         gramtools_json = json.loads(gramtools_process.stdout)
         return gramtools_json.get('version_number', None)
@@ -90,7 +102,7 @@ def find_binaries_and_versions(programs=None):
     data = {}
 
     if programs is None:
-        programs = ['bwa', 'dnadiff', 'gramtools', 'nextflow']
+        programs = ['bcftools', 'bwa', 'dnadiff', 'gramtools', 'nextflow']
 
     for program in programs:
         binary = find_binary(program, allow_fail=True)
@@ -118,7 +130,7 @@ def dependencies_report(programs=None):
     lines = ['minos ' + __version__]
 
     if programs is None:
-        programs = ['bwa', 'dnadiff', 'gramtools', 'nextflow']
+        programs = ['bcftools', 'bwa', 'dnadiff', 'gramtools', 'nextflow']
     programs_data = find_binaries_and_versions(programs=programs)
 
     for program in programs:
