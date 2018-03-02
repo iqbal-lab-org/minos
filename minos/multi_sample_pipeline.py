@@ -100,10 +100,12 @@ class MultiSamplePipeline:
 params.ref_fasta = ""
 params.min_large_ref_length = 0
 params.gramtools_max_read_length = 0
+params.final_outdir = ""
 
 
 data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
 ref_fasta = file(params.ref_fasta).toAbsolutePath()
+final_outdir = file(params.final_outdir).toAbsolutePath()
 
 if (!data_in_tsv.exists()) {
     exit 1, "Input data TSV file not found: ${params.data_in_tsv} -- aborting"
@@ -115,6 +117,10 @@ if (!ref_fasta.exists()) {
 
 if (params.min_large_ref_length < 1) {
     exit 1, "Must use option --min_large_ref_length -- aborting"
+}
+
+if (!final_outdir.exists()) {
+    exit 1, "Output directory not found: ${params.final_outdir} -- aborting"
 }
 
 split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
@@ -197,7 +203,7 @@ process minos_all_small_vars {
     set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) from minos_all_small_vars_tsv_in
 
     output:
-    file("small_vars.minos.${tsv_fields['sample_id']}")
+    file("small_vars.minos.${tsv_fields['sample_id']}") into minos_all_small_vars_out
 
     """
     sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
@@ -207,6 +213,51 @@ process minos_all_small_vars {
     tabix -p vcf \$minos_outdir/final.vcf.gz
     """
 }
+
+
+// This just takes the list of files output by minos_all_small_vars
+// and writes a new file, with them sorted. Have this as a separate
+// process from the bash script that runs bcftools because the number
+// of files could go over bash's character/length limits
+process make_bcftools_small_vars_fofn {
+    input:
+    val(minos_dir_list) from minos_all_small_vars_out.collect()
+
+    output:
+    file('vcf_file_list_for_bcftools.txt') into make_bcftools_small_vars_fofn_out
+
+    """
+    #!/usr/bin/env python3
+    # Files end with .N (N=0,1,2,3,...) Sort numerically on this N
+    import os
+    minos_dir_list = ["${minos_dir_list.join('", "')}"]
+    tuple_list = []
+    for filename in minos_dir_list:
+        fields = filename.rsplit('.', maxsplit=1)
+        tuple_list.append((int(fields[1]), fields[0]))
+    tuple_list.sort()
+
+    with open('vcf_file_list_for_bcftools.txt', 'w') as f:
+        for t in tuple_list:
+            vcf = os.path.join(t[1] + '.' + str(t[0]), 'final.vcf.gz')
+            print(vcf, file=f)
+    """
+}
+
+
+process bcftools_merge {
+    publishDir path: final_outdir, mode: 'move', overwrite: true
+    input:
+    file('vcf_file_list_for_bcftools.txt') from make_bcftools_small_vars_fofn_out
+
+    output:
+    file('combined_calls.vcf')
+
+    """
+    bcftools merge -l vcf_file_list_for_bcftools.txt -o combined_calls.vcf
+    """
+}
+
 
 ''', file=f)
 
@@ -255,6 +306,7 @@ process minos_all_small_vars {
             '--ref_fasta', self.ref_fasta,
             '--data_in_tsv', self.nextflow_input_tsv,
             '--min_large_ref_length', str(self.min_large_ref_length),
+            '--final_outdir', self.output_dir,
             '--gramtools_max_read_length', str(self.gramtools_max_read_length),
         ]
         nextflow_command = ' '.join(nextflow_command)
