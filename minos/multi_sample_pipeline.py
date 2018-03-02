@@ -4,7 +4,7 @@ import shutil
 
 from cluster_vcf_records import vcf_file_read
 
-from minos import utils, vcf_file_split_deletions
+from minos import dependencies, utils, vcf_file_split_deletions
 
 class Error (Exception): pass
 
@@ -101,6 +101,7 @@ params.ref_fasta = ""
 params.min_large_ref_length = 0
 params.gramtools_max_read_length = 0
 params.final_outdir = ""
+params.bcftools = "bcftools"
 
 
 data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
@@ -254,7 +255,7 @@ process bcftools_merge {
     file('combined_calls.vcf')
 
     """
-    bcftools merge -l vcf_file_list_for_bcftools.txt -o combined_calls.vcf
+    ${params.bcftools} merge -l vcf_file_list_for_bcftools.txt -o combined_calls.vcf
     """
 }
 
@@ -301,8 +302,11 @@ process bcftools_merge {
         if self.nextflow_config_file is not None:
             nextflow_command.extend(['-c', self.nextflow_config_file])
 
+        bcftools = dependencies.find_binary('bcftools')
+
         nextflow_command += [
             nextflow_script,
+            '--bcftools', bcftools,
             '--ref_fasta', self.ref_fasta,
             '--data_in_tsv', self.nextflow_input_tsv,
             '--min_large_ref_length', str(self.min_large_ref_length),
