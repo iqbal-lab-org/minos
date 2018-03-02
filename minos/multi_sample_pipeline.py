@@ -19,6 +19,7 @@ class MultiSamplePipeline:
         nextflow_work_dir=None,
         force=False,
         no_run=False,
+        clean=True,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
@@ -42,6 +43,7 @@ class MultiSamplePipeline:
         self.nextflow_input_tsv = os.path.join(self.output_dir, 'nextflow.input.tsv')
         self.log_file = os.path.join(self.output_dir, 'log.txt')
         self.no_run = no_run
+        self.clean = clean
 
 
     @classmethod
@@ -327,4 +329,12 @@ process bcftools_merge {
             utils.syscall(nextflow_command)
             logging.info('Finish running nextflow. cd ' + original_dir)
 
+        if self.clean:
+            logging.info('Delete nextflow work directory ' + self.nextflow_work_dir)
+            shutil.rmtree(self.nextflow_work_dir)
+            logging.info('Delete .nextflow directory')
+            shutil.rmtree('.nextflow')
+
+        logging.info('Rename .nextflow.log -> nextflow.log')
+        os.rename('.nextflow.log', 'nextflow.log')
         os.chdir(original_dir)

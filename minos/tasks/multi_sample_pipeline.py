@@ -11,5 +11,6 @@ def run(options):
         nextflow_work_dir=options.nextflow_work_dir,
         force=options.force,
         no_run=options.no_run,
+        clean=not options.no_clean,
     )
     pipeline.run()

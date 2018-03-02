@@ -92,6 +92,7 @@ subparser_multi_sample_pipeline.add_argument('--nextflow_work_dir', help='Nextfl
 subparser_multi_sample_pipeline.add_argument('--nextflow_config_file', help='Nextflow config file (-c option of nextflow). If not given, nextflow\'s defaults are used', metavar='FILENAME')
 subparser_multi_sample_pipeline.add_argument('--force', action='store_true', help='Overwrite the output directory')
 subparser_multi_sample_pipeline.add_argument('--no_run', action='store_true', help='Make all input files for nextflow, but do not run nextflow')
+subparser_multi_sample_pipeline.add_argument('--no_clean', action='store_true', help='Do not clean up temporary nextflow files')
 subparser_multi_sample_pipeline.set_defaults(func=minos.tasks.multi_sample_pipeline.run)
 
 
