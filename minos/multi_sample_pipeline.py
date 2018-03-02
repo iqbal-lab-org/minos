@@ -300,7 +300,7 @@ process bcftools_merge {
             nextflow, 'run',
             '-work-dir', self.nextflow_work_dir,
             '-with-dag', 'nextflow.out.dag.pdf',
-            '-with-trace', 'newxtflow.out.trace.txt',
+            '-with-trace', 'nextflow.out.trace.txt',
         ]
 
         if self.nextflow_config_file is not None:
