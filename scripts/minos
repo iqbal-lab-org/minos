@@ -74,6 +74,27 @@ subparser_cluster_vcfs.add_argument('vcf_files', nargs='+', help='VCF filename(s
 subparser_cluster_vcfs.set_defaults(func=minos.tasks.cluster_vcfs.run)
 
 
+#----------------- multi_sample_pipeline -------------------------------------
+
+subparser_multi_sample_pipeline = subparsers.add_parser(
+    'multi_sample_pipeline',
+    help='Re-call across mulitple samples',
+    usage='minos multi_sample_pipeline [options] <ref_fasta> <data_tsv> <outdir>',
+    description='Re-calls variants across multiple samples. Re-genotypes every sample at every position where there is a variant in the input. Assumes input VCF files made by minos.',
+)
+
+subparser_multi_sample_pipeline.add_argument('ref_fasta', help='FASTA file of reference, corresponding to all input files')
+subparser_multi_sample_pipeline.add_argument('data_tsv', help='TSV file of input files. One sample per line. column1=VCF filename. column2=reads file. Can optionally have more columns for any sample that has more than one reads file.')
+subparser_multi_sample_pipeline.add_argument('outdir', help='Name of output directory')
+subparser_multi_sample_pipeline.add_argument('--min_large_ref_length', type=int, help='Variants with REF string at least this long are counted as large. These are currently removed from the analysis [%(default)s]', default=50, metavar='INT')
+subparser_multi_sample_pipeline.add_argument('--max_read_length', type=int, help='Maximum read length (--max-read-length option of gramtools build). If not given, determined from header of VCF files (if made by minos). The default of zero means determine from VCF files.', default=0, metavar='INT')
+subparser_multi_sample_pipeline.add_argument('--nextflow_work_dir', help='Nextflow work directory (-work-dir option of nextflow). If not given subdirectory of outdir is used', metavar='DIRECTORY_NAME')
+subparser_multi_sample_pipeline.add_argument('--nextflow_config_file', help='Nextflow config file (-c option of nextflow). If not given, nextflow\'s defaults are used', metavar='FILENAME')
+subparser_multi_sample_pipeline.add_argument('--force', action='store_true', help='Overwrite the output directory')
+subparser_multi_sample_pipeline.add_argument('--no_run', action='store_true', help='Make all input files for nextflow, but do not run nextflow')
+subparser_multi_sample_pipeline.set_defaults(func=minos.tasks.multi_sample_pipeline.run)
+
+
 #------------------------ versions -------------------------------------------
 subparser_versions = subparsers.add_parser(
     'versions',
