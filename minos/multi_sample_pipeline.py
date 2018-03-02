@@ -14,7 +14,7 @@ class MultiSamplePipeline:
         input_data_tsv,
         output_dir,
         min_large_ref_length=50,
-        gramtools_max_read_length=200,
+        gramtools_max_read_length=0,
         nextflow_config_file=None,
         nextflow_work_dir=None,
         force=False,
