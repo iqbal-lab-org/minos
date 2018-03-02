@@ -284,6 +284,7 @@ process bcftools_merge {
         formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
         fh.setFormatter(formatter)
         log.addHandler(fh)
+        dependencies.check_and_report_dependencies(programs=['bcftools', 'nextflow'])
 
         self._prepare_nextflow_input_files()
         original_dir = os.getcwd()
@@ -291,8 +292,10 @@ process bcftools_merge {
         nextflow_script = 'run_pipeline.nf'
         MultiSamplePipeline._write_nextflow_script(nextflow_script)
         logging.info('Prepared nextflow files. cd ' + self.output_dir)
+
+        nextflow = dependencies.find_binary('nextflow')
         nextflow_command = [
-            'nextflow run',
+            nextflow, 'run',
             '-work-dir', self.nextflow_work_dir,
             '-with-dag', 'nextflow.out.dag.pdf',
             '-with-trace', 'newxtflow.out.trace.txt',
