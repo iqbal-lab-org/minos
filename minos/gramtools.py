@@ -11,58 +11,56 @@ from minos import __version__ as minos_version
 class Error (Exception): pass
 
 
-def _get_quasimap_out_dir(gramtools_dir):
-    '''When quasimap is run, it makes a new dir like gramtools.out/quasimap_outputs/1510738443_ksize15.
-       This function returns that directory. Dies if finds more than one directory in quasimap_outputs/'''
-    if not os.path.exists(gramtools_dir):
-        raise Error('Gramtools directory not found "' + gramtools_dir + '"')
-    quasimap_outputs = os.path.join(gramtools_dir, 'quasimap_outputs')
-    if not os.path.exists(quasimap_outputs):
-        raise Error('quasimap outputs directory not found "' + quasimap_outputs + '"')
-
-    subdirs = [x for x in os.listdir(quasimap_outputs) if os.path.isdir(os.path.join(quasimap_outputs, x))]
-    if len(subdirs) == 0:
-        raise Error('No directories found in quasimap outputs directory "' + quasimap_outputs + '"')
-    elif len(subdirs) > 1:
-        raise Error(str(len(subdirs)) + ' directories found in quasimap outputs directory "' + quasimap_outputs + '"')
-
-    return os.path.join(quasimap_outputs, subdirs[0])
-
-
-def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
-    '''Runs gramtools build and quasimap. Returns quasimap output directory.
-    "reads" can be one filename, or a list of filenames.'''
-    if type(reads) is not list:
-        assert type(reads) is str
-        reads = [reads]
-
+def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=15):
+    '''Runs gramtools build. Makes new directory called 'outdir' for
+    the output'''
     gramtools_exe = dependencies.find_binary('gramtools')
     build_command = ' '.join([
         gramtools_exe,
         'build',
-        '--gram-directory', output_dir,
+        '--gram-directory', outdir,
         '--vcf', vcf_file,
         '--reference', ref_file,
         '--max-read-length', str(max_read_length),
+        '--kmer-size', str(kmer_size),
     ])
     logging.info('Running gramtools build: ' + build_command)
     utils.syscall(build_command)
     logging.info('Finished running gramtools build')
 
+
+def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_length, kmer_size=15):
+    '''If build_dir does not exist, runs runs gramtools build and quasimap.
+    Otherwise, just runs quasimap. quasimap output is in new
+    directory called quasimap_dir.
+    "reads" can be one filename, or a list of filenames.
+    Raises Error if either of the expected json coverage 
+    files made by quasimap are not found.'''
+    gramtools_exe = dependencies.find_binary('gramtools')
+    if not os.path.exists(build_dir):
+        run_gramtools_build(build_dir, vcf_file, ref_file, max_read_length, kmer_size=kmer_size)
+
+    if type(reads) is not list:
+        assert type(reads) is str
+        reads = [reads]
+
     quasimap_command = ' '.join([
         gramtools_exe,
         'quasimap',
-        '--gram-directory', output_dir,
+        '--gram-directory', build_dir,
+        '--run-directory', quasimap_dir,
         ' '.join(['--reads ' + x for x in reads]),
     ])
     logging.info('Running gramtools quasimap: ' + quasimap_command)
     utils.syscall(quasimap_command)
     logging.info('Finished running gramtools quasimap')
-    quasimap_dir = _get_quasimap_out_dir(output_dir)
+
+    build_report = os.path.join(build_dir, 'build_report.json')
+    quasimap_report = os.path.join(quasimap_dir, 'report.json')
     allele_base_counts_file = os.path.join(quasimap_dir, 'allele_base_coverage.json')
     grouped_allele_counts_file = os.path.join(quasimap_dir, 'grouped_allele_counts_coverage.json')
     files_ok = True
-    for filename in allele_base_counts_file, grouped_allele_counts_file:
+    for filename in build_report, quasimap_report, allele_base_counts_file, grouped_allele_counts_file:
         if not(os.path.exists(filename)):
             files_ok = False
             logging.error('gramtools file not found: ' + filename)
@@ -72,7 +70,12 @@ def run_gramtools(output_dir, vcf_file, ref_file, reads, max_read_length):
         logging.error(error_message)
         raise Error(error_message)
 
-    return quasimap_dir
+    with open(build_report) as f:
+        json_build_report = json.load(f)
+    with open(quasimap_report) as f:
+        json_quasimap_report = json.load(f)
+
+    return json_build_report, json_quasimap_report
 
 
 def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
@@ -99,7 +102,7 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     return round(total_coverage/len(vcf_lines), 3), vcf_header, vcf_lines, all_allele_coverage, allele_groups
 
 
-def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, read_error_rate):
+def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, read_error_rate, kmer_size):
     '''allele_depths should be a dict of allele -> coverage.
     The REF allele must also be in the dict.
     So keys of dict must be equal to REF + ALTs sequences.
@@ -126,16 +129,17 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
     cov_string = ','.join([str(gtyper.singleton_alleles_cov.get(x, 0)) for x in range(1 + len(vcf_record.ALT))])
     vcf_record.QUAL = None
     vcf_record.FILTER = '.'
-    vcf_record.INFO = {'DP': str(sum(allele_combination_cov.values()))}
-    vcf_record.format_keys = ['GT', 'COV', 'GT_CONF']
+    vcf_record.INFO = {'KMER': str(kmer_size)}
+    vcf_record.format_keys = ['DP', 'GT', 'COV', 'GT_CONF']
     vcf_record.FORMAT = {
+        'DP': str(sum(allele_combination_cov.values())),
         'GT': genotype,
         'COV': cov_string,
         'GT_CONF': str(gtyper.genotype_confidence)
     }
 
 
-def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, sample_name='SAMPLE'):
+def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, kmer_size, sample_name='SAMPLE', max_read_length=None):
     '''mean_depth, vcf_records, all_allele_coverage, allele_groups should be those
     returned by load_gramtools_vcf_and_allele_coverage_files().
     Writes a new VCF that has allele counts for all the ALTs'''
@@ -145,11 +149,20 @@ def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, a
         print('##fileformat=VCFv4.2', file=f)
         print('##source=minos, version', minos_version, file=f)
         print('##fileDate=', datetime.date.today(), sep='', file=f)
+        print('##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">', file=f)
+        print('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">', file=f)
+        print('##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">', file=f)
+        print('##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">', file=f)
+        print('##INFO=<ID=KMER,Number=1,Type=Integer,Description="Kmer size at which variant was discovered (kmer-size used by gramtools build)">', file=f)
+
+        if max_read_length is not None:
+            print('##minos_max_read_length=' + str(max_read_length), file=f)
+
         print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_name, sep='\t', file=f)
 
         for i in range(len(vcf_records)):
             logging.debug('Genotyping: ' + str(vcf_records[i]))
-            update_vcf_record_using_gramtools_allele_depths(vcf_records[i], all_allele_coverage[i][0], all_allele_coverage[i][1], allele_groups, mean_depth, read_error_rate)
+            update_vcf_record_using_gramtools_allele_depths(vcf_records[i], all_allele_coverage[i][0], all_allele_coverage[i][1], allele_groups, mean_depth, read_error_rate, kmer_size)
             print(vcf_records[i], file=f)
 
 

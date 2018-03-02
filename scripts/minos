@@ -26,10 +26,12 @@ subparser_adjudicate = subparsers.add_parser(
     epilog='IMPORTANT: the --reads option is required',
 )
 
-subparser_adjudicate.add_argument('--max_read_length', type=int, help='Maximum read length, this is used by gramtools [%(default)s]', default=150, metavar='INT')
+subparser_adjudicate.add_argument('--gramtools_build_dir', help='Gramtools build directory corresponding to input VCF file. If used, skips gramtools build stage and uses the provided directory instead', metavar='DIRNAME')
+subparser_adjudicate.add_argument('--max_read_length', type=int, help='Maximum read length, this is used by gramtools. If not given, estimated by taking longest of first 10,000 reads', metavar='INT')
 subparser_adjudicate.add_argument('--read_error_rate', type=float, help='Read error rate. If not given, is estimated from quality scores of first 10,000 reads', metavar='FLOAT')
 subparser_adjudicate.add_argument('--max_alleles_per_cluster', type=int, help='Maximum allowed alleles in one cluster. If there are too many alleles then combinations of SNPs are not generated [%(default)s]', metavar='INT', default=5000)
 subparser_adjudicate.add_argument('--force', action='store_true', help='Replace outdir, if it already exists')
+subparser_adjudicate.add_argument('--sample_name', help='Sample name to put in final VCF output file. Default is to use first sample name found in input VCF file(s)', metavar='STRING')
 subparser_adjudicate.add_argument('--reads', action='append', required=True, help='REQUIRED. Reads file. Can be any format compatible with htslib. Use this option more than once for >1 reads files', metavar='FILENAME')
 subparser_adjudicate.add_argument('outdir', help='Name of output directory')
 subparser_adjudicate.add_argument('ref_fasta', help='Reference FASTA filename (must match VCF file(s))')
@@ -70,6 +72,28 @@ subparser_cluster_vcfs.add_argument('-o', '--outfile', help='Name of output VCF 
 subparser_cluster_vcfs.add_argument('ref_fasta', help='FASTA filename of reference genome that matches the VCF file')
 subparser_cluster_vcfs.add_argument('vcf_files', nargs='+', help='VCF filename(s) to be merged. Must provide at least one filename.')
 subparser_cluster_vcfs.set_defaults(func=minos.tasks.cluster_vcfs.run)
+
+
+#----------------- multi_sample_pipeline -------------------------------------
+
+subparser_multi_sample_pipeline = subparsers.add_parser(
+    'multi_sample_pipeline',
+    help='Re-call across mulitple samples',
+    usage='minos multi_sample_pipeline [options] <ref_fasta> <data_tsv> <outdir>',
+    description='Re-calls variants across multiple samples. Re-genotypes every sample at every position where there is a variant in the input. Assumes input VCF files made by minos.',
+)
+
+subparser_multi_sample_pipeline.add_argument('ref_fasta', help='FASTA file of reference, corresponding to all input files')
+subparser_multi_sample_pipeline.add_argument('data_tsv', help='TSV file of input files. One sample per line. column1=VCF filename. column2=reads file. Can optionally have more columns for any sample that has more than one reads file.')
+subparser_multi_sample_pipeline.add_argument('outdir', help='Name of output directory')
+subparser_multi_sample_pipeline.add_argument('--min_large_ref_length', type=int, help='Variants with REF string at least this long are counted as large. These are currently removed from the analysis [%(default)s]', default=50, metavar='INT')
+subparser_multi_sample_pipeline.add_argument('--max_read_length', type=int, help='Maximum read length (--max-read-length option of gramtools build). If not given, determined from header of VCF files (if made by minos). The default of zero means determine from VCF files.', default=0, metavar='INT')
+subparser_multi_sample_pipeline.add_argument('--nextflow_work_dir', help='Nextflow work directory (-work-dir option of nextflow). If not given subdirectory of outdir is used', metavar='DIRECTORY_NAME')
+subparser_multi_sample_pipeline.add_argument('--nextflow_config_file', help='Nextflow config file (-c option of nextflow). If not given, nextflow\'s defaults are used', metavar='FILENAME')
+subparser_multi_sample_pipeline.add_argument('--force', action='store_true', help='Overwrite the output directory')
+subparser_multi_sample_pipeline.add_argument('--no_run', action='store_true', help='Make all input files for nextflow, but do not run nextflow')
+subparser_multi_sample_pipeline.add_argument('--no_clean', action='store_true', help='Do not clean up temporary nextflow files')
+subparser_multi_sample_pipeline.set_defaults(func=minos.tasks.multi_sample_pipeline.run)
 
 
 #------------------------ versions -------------------------------------------

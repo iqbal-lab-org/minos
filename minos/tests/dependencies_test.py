@@ -5,6 +5,11 @@ import unittest
 from minos import dependencies
 
 class TestDependencies(unittest.TestCase):
+    def test_find_binary_bcftools(self):
+        '''test find_binary bcftools'''
+        self.assertIsNotNone(dependencies.find_binary('bcftools'))
+
+
     def test_find_binary_gramtools(self):
         '''test find_binary gramtools'''
         self.assertIsNotNone(dependencies.find_binary('gramtools'))
@@ -13,6 +18,16 @@ class TestDependencies(unittest.TestCase):
     def test_find_binary_bwa(self):
         '''test find_binary bwa'''
         self.assertIsNotNone(dependencies.find_binary('bwa'))
+
+
+    def test_get_version_of_program_bcftools(self):
+        '''test get_version_of_program bcftools'''
+        # We don't know what the version might be, so just
+        # check that we got something that starts with X.Y.Z.
+        got = dependencies.get_version_of_program('bcftools')
+        self.assertIsNotNone(got)
+        version_regex = re.compile(r'^[0-9]+\.[0-9]+\.[0-9]+ ')
+        self.assertIsNotNone(version_regex.search(got))
 
 
     def test_get_version_of_program_gramtools(self):
@@ -45,6 +60,16 @@ class TestDependencies(unittest.TestCase):
         self.assertIsNotNone(version_regex.search(got))
 
 
+    def test_get_version_of_program_nextflow(self):
+        '''test get_version_of_program nextflow'''
+        # We don't know what the version might be, so just
+        # check that we got something that has numbers and dots
+        got = dependencies.get_version_of_program('nextflow')
+        self.assertIsNotNone(got)
+        version_regex = re.compile(r'^[0-9\.]+ build [0-9]+$')
+        self.assertIsNotNone(version_regex.search(got))
+
+
     def test_find_python_packages(self):
         '''test find_python_packages'''
         # We don't know what the versions will be.
@@ -60,7 +85,7 @@ class TestDependencies(unittest.TestCase):
         # We don't know what the vetsions will be.
         # Just check we don't get None
         got = dependencies.find_binaries_and_versions()
-        self.assertEqual(['bwa', 'dnadiff', 'gramtools'], sorted(list(got.keys())))
+        self.assertEqual(['bcftools', 'bwa', 'dnadiff', 'gramtools', 'nextflow'], sorted(list(got.keys())))
         for version, path in got.items():
             self.assertIsNotNone(version)
             self.assertIsNotNone(path)
