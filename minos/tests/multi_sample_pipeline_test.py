@@ -3,6 +3,8 @@ import os
 import shutil
 import unittest
 
+from cluster_vcf_records import vcf_file_read
+
 from minos import multi_sample_pipeline
 
 modules_dir = os.path.dirname(os.path.abspath(multi_sample_pipeline.__file__))
@@ -132,6 +134,17 @@ class TestMultiSamplePipeline(unittest.TestCase):
 
         pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, input_tsv, outdir, min_large_ref_length=10)
         pipeline.run()
+
+        expected_vcf = os.path.join(data_dir, 'run.out.vcf')
+        expected_header, expected_lines = vcf_file_read.vcf_file_to_list(expected_vcf)
+        got_vcf = os.path.join(outdir, 'combined_calls.vcf')
+        self.assertTrue(os.path.exists(got_vcf))
+        got_header, got_lines = vcf_file_read.vcf_file_to_list(got_vcf)
+        # the datei, minos version, and bcftools verisons might not match
+        expected_header = [x for x in expected_header if not x.startswith('##fileDate') or x.startswith('##source=minos') or x.startswith('##bcftools_mergeVersion')]
+        got_header = [x for x in got_header if not x.startswith('##fileDate')]
+        self.assertEqual(expected_header, got_header)
+        self.assertEqual(expected_lines, got_lines)
 
         shutil.rmtree(outdir)
         os.unlink(input_tsv)
