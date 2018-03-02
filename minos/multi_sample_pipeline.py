@@ -284,7 +284,6 @@ process bcftools_merge {
         formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
         fh.setFormatter(formatter)
         log.addHandler(fh)
-        logging.info('TESTING')
 
         self._prepare_nextflow_input_files()
         original_dir = os.getcwd()
