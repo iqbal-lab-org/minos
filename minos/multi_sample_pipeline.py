@@ -291,7 +291,7 @@ process bcftools_merge {
         self._prepare_nextflow_input_files()
         original_dir = os.getcwd()
         os.chdir(self.output_dir)
-        nextflow_script = 'run_pipeline.nf'
+        nextflow_script = 'nextflow.run.nf'
         MultiSamplePipeline._write_nextflow_script(nextflow_script)
         logging.info('Prepared nextflow files. cd ' + self.output_dir)
 
