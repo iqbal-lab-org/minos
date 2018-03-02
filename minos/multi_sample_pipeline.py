@@ -18,6 +18,7 @@ class MultiSamplePipeline:
         nextflow_config_file=None,
         nextflow_work_dir=None,
         force=False,
+        no_run=True,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
@@ -40,6 +41,7 @@ class MultiSamplePipeline:
         self.force = force
         self.nextflow_input_tsv = os.path.join(self.output_dir, 'nextflow.input.tsv')
         self.log_file = os.path.join(self.output_dir, 'log.txt')
+        self.no_run = no_run
 
 
     @classmethod
@@ -316,7 +318,13 @@ process bcftools_merge {
             '--gramtools_max_read_length', str(self.gramtools_max_read_length),
         ]
         nextflow_command = ' '.join(nextflow_command)
-        logging.info('Start running nextflow: ' + nextflow_command)
-        utils.syscall(nextflow_command)
-        logging.info('Finish running nextflow. cd ' + original_dir)
+
+        if self.no_run:
+            print('Prepared nextflow pipeline. --no_run used, so not running. The nextflow command to run is:')
+            print(nextflow_command)
+        else:
+            logging.info('Start running nextflow: ' + nextflow_command)
+            utils.syscall(nextflow_command)
+            logging.info('Finish running nextflow. cd ' + original_dir)
+
         os.chdir(original_dir)
