@@ -93,6 +93,11 @@ subparser_multi_sample_pipeline.add_argument('--nextflow_config_file', help='Nex
 subparser_multi_sample_pipeline.add_argument('--force', action='store_true', help='Overwrite the output directory')
 subparser_multi_sample_pipeline.add_argument('--no_run', action='store_true', help='Make all input files for nextflow, but do not run nextflow')
 subparser_multi_sample_pipeline.add_argument('--no_clean', action='store_true', help='Do not clean up temporary nextflow files')
+subparser_multi_sample_pipeline.add_argument('--nf_ram_cluster_small_vars', type=float, help='Nextflow RAM limit when clustering small variants [%(default)s]', metavar='FLOAT', default=2)
+subparser_multi_sample_pipeline.add_argument('--nf_ram_gramtools_build_small', type=float, help='Nextflow RAM limit when running gramtools build on small variants [%(default)s]', metavar='FLOAT', default=12)
+subparser_multi_sample_pipeline.add_argument('--nf_ram_minos_small_vars', type=float, help='Nextflow RAM limit when running minos on small variants [%(default)s]', metavar='FLOAT', default=5)
+subparser_multi_sample_pipeline.add_argument('--nf_ram_bcftools_merge', type=float, help='Nextflow RAM limit when running vcftools merge [%(default)s]', metavar='FLOAT', default=2)
+subparser_multi_sample_pipeline.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
 subparser_multi_sample_pipeline.set_defaults(func=minos.tasks.multi_sample_pipeline.run)
 
 

@@ -132,7 +132,7 @@ class TestMultiSamplePipeline(unittest.TestCase):
 
         outdir = 'tmp.multi_sample_pipeline.run.out'
 
-        pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, input_tsv, outdir, min_large_ref_length=10)
+        pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, input_tsv, outdir, min_large_ref_length=10, testing=True)
         pipeline.run()
 
         expected_vcf = os.path.join(data_dir, 'run.out.vcf')
