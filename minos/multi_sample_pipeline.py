@@ -20,6 +20,11 @@ class MultiSamplePipeline:
         force=False,
         no_run=False,
         clean=True,
+        testing=False,
+        nf_ram_cluster_small_vars=2,
+        nf_ram_gramtools_build_small=12,
+        nf_ram_minos_small_vars=5,
+        nf_ram_bcftools_merge=2,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
@@ -44,6 +49,11 @@ class MultiSamplePipeline:
         self.log_file = os.path.join(self.output_dir, 'log.txt')
         self.no_run = no_run
         self.clean = clean
+        self.testing = testing
+        self.nf_ram_cluster_small_vars =  nf_ram_cluster_small_vars
+        self.nf_ram_gramtools_build_small = nf_ram_gramtools_build_small
+        self.nf_ram_minos_small_vars = nf_ram_minos_small_vars
+        self.nf_ram_bcftools_merge = nf_ram_bcftools_merge
 
 
     @classmethod
@@ -106,6 +116,11 @@ params.min_large_ref_length = 0
 params.gramtools_max_read_length = 0
 params.final_outdir = ""
 params.bcftools = "bcftools"
+params.testing = false
+params.cluster_small_vars_ram = 2
+params.gramtools_build_small_vars_ram = 12
+params.minos_small_vars_ram = 5
+params.bcftools_merge_ram = 2
 
 
 data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
@@ -132,6 +147,7 @@ split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
 
 
 process process_input_vcf_file {
+    memory '0.5 GB'
     input:
     val tsv_fields from split_tsv
 
@@ -160,6 +176,10 @@ process process_input_vcf_file {
 
 
 process cluster_small_vars_vcf {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'ignore'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.cluster_small_vars_ram * task.attempt}
+    maxRetries 3
+
     input:
     val(file_list) from process_input_vcf_file_out_small.collect()
 
@@ -177,6 +197,10 @@ process cluster_small_vars_vcf {
 
 
 process gramtools_build_small_vars {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'ignore'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.gramtools_build_small_vars_ram * task.attempt}
+    maxRetries 3
+
     input:
     file('small_vars_clustered.vcf') from cluster_small_vars_vcf_out
     val(max_read_length) from max_read_lengths.max()
@@ -203,6 +227,10 @@ process gramtools_build_small_vars {
 
 
 process minos_all_small_vars {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'ignore'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.minos_small_vars_ram * task.attempt}
+    maxRetries 3
+
     input:
     set(file('small_vars_clustered.vcf'), file('small_vars_clustered.gramtools.build')) from gramtools_build_small_vars_out
     set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) from minos_all_small_vars_tsv_in
@@ -225,6 +253,8 @@ process minos_all_small_vars {
 // process from the bash script that runs bcftools because the number
 // of files could go over bash's character/length limits
 process make_bcftools_small_vars_fofn {
+    memory '1 GB'
+
     input:
     val(minos_dir_list) from minos_all_small_vars_out.collect()
 
@@ -251,6 +281,10 @@ process make_bcftools_small_vars_fofn {
 
 
 process bcftools_merge {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'ignore'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.bcftools_merge_ram * task.attempt}
+    maxRetries 3
+
     publishDir path: final_outdir, mode: 'move', overwrite: true
     input:
     file('vcf_file_list_for_bcftools.txt') from make_bcftools_small_vars_fofn_out
@@ -318,7 +352,15 @@ process bcftools_merge {
             '--min_large_ref_length', str(self.min_large_ref_length),
             '--final_outdir', self.output_dir,
             '--gramtools_max_read_length', str(self.gramtools_max_read_length),
+            '--cluster_small_vars_ram', str(self.nf_ram_cluster_small_vars),
+            '--gramtools_build_small_vars_ram', str(self.nf_ram_gramtools_build_small),
+            '--minos_small_vars_ram', str(self.nf_ram_minos_small_vars),
+            '--bcftools_merge_ram', str(self.nf_ram_bcftools_merge),
         ]
+
+        if self.testing:
+            nextflow_command.append('--testing')
+
         nextflow_command = ' '.join(nextflow_command)
 
         if self.no_run:
