@@ -368,8 +368,14 @@ process bcftools_merge {
             print(nextflow_command)
         else:
             logging.info('Start running nextflow: ' + nextflow_command)
-            utils.syscall(nextflow_command)
-            logging.info('Finish running nextflow. cd ' + original_dir)
+            syscall_process = utils.syscall(nextflow_command)
+            logging.info('Finish running nextflow. Writing nextflow stdout/stderr to files')
+            with open('nextflow.stdout', 'w') as f:
+                print(syscall_process.stdout.rstrip(), file=f)
+            with open('nextflow.stderr', 'w') as f:
+                print(syscall_process.stderr.rstrip(), file=f)
+
+            logging.info('cd ' + original_dir)
 
         if self.clean:
             logging.info('Delete nextflow work directory ' + self.nextflow_work_dir)
