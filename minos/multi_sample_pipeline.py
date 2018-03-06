@@ -176,7 +176,7 @@ process process_input_vcf_file {
 
 
 process cluster_small_vars_vcf {
-    errorStrategy {task.attempt < 3 ? 'retry' : 'ignore'}
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
     memory {params.testing ? '0.5 GB' : 1.GB * params.cluster_small_vars_ram * task.attempt}
     maxRetries 3
 
@@ -197,7 +197,7 @@ process cluster_small_vars_vcf {
 
 
 process gramtools_build_small_vars {
-    errorStrategy {task.attempt < 3 ? 'retry' : 'ignore'}
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
     memory {params.testing ? '0.5 GB' : 1.GB * params.gramtools_build_small_vars_ram * task.attempt}
     maxRetries 3
 
@@ -227,7 +227,7 @@ process gramtools_build_small_vars {
 
 
 process minos_all_small_vars {
-    errorStrategy {task.attempt < 3 ? 'retry' : 'ignore'}
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
     memory {params.testing ? '0.5 GB' : 1.GB * params.minos_small_vars_ram * task.attempt}
     maxRetries 3
 
@@ -281,7 +281,7 @@ process make_bcftools_small_vars_fofn {
 
 
 process bcftools_merge {
-    errorStrategy {task.attempt < 3 ? 'retry' : 'ignore'}
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
     memory {params.testing ? '0.5 GB' : 1.GB * params.bcftools_merge_ram * task.attempt}
     maxRetries 3
 
