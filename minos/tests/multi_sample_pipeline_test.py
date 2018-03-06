@@ -141,8 +141,8 @@ class TestMultiSamplePipeline(unittest.TestCase):
         self.assertTrue(os.path.exists(got_vcf))
         got_header, got_lines = vcf_file_read.vcf_file_to_list(got_vcf)
         # the datei, minos version, and bcftools verisons might not match
-        expected_header = [x for x in expected_header if not x.startswith('##fileDate') or x.startswith('##source=minos') or x.startswith('##bcftools_mergeVersion')]
-        got_header = [x for x in got_header if not x.startswith('##fileDate')]
+        expected_header = [x for x in expected_header if not (x.startswith('##fileDate') or x.startswith('##source=minos') or x.startswith('##bcftools_mergeVersion'))]
+        got_header = [x for x in got_header if not (x.startswith('##fileDate') or x.startswith('##source=minos') or x.startswith('##bcftools_mergeVersion'))]
         self.assertEqual(expected_header, got_header)
         self.assertEqual(expected_lines, got_lines)
 
