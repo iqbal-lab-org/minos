@@ -269,7 +269,7 @@ class MappingBasedVerifier:
 
             if 'GT_CONF' in vcf_record.FORMAT and vcf_record.FORMAT['MINOS_CHECK_GENOTYPE'] in {'0', '1'}:
                 tp_or_fp = {'1': 'TP', '0': 'FP'}[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']]
-                gt_conf = int(vcf_record.FORMAT['GT_CONF'])
+                gt_conf = int(float(vcf_record.FORMAT['GT_CONF']))
                 gt_conf_hists[tp_or_fp][gt_conf] = gt_conf_hists[tp_or_fp].get(gt_conf, 0) + 1
 
         stats['gt_wrong'] = stats['0']
