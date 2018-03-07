@@ -199,8 +199,12 @@ process process_input_vcf_file {
     """
     #!/usr/bin/env python3
     from minos import multi_sample_pipeline
-    max_read_length = multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
+    multi_sample_pipeline.MultiSamplePipeline._filter_input_file_for_clustering(
         "${tsv_fields.vcf_file}",
+        'filtered.vcf'
+    )
+    max_read_length = multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
+        'filtered.vcf',
         "small_vars.${tsv_fields['sample_id']}.vcf",
         "big_vars.${tsv_fields['sample_id']}.vcf",
         "sample_name.${tsv_fields['sample_id']}",
