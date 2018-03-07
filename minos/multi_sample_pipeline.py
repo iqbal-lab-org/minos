@@ -80,6 +80,45 @@ class MultiSamplePipeline:
 
 
     @classmethod
+    def _filter_input_file_for_clustering(cls, infile, outfile):
+        header_lines, vcf_records = vcf_file_read.vcf_file_to_dict(infile, sort=True, homozygous_only=False, remove_asterisk_alts=True, remove_useless_start_nucleotides=True)
+        with open(outfile, 'w') as f:
+            print(*header_lines, sep='\n', file=f)
+            for ref_name in vcf_records:
+                for vcf_record in vcf_records[ref_name]:
+                    if vcf_record.FILTER == 'MISMAPPED_UNPLACEABLE':
+                        continue
+                    if vcf_record.FORMAT is None or 'GT' not in vcf_record.FORMAT:
+                        logging.warning('No GT in vcf record:' + str(vcf_record))
+                        continue
+
+                    genotype = vcf_record.FORMAT['GT']
+                    genotypes = genotype.split('/')
+
+                    called_alleles = set(genotypes)
+                    if called_alleles == {'0'} or '.' in called_alleles:
+                        continue
+
+                    genotypes = sorted([int(x) for x in genotypes])
+
+                    if len(called_alleles) == 1:
+                        assert 0 not in genotypes
+                        vcf_record.set_format_key_value('GT', '1/1')
+                        vcf_record.ALT = [vcf_record.ALT[int(genotypes[0]) - 1]]
+                    else:
+                        assert len(called_alleles) == 2
+                        vcf_record.set_format_key_value('GT', '0/1')
+                        if 0 in genotypes:
+                            vcf_record.set_format_key_value('GT', '0/1')
+                            vcf_record.ALT = [vcf_record.ALT[genotypes[1] - 1]]
+                        else:
+                            vcf_record.set_format_key_value('GT', '1/2')
+                            vcf_record.ALT = [vcf_record.ALT[genotypes[0] - 1], vcf_record.ALT[genotypes[1] - 1]]
+
+                    print(vcf_record, file=f)
+
+
+    @classmethod
     def _nextflow_helper_process_input_vcf_file(cls, infile, out_small_vars, out_big_vars, out_sample_name, min_large_ref_length):
         splitter = vcf_file_split_deletions.VcfFileSplitDeletions(infile, out_small_vars, out_big_vars, min_large_ref_length=min_large_ref_length)
         splitter.run()
@@ -160,8 +199,12 @@ process process_input_vcf_file {
     """
     #!/usr/bin/env python3
     from minos import multi_sample_pipeline
-    max_read_length = multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
+    multi_sample_pipeline.MultiSamplePipeline._filter_input_file_for_clustering(
         "${tsv_fields.vcf_file}",
+        'filtered.vcf'
+    )
+    max_read_length = multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
+        'filtered.vcf',
         "small_vars.${tsv_fields['sample_id']}.vcf",
         "big_vars.${tsv_fields['sample_id']}.vcf",
         "sample_name.${tsv_fields['sample_id']}",
