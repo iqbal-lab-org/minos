@@ -57,6 +57,15 @@ class TestMultiSamplePipeline(unittest.TestCase):
             os.unlink(filename)
 
 
+    def test_filter_input_file_for_clustering(self):
+        infile = os.path.join(data_dir, 'filter_input_file_for_clustering.in.vcf')
+        expect = os.path.join(data_dir, 'filter_output_file_for_clusteroutg.out.vcf')
+        outfile = 'tmp.multi_sample_pipeline.filter_input_file_for_clustering.vcf'
+        multi_sample_pipeline.MultiSamplePipeline._filter_input_file_for_clustering(infile, outfile)
+        self.assertTrue(filecmp.cmp(expect, outfile, shallow=False))
+        os.unlink(outfile)
+
+
     def test_nextflow_helper_process_input_vcf_file(self):
         '''test _nextflow_helper_process_input_vcf_file'''
         infile = os.path.join(data_dir, 'nextflow_helper_process_input_vcf_file.in.vcf')
