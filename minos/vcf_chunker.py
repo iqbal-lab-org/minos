@@ -72,7 +72,8 @@ class VcfChunker:
 
     def make_split_files(self):
         assert len(self.vcf_split_files) == 0
-        total_files = 0
+        self.total_split_files = 0
+        self.total_input_records = 0
         vcf_header_lines, vcf_records = cluster_vcf_records.vcf_file_read.vcf_file_to_dict(self.vcf_infile)
         if self.variants_per_split is None:
             total_records = VcfChunker._total_variants_in_vcf_dict(vcf_records)
@@ -81,6 +82,7 @@ class VcfChunker:
         for ref_name, vcf_record_list in vcf_records.items():
             file_end_index = -1
             self.vcf_split_files[ref_name] = []
+            self.total_input_records += len(vcf_record_list)
 
             while file_end_index < len(vcf_record_list) - 1:
                 if file_end_index == -1:
@@ -90,7 +92,7 @@ class VcfChunker:
 
                 file_start_index, use_end_index, file_end_index = VcfChunker._chunk_end_indexes_from_vcf_record_list(vcf_record_list, use_start_index, self.variants_per_split, self.flank_length)
                 split_file = SplitFile(
-                    os.path.join(self.outdir, 'split.' + str(total_files) + '.in.vcf'),
+                    os.path.join(self.outdir, 'split.' + str(self.total_split_files) + '.in.vcf'),
                     ref_name,
                     max(0, min(vcf_record_list[file_start_index].POS, vcf_record_list[use_start_index].POS - self.flank_length)),
                     max(vcf_record_list[file_end_index].ref_end_pos(), vcf_record_list[use_end_index].ref_end_pos() + self.flank_length),
@@ -107,5 +109,27 @@ class VcfChunker:
                     for i in range(file_start_index, file_end_index + 1, 1):
                         print(vcf_record_list[i], file=f)
 
-                total_files += 1
+                self.total_split_files += 1
 
+
+    def merge_files(self, files_to_merge, outfile):
+        total_output_records = 0
+        printed_header_lines = False
+
+        with open(outfile, 'w') as f:
+            for ref_name in self.vcf_split_files:
+                assert ref_name in files_to_merge
+                assert len(self.vcf_split_files[ref_name]) == len(files_to_merge[ref_name])
+                for i, split_file in enumerate(self.vcf_split_files[ref_name]):
+                    header_lines, records_to_merge = cluster_vcf_records.vcf_file_read.vcf_file_to_list(files_to_merge[ref_name][i])
+                    if not printed_header_lines:
+                        print(*header_lines, sep='\n', file=f)
+                        printed_header_lines = True
+                    start_i = split_file.use_start_index - split_file.file_start_index
+                    end_i = start_i + split_file.use_end_index - split_file.use_start_index
+                    for j in range(start_i, end_i + 1, 1):
+                        total_output_records += 1
+                        print(records_to_merge[j], file=f)
+
+        if self.total_input_records != total_output_records:
+            raise Error('Number of input VCF records != numnber of output VCF records. Cannot continue')

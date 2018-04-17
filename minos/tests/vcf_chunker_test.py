@@ -1,3 +1,4 @@
+import filecmp
 import shutil
 import os
 import unittest
@@ -145,4 +146,20 @@ class TestVcfChunker(unittest.TestCase):
 
         self.assertFalse(os.path.exists(os.path.join(tmp_out, 'split.3.in.vcf')))
         shutil.rmtree(tmp_out)
+
+
+    def test_merge_files(self):
+        '''test merge_files'''
+        vcf_to_split = os.path.join(data_dir, 'merge_files.in.vcf')
+        tmp_outdir = 'tmp.vcf_chunker.merge_files'
+        chunker = vcf_chunker.VcfChunker(vcf_to_split, tmp_outdir, variants_per_split=4, flank_length=3)
+        chunker.make_split_files()
+        to_merge = {}
+        for ref, split_list in chunker.vcf_split_files.items():
+            to_merge[ref] = [x.filename for x in split_list]
+        tmp_vcf_out = 'tmp.vcf_chunker.merge_files.out.vcf'
+        chunker.merge_files(to_merge, tmp_vcf_out)
+        self.assertTrue(filecmp.cmp(vcf_to_split, tmp_vcf_out, shallow=False))
+        os.unlink(tmp_vcf_out)
+        shutil.rmtree(tmp_outdir)
 
