@@ -114,6 +114,10 @@ class Adjudicator:
             logging.error(error_message)
             raise Error(error_message)
 
+        self._run_gramtools_not_split_vcf()
+
+
+    def _run_gramtools_not_split_vcf(self):
         build_report, quasimap_report = gramtools.run_gramtools(
             self.gramtools_build_dir,
             self.gramtools_quasimap_dir,
