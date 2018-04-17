@@ -8,6 +8,7 @@ except:
 
 __all__ = [
     'adjudicator',
+    'bam_read_extract',
     'dependencies',
     'genotyper',
     'gramtools',
