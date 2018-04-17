@@ -15,6 +15,7 @@ __all__ = [
     'multi_sample_pipeline',
     'tasks',
     'utils',
+    'vcf_chunker',
     'vcf_file_split_deletions',
 ]
 
