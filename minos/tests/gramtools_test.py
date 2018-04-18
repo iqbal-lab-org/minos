@@ -175,24 +175,31 @@ class TestGramtools(unittest.TestCase):
         quasimap_dir = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.quasimap')
         mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups  = gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file_in, quasimap_dir)
         tmp_outfile = 'tmp.gramtools.write_vcf_annotated_using_coverage_from_gramtools.vcf'
+        tmp_outfile_filtered = tmp_outfile + '.filter.vcf'
         error_rate = 0.001
         kmer_size = 42
-        gramtools.write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, allele_coverage, allele_groups, error_rate, tmp_outfile, kmer_size, sample_name='sample_42', max_read_length=200)
+        gramtools.write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, allele_coverage, allele_groups, error_rate, tmp_outfile, kmer_size, sample_name='sample_42', max_read_length=200, filtered_outfile=tmp_outfile_filtered)
         expected_vcf = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.out.vcf')
+        expected_vcf_filtered = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.out.vcf.filter.vcf')
         # Today's date and the verison of minos get added to the header.
         # We'll have to take account
         # of those by fixing what we get from the expected file
-        expected_header, expected_vcf_records = vcf_file_read.vcf_file_to_list(expected_vcf)
-        got_header, got_vcf_records = vcf_file_read.vcf_file_to_list(tmp_outfile)
-        for i in range(len(expected_header)):
-            if expected_header[i].startswith('##fileDate='):
-                expected_header[i] = '##fileDate=' + str(datetime.date.today())
-            elif expected_header[i].startswith('##source=minos'):
-                expected_header[i] = '##source=minos, version ' + minos_version
+        def check_vcfs(expected_vcf, got_vcf):
+            expected_header, expected_vcf_records = vcf_file_read.vcf_file_to_list(expected_vcf)
+            got_header, got_vcf_records = vcf_file_read.vcf_file_to_list(got_vcf)
+            for i in range(len(expected_header)):
+                if expected_header[i].startswith('##fileDate='):
+                    expected_header[i] = '##fileDate=' + str(datetime.date.today())
+                elif expected_header[i].startswith('##source=minos'):
+                    expected_header[i] = '##source=minos, version ' + minos_version
 
-        self.assertEqual(expected_header, got_header)
-        self.assertEqual(expected_vcf_records, got_vcf_records)
+            self.assertEqual(expected_header, got_header)
+            self.assertEqual(expected_vcf_records, got_vcf_records)
+
+        check_vcfs(expected_vcf, tmp_outfile)
+        check_vcfs(expected_vcf_filtered, tmp_outfile_filtered)
         os.unlink(tmp_outfile)
+        os.unlink(tmp_outfile_filtered)
 
 
     def test_load_allele_files(self):
