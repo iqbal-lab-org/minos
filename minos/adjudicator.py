@@ -33,16 +33,18 @@ class Adjudicator:
         self.max_alleles_per_cluster = max_alleles_per_cluster
         self.sample_name = sample_name
         self.outdir = os.path.abspath(outdir)
-        self.splitdir = os.path.join(self.outdir, 'split')
+        self.split_output_dir = os.path.join(self.outdir, 'split.out')
         self.log_file = os.path.join(self.outdir, 'log.txt')
         self.clustered_vcf = os.path.join(self.outdir, 'gramtools.in.vcf')
         self.final_vcf = os.path.join(self.outdir, 'final.vcf')
 
         if gramtools_build_dir is None:
+            self.split_input_dir = os.path.join(self.outdir, 'split.in')
             self.gramtools_build_dir = os.path.join(self.outdir, 'gramtools.build')
             self.user_supplied_gramtools_build_dir = False
         else:
             self.gramtools_build_dir = os.path.abspath(gramtools_build_dir)
+            self.split_input_dir = self.gramtools_build_dir
             self.user_supplied_gramtools_build_dir = True
             if not os.path.exists(self.gramtools_build_dir):
                 raise Error('Error! gramtools_build_dir=' + self.gramtools_build_dir + ' used, but directory not found on disk. Cannot continue')
@@ -177,17 +179,25 @@ class Adjudicator:
 
 
     def _run_gramtools_with_split_vcf(self):
-        logging.info('Splitting VCF files into chunks')
+        logging.info('Splitting VCF files into chunks (if not already done)')
         chunker = vcf_chunker.VcfChunker(
-            self.clustered_vcf,
-            self.splitdir,
+            self.split_input_dir,
+            vcf_infile=self.clustered_vcf,
+            ref_fasta=self.ref_fasta,
             variants_per_split=self.variants_per_split,
+            max_read_length=self.max_read_length,
             total_splits=self.total_splits,
             flank_length=self.max_read_length,
+            gramtools_kmer_size=self.gramtools_kmer_size,
         )
         chunker.make_split_files()
-        logging.info('VCF file into ' + str(chunker.total_split_files) + ' chunks')
-        unmapped_reads_file = os.path.join(self.splitdir, 'unmapped_reads.bam')
+        logging.info('VCF file split into ' + str(chunker.total_split_files) + ' chunks')
+        try:
+            os.mkdir(self.split_output_dir)
+        except:
+            raise Error('Error making output split directory ' + self.split_output_dir)
+
+        unmapped_reads_file = os.path.join(self.split_output_dir, 'unmapped_reads.bam')
         bam_read_extract.get_unmapped_reads(self.reads_files[0], unmapped_reads_file)
         split_vcf_outfiles = {}
 
@@ -195,7 +205,7 @@ class Adjudicator:
             split_vcf_outfiles[ref_name] = []
             for split_file in split_file_list:
                 logging.info('===== Start analysing variants in VCF split file ' + split_file.filename + ' =====')
-                split_reads_file = split_file.filename + '.reads.bam'
+                split_reads_file = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.reads.bam')
                 bam_read_extract.get_region(
                     self.reads_files[0],
                     split_file.chrom,
@@ -204,11 +214,10 @@ class Adjudicator:
                     split_reads_file,
                 )
 
-                gramtools_build_dir = split_file.filename + '.gramtools.build'
-                gramtools_quasimap_dir = split_file.filename + '.gramtools.quasimap'
+                gramtools_quasimap_dir = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.gramtools.quasimap')
 
                 build_report, quasimap_report = gramtools.run_gramtools(
-                    gramtools_build_dir,
+                    split_file.gramtools_build_dir,
                     gramtools_quasimap_dir,
                     split_file.filename,
                     self.ref_fasta,
@@ -218,7 +227,7 @@ class Adjudicator:
                 )
 
                 logging.info('Loading split gramtools quasimap output files ' + gramtools_quasimap_dir)
-                perl_generated_vcf = os.path.join(gramtools_build_dir, 'perl_generated_vcf')
+                perl_generated_vcf = os.path.join(split_file.gramtools_build_dir, 'perl_generated_vcf')
                 mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(perl_generated_vcf, gramtools_quasimap_dir)
                 logging.info('Finished loading gramtools files')
                 if self.sample_name is None:
@@ -226,7 +235,7 @@ class Adjudicator:
                 else:
                     sample_name = self.sample_name
                 assert sample_name is not None
-                split_vcf_out = split_reads_file + '.out.vcf'
+                split_vcf_out = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.out.vcf')
                 logging.info('Writing VCf output file ' + split_vcf_out + ' for split VCF file ' + split_file.filename)
                 gramtools.write_vcf_annotated_using_coverage_from_gramtools(
                     mean_depth,
@@ -243,12 +252,14 @@ class Adjudicator:
 
                 if self.clean:
                     logging.info('Cleaning gramtools files from split VCF file ' + split_file.filename)
+                    if not self.user_supplied_gramtools_build_dir:
+                        os.rename(os.path.join(split_file.gramtools_build_dir, 'build_report.json'), split_file.gramtools_build_dir + '.report.json')
+                        shutil.rmtree(split_file.gramtools_build_dir)
+                        os.unlink(split_file.filename)
+
                     os.rename(os.path.join(gramtools_quasimap_dir, 'report.json'), gramtools_quasimap_dir + '.report.json')
-                    os.rename(os.path.join(gramtools_build_dir, 'build_report.json'), gramtools_build_dir + '.report.json')
                     shutil.rmtree(gramtools_quasimap_dir)
-                    shutil.rmtree(gramtools_build_dir)
                     os.unlink(split_reads_file)
-                    os.unlink(split_file.filename)
 
                 logging.info('===== Finish analysing variants in VCF split file ' + split_file.filename + ' =====')
 
