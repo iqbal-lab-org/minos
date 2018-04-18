@@ -15,12 +15,15 @@ class MultiSamplePipeline:
         output_dir,
         min_large_ref_length=50,
         gramtools_max_read_length=0,
+        gramtools_kmer_size=15,
         nextflow_config_file=None,
         nextflow_work_dir=None,
         force=False,
         no_run=False,
         clean=True,
         testing=False,
+        variants_per_split=None,
+        total_splits=None,
         nf_ram_cluster_small_vars=2,
         nf_ram_gramtools_build_small=12,
         nf_ram_minos_small_vars=5,
@@ -38,6 +41,7 @@ class MultiSamplePipeline:
         self.nextflow_config_file = None if nextflow_config_file is None else os.path.abspath(nextflow_config_file)
         self.min_large_ref_length = min_large_ref_length
         self.gramtools_max_read_length = gramtools_max_read_length
+        self.gramtools_kmer_size = gramtools_kmer_size
 
         if nextflow_work_dir is None:
             self.nextflow_work_dir = os.path.join(self.output_dir, 'nextflow.work')
@@ -50,10 +54,13 @@ class MultiSamplePipeline:
         self.no_run = no_run
         self.clean = clean
         self.testing = testing
+        self.variants_per_split = variants_per_split
+        self.total_splits = total_splits
         self.nf_ram_cluster_small_vars =  nf_ram_cluster_small_vars
         self.nf_ram_gramtools_build_small = nf_ram_gramtools_build_small
         self.nf_ram_minos_small_vars = nf_ram_minos_small_vars
         self.nf_ram_bcftools_merge = nf_ram_bcftools_merge
+
 
 
     @classmethod
@@ -153,6 +160,7 @@ class MultiSamplePipeline:
 params.ref_fasta = ""
 params.min_large_ref_length = 0
 params.gramtools_max_read_length = 0
+params.gramtools_kmer_size = 0
 params.final_outdir = ""
 params.bcftools = "bcftools"
 params.testing = false
@@ -160,6 +168,9 @@ params.cluster_small_vars_ram = 2
 params.gramtools_build_small_vars_ram = 12
 params.minos_small_vars_ram = 5
 params.bcftools_merge_ram = 2
+params.variants_per_split = 0
+params.total_splits = 0
+
 
 
 data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
@@ -176,6 +187,10 @@ if (!ref_fasta.exists()) {
 
 if (params.min_large_ref_length < 1) {
     exit 1, "Must use option --min_large_ref_length -- aborting"
+}
+
+if (params.gramtools_kmer_size < 1) {
+    exit 1, "Must use option --gramtools_kmer_size -- aborting"
 }
 
 if (!final_outdir.exists()) {
@@ -254,7 +269,7 @@ process gramtools_build_small_vars {
     """
     #!/usr/bin/env python3
     import sys
-    from minos import gramtools
+    from minos import gramtools, vcf_chunker
     if ${params.gramtools_max_read_length} == 0:
         max_read_length = ${max_read_length}
     else:
@@ -264,9 +279,33 @@ process gramtools_build_small_vars {
         print('Error! max read length could not be inferred from input VCF files. Must use option --gramtools_max_read_length')
         sys.exit(1)
 
-    gramtools.run_gramtools_build("small_vars_clustered.gramtools.build", "small_vars_clustered.vcf", "${params.ref_fasta}", max_read_length)
+    total_splits = ${params.total_splits} if ${params.total_splits} > 0 else None
+    variants_per_split = ${params.variants_per_split} if ${params.variants_per_split} > 0 else None
+    print("total_splits", total_splits)
+    print("variants_per_split", variants_per_split)
+
+    if total_splits is None and variants_per_split is None:
+        gramtools.run_gramtools_build(
+            "small_vars_clustered.gramtools.build",
+            "small_vars_clustered.vcf",
+            "${params.ref_fasta}",
+            max_read_length,
+        )
+    else:
+        chunker = vcf_chunker.VcfChunker(
+            "small_vars_clustered.gramtools.build",
+            vcf_infile="small_vars_clustered.vcf",
+            ref_fasta="${params.ref_fasta}",
+            variants_per_split=variants_per_split,
+            max_read_length=max_read_length,
+            total_splits=total_splits,
+            flank_length=max_read_length,
+            gramtools_kmer_size=${params.gramtools_kmer_size},
+        )
+        chunker.make_split_files()
     """
 }
+
 
 
 process minos_all_small_vars {
@@ -397,12 +436,19 @@ process bcftools_merge {
             '--gramtools_max_read_length', str(self.gramtools_max_read_length),
             '--cluster_small_vars_ram', str(self.nf_ram_cluster_small_vars),
             '--gramtools_build_small_vars_ram', str(self.nf_ram_gramtools_build_small),
+            '--gramtools_kmer_size', str(self.gramtools_kmer_size),
             '--minos_small_vars_ram', str(self.nf_ram_minos_small_vars),
             '--bcftools_merge_ram', str(self.nf_ram_bcftools_merge),
         ]
 
         if self.testing:
             nextflow_command.append('--testing')
+
+
+        if self.variants_per_split is not None:
+            nextflow_command.append('--variants_per_split ' + str(self.variants_per_split))
+        elif self.total_splits is not None:
+            nextflow_command.append('--total_splits ' + str(self.total_splits))
 
         nextflow_command = ' '.join(nextflow_command)
 

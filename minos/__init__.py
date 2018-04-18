@@ -8,6 +8,7 @@ except:
 
 __all__ = [
     'adjudicator',
+    'bam_read_extract',
     'dependencies',
     'genotyper',
     'gramtools',
@@ -15,6 +16,7 @@ __all__ = [
     'multi_sample_pipeline',
     'tasks',
     'utils',
+    'vcf_chunker',
     'vcf_file_split_deletions',
 ]
 

@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument('--version', action='version', version=minos.__version__)
-parser.add_argument('--debug', help="More verbose logging", action='store_true')
+parser.add_argument('--debug', help="More verbose logging, and less file cleaning", action='store_true')
 
 
 subparsers = parser.add_subparsers(title='Available commands', help='', metavar='')
@@ -26,13 +26,16 @@ subparser_adjudicate = subparsers.add_parser(
     epilog='IMPORTANT: the --reads option is required',
 )
 
+subparser_adjudicate.add_argument('--reads', action='append', required=True, help='REQUIRED. Reads file. Can be any format compatible with htslib. Use this option more than once for >1 reads files. If splitting (with --total_splits or --variants_per_split), must provide one sorted indexed BAM file of reads', metavar='FILENAME')
 subparser_adjudicate.add_argument('--gramtools_build_dir', help='Gramtools build directory corresponding to input VCF file. If used, skips gramtools build stage and uses the provided directory instead', metavar='DIRNAME')
+subparser_adjudicate.add_argument('--gramtools_kmer_size', type=int, help='This number is used with gramtools build --kmer-size. Ignored if --gramtools_build_dir used.  [%(default)s]', default=15)
 subparser_adjudicate.add_argument('--max_read_length', type=int, help='Maximum read length, this is used by gramtools. If not given, estimated by taking longest of first 10,000 reads', metavar='INT')
 subparser_adjudicate.add_argument('--read_error_rate', type=float, help='Read error rate. If not given, is estimated from quality scores of first 10,000 reads', metavar='FLOAT')
 subparser_adjudicate.add_argument('--max_alleles_per_cluster', type=int, help='Maximum allowed alleles in one cluster. If there are too many alleles then combinations of SNPs are not generated [%(default)s]', metavar='INT', default=5000)
 subparser_adjudicate.add_argument('--force', action='store_true', help='Replace outdir, if it already exists')
 subparser_adjudicate.add_argument('--sample_name', help='Sample name to put in final VCF output file. Default is to use first sample name found in input VCF file(s)', metavar='STRING')
-subparser_adjudicate.add_argument('--reads', action='append', required=True, help='REQUIRED. Reads file. Can be any format compatible with htslib. Use this option more than once for >1 reads files', metavar='FILENAME')
+subparser_adjudicate.add_argument('--total_splits', type=int, help='Split VCF, aiming for this many chunks with the same number of variants in each chunk. Increases run time, but saves RAM (see also --variants_per_split). If used, then reads must be in one sorted indexed BAM file', metavar='INT')
+subparser_adjudicate.add_argument('--variants_per_split', type=int, help='Split VCF, aiming for this many variants in each split. Takes precedence over --total_splits. Increases run time, but saves RAM. If used, then reads must be in one sorted indexed BAM file', metavar='INT')
 subparser_adjudicate.add_argument('outdir', help='Name of output directory')
 subparser_adjudicate.add_argument('ref_fasta', help='Reference FASTA filename (must match VCF file(s))')
 subparser_adjudicate.add_argument('vcf_files', nargs='+', help='VCF filename(s) to be merged. Must provide at least one filename.')
@@ -50,7 +53,7 @@ subparser_check_with_ref = subparsers.add_parser(
 subparser_check_with_ref.add_argument('--expected_variants_vcf', help='File of all expected variants that we expect to see, relative to the vcf_ref file. Incompatible with --run_dnadiff')
 subparser_check_with_ref.add_argument('--run_dnadiff', action='store_true', help='Run dnadiff to get all expected variants we should see in vcf_file. Incompatible with --expected_variants_vcf')
 subparser_check_with_ref.add_argument('--flank_length', type=int, help='Number of nucleotides to use before and after each allele for mapping [%(default)s]', default=31, metavar='INT')
-subparser_check_with_ref.add_argument('--no_filter_cluster', action='store_true', help='Do not filter and cluster the input VCF before chekcing accuracy')
+subparser_check_with_ref.add_argument('--no_filter_cluster', action='store_true', help='Do not filter and cluster the input VCF before checking accuracy')
 subparser_check_with_ref.add_argument('vcf_file', help='Name of VCF file to be checked')
 subparser_check_with_ref.add_argument('vcf_ref', help='Reference FASTA file used to make VCF (must match VCF file)')
 subparser_check_with_ref.add_argument('truth_ref', help='Reference FASTA file that we assume to tbe the truth')
@@ -74,6 +77,25 @@ subparser_cluster_vcfs.add_argument('vcf_files', nargs='+', help='VCF filename(s
 subparser_cluster_vcfs.set_defaults(func=minos.tasks.cluster_vcfs.run)
 
 
+#----------------- make_split_gramtools_build --------------------------------
+subparser_make_split_gramtools_build = subparsers.add_parser(
+    'make_split_gramtools_build',
+    help='Split VCF/ref into pieces and run gramtools build',
+    usage='minos make_split_gramtools_build [options] <outdir> <VCF file> <ref FASTA>',
+    description='Split VCF/ref into pieces and run gramtools build. The resulting directory can be used with "minos adjudicate --gramtools_build_dir", so that the same build can be used on multiple samples without generating it during each run of minos',
+)
+
+subparser_make_split_gramtools_build.add_argument('outdir', help='Name of output directory')
+subparser_make_split_gramtools_build.add_argument('vcf_file', help='Input VCF file to be split')
+subparser_make_split_gramtools_build.add_argument('ref_fasta', help='Reference FASTA file')
+subparser_make_split_gramtools_build.add_argument('--total_splits', type=int, help='Split VCF, aiming for this many chunks with the same number of variants in each chunk (see also --variants_per_split) [%(default)s]', metavar='INT', default=100)
+subparser_make_split_gramtools_build.add_argument('--variants_per_split', type=int, help='Split VCF, aiming for this many variants in each split. If used, --total_splits is ignored', metavar='INT')
+subparser_make_split_gramtools_build.add_argument('--max_read_length', type=int, help='This number is used with gramtools build --max-read-length [%(default)s]', default=200)
+subparser_make_split_gramtools_build.add_argument('--gramtools_kmer_size', type=int, help='This number is used with gramtools build --kmer-size [%(default)s]', default=15)
+subparser_make_split_gramtools_build.set_defaults(func=minos.tasks.make_split_gramtools_build.run)
+
+
+
 #----------------- multi_sample_pipeline -------------------------------------
 
 subparser_multi_sample_pipeline = subparsers.add_parser(
@@ -88,6 +110,8 @@ subparser_multi_sample_pipeline.add_argument('data_tsv', help='TSV file of input
 subparser_multi_sample_pipeline.add_argument('outdir', help='Name of output directory')
 subparser_multi_sample_pipeline.add_argument('--min_large_ref_length', type=int, help='Variants with REF string at least this long are counted as large. These are currently removed from the analysis [%(default)s]', default=50, metavar='INT')
 subparser_multi_sample_pipeline.add_argument('--max_read_length', type=int, help='Maximum read length (--max-read-length option of gramtools build). If not given, determined from header of VCF files (if made by minos). The default of zero means determine from VCF files.', default=0, metavar='INT')
+subparser_multi_sample_pipeline.add_argument('--total_splits', type=int, help='Split VCF, aiming for this many chunks with the same number of variants in each chunk. Increases run time, but saves RAM (see also --variants_per_split). If used, then reads for each sample must be in one sorted indexed BAM file', metavar='INT')
+subparser_multi_sample_pipeline.add_argument('--variants_per_split', type=int, help='Split VCF, aiming for this many variants in each split. Takes precedence over --total_splits. Increases run time, but saves RAM. If used, then reads for each sample must be in one sorted indexed BAM file', metavar='INT')
 subparser_multi_sample_pipeline.add_argument('--nextflow_work_dir', help='Nextflow work directory (-work-dir option of nextflow). If not given subdirectory of outdir is used', metavar='DIRECTORY_NAME')
 subparser_multi_sample_pipeline.add_argument('--nextflow_config_file', help='Nextflow config file (-c option of nextflow). If not given, nextflow\'s defaults are used', metavar='FILENAME')
 subparser_multi_sample_pipeline.add_argument('--force', action='store_true', help='Overwrite the output directory')

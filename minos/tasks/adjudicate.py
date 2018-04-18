@@ -12,6 +12,10 @@ def run(options):
         max_alleles_per_cluster=options.max_alleles_per_cluster,
         gramtools_build_dir=options.gramtools_build_dir,
         sample_name=options.sample_name,
+        variants_per_split=options.variants_per_split,
+        total_splits=options.total_splits,
+        clean=not options.debug,
+        gramtools_kmer_size=options.gramtools_kmer_size,
     )
     adj.run()
 
