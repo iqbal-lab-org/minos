@@ -13,6 +13,7 @@ class Error (Exception): pass
 
 split_file_attributes = [
     'filename',
+    'file_number',
     'chrom',
     'chrom_start',
     'chrom_end',
@@ -147,6 +148,7 @@ class VcfChunker:
                 file_start_index, use_end_index, file_end_index = VcfChunker._chunk_end_indexes_from_vcf_record_list(vcf_record_list, use_start_index, self.variants_per_split, self.flank_length)
                 split_file = SplitFile(
                     os.path.join(self.outdir, 'split.' + str(self.total_split_files) + '.in.vcf'),
+                    self.total_split_files,
                     ref_name,
                     max(0, min(vcf_record_list[file_start_index].POS, vcf_record_list[use_start_index].POS - self.flank_length)),
                     max(vcf_record_list[file_end_index].ref_end_pos(), vcf_record_list[use_end_index].ref_end_pos() + self.flank_length),
