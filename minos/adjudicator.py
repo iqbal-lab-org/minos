@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
@@ -100,6 +101,7 @@ class Adjudicator:
         formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
         fh.setFormatter(formatter)
         log.addHandler(fh)
+        logging.info('Command run: ' + ' '.join(sys.argv))
         dependencies.check_and_report_dependencies(programs=['gramtools'])
         logging.info('Dependencies look OK')
 
