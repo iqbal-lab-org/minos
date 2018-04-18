@@ -14,6 +14,7 @@ def run(options):
         sample_name=options.sample_name,
         variants_per_split=options.variants_per_split,
         total_splits=options.total_splits,
+        clean=not options.debug,
     )
     adj.run()
 

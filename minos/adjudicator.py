@@ -24,6 +24,7 @@ class Adjudicator:
         sample_name=None,
         variants_per_split=None,
         total_splits=None,
+        clean=True,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -39,8 +40,10 @@ class Adjudicator:
 
         if gramtools_build_dir is None:
             self.gramtools_build_dir = os.path.join(self.outdir, 'gramtools.build')
+            self.user_supplied_gramtools_build_dir = False
         else:
             self.gramtools_build_dir = os.path.abspath(gramtools_build_dir)
+            self.user_supplied_gramtools_build_dir = True
             if not os.path.exists(self.gramtools_build_dir):
                 raise Error('Error! gramtools_build_dir=' + self.gramtools_build_dir + ' used, but directory not found on disk. Cannot continue')
 
@@ -54,6 +57,8 @@ class Adjudicator:
 
         if (self.total_splits is not None or self.variants_per_split is not None) and len(self.reads_files) != 1:
             raise Error('Error! If using splitting, must input one reads file (which is assumed to be a sorted indexed BAM file)')
+
+        self.clean = clean
 
 
     @classmethod
@@ -162,6 +167,14 @@ class Adjudicator:
             max_read_length=self.max_read_length,
         )
 
+        if self.clean:
+            os.rename(os.path.join(self.gramtools_quasimap_dir, 'report.json'), os.path.join(self.outdir, 'gramtools.quasimap.report.json'))
+            shutil.rmtree(self.gramtools_quasimap_dir)
+
+            if not self.user_supplied_gramtools_build_dir:
+                os.rename(os.path.join(self.gramtools_build_dir, 'build_report.json'), os.path.join(self.outdir, 'gramtools.build.report.json'))
+                shutil.rmtree(self.gramtools_build_dir)
+
 
     def _run_gramtools_with_split_vcf(self):
         chunker = vcf_chunker.VcfChunker(
@@ -225,5 +238,19 @@ class Adjudicator:
                 )
                 split_vcf_outfiles[ref_name].append(split_vcf_out)
 
+                if self.clean:
+                    os.rename(os.path.join(gramtools_quasimap_dir, 'report.json'), gramtools_quasimap_dir + '.report.json')
+                    os.rename(os.path.join(gramtools_build_dir, 'build_report.json'), gramtools_build_dir + '.report.json')
+                    shutil.rmtree(gramtools_quasimap_dir)
+                    shutil.rmtree(gramtools_build_dir)
+                    os.unlink(split_reads_file)
+                    os.unlink(split_file.filename)
+
         chunker.merge_files(split_vcf_outfiles, self.final_vcf)
+
+        if self.clean:
+            for file_list in split_vcf_outfiles.values():
+                for filename in file_list:
+                    os.unlink(filename)
+            os.unlink(unmapped_reads_file)
 
