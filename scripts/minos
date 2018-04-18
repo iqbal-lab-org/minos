@@ -28,6 +28,7 @@ subparser_adjudicate = subparsers.add_parser(
 
 subparser_adjudicate.add_argument('--reads', action='append', required=True, help='REQUIRED. Reads file. Can be any format compatible with htslib. Use this option more than once for >1 reads files. If splitting (with --total_splits or --variants_per_split), must provide one sorted indexed BAM file of reads', metavar='FILENAME')
 subparser_adjudicate.add_argument('--gramtools_build_dir', help='Gramtools build directory corresponding to input VCF file. If used, skips gramtools build stage and uses the provided directory instead', metavar='DIRNAME')
+subparser_adjudicate.add_argument('--gramtools_kmer_size', type=int, help='This number is used with gramtools build --kmer-size. Ignored if --gramtools_build_dir used.  [%(default)s]', default=15)
 subparser_adjudicate.add_argument('--max_read_length', type=int, help='Maximum read length, this is used by gramtools. If not given, estimated by taking longest of first 10,000 reads', metavar='INT')
 subparser_adjudicate.add_argument('--read_error_rate', type=float, help='Read error rate. If not given, is estimated from quality scores of first 10,000 reads', metavar='FLOAT')
 subparser_adjudicate.add_argument('--max_alleles_per_cluster', type=int, help='Maximum allowed alleles in one cluster. If there are too many alleles then combinations of SNPs are not generated [%(default)s]', metavar='INT', default=5000)
@@ -74,6 +75,25 @@ subparser_cluster_vcfs.add_argument('-o', '--outfile', help='Name of output VCF 
 subparser_cluster_vcfs.add_argument('ref_fasta', help='FASTA filename of reference genome that matches the VCF file')
 subparser_cluster_vcfs.add_argument('vcf_files', nargs='+', help='VCF filename(s) to be merged. Must provide at least one filename.')
 subparser_cluster_vcfs.set_defaults(func=minos.tasks.cluster_vcfs.run)
+
+
+#----------------- make_split_gramtools_build --------------------------------
+subparser_make_split_gramtools_build = subparsers.add_parser(
+    'make_split_gramtools_build',
+    help='Split VCF/ref into pieces and run gramtools build',
+    usage='minos make_split_gramtools_build [options] <outdir> <VCF file> <ref FASTA>',
+    description='Split VCF/ref into pieces and run gramtools build. The resulting directory can be used with "minos adjudicate --gramtools_build_dir", so that the same build can be used on multiple samples without generating it during each run of minos',
+)
+
+subparser_make_split_gramtools_build.add_argument('outdir', help='Name of output directory')
+subparser_make_split_gramtools_build.add_argument('vcf_file', help='Input VCF file to be split')
+subparser_make_split_gramtools_build.add_argument('ref_fasta', help='Reference FASTA file')
+subparser_make_split_gramtools_build.add_argument('--total_splits', type=int, help='Split VCF, aiming for this many chunks with the same number of variants in each chunk (see also --variants_per_split) [%(default)s]', metavar='INT', default=100)
+subparser_make_split_gramtools_build.add_argument('--variants_per_split', type=int, help='Split VCF, aiming for this many variants in each split. If used, --total_splits is ignored', metavar='INT')
+subparser_make_split_gramtools_build.add_argument('--max_read_length', type=int, help='This number is used with gramtools build --max-read-length [%(default)s]', default=200)
+subparser_make_split_gramtools_build.add_argument('--gramtools_kmer_size', type=int, help='This number is used with gramtools build --kmer-size [%(default)s]', default=15)
+subparser_make_split_gramtools_build.set_defaults(func=minos.tasks.make_split_gramtools_build.run)
+
 
 
 #----------------- multi_sample_pipeline -------------------------------------

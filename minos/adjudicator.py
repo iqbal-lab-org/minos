@@ -20,7 +20,7 @@ class Adjudicator:
         overwrite_outdir=False,
         max_alleles_per_cluster=5000,
         gramtools_build_dir=None,
-        gramtools_kmer_size=None,
+        gramtools_kmer_size=15,
         sample_name=None,
         variants_per_split=None,
         total_splits=None,
@@ -49,7 +49,7 @@ class Adjudicator:
             if not os.path.exists(self.gramtools_build_dir):
                 raise Error('Error! gramtools_build_dir=' + self.gramtools_build_dir + ' used, but directory not found on disk. Cannot continue')
 
-        self.gramtools_kmer_size = Adjudicator._get_gramtools_kmer_size(gramtools_build_dir, gramtools_kmer_size)
+        self.gramtools_kmer_size = gramtools_kmer_size
         self.gramtools_quasimap_dir = os.path.join(self.outdir, 'gramtools.quasimap')
         self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
         self.read_error_rate = read_error_rate
@@ -65,7 +65,7 @@ class Adjudicator:
 
     @classmethod
     def _get_gramtools_kmer_size(cls, build_dir, input_kmer_size):
-        if build_dir is not None:
+        if build_dir is not None and os.path.exists(build_dir):
             json_file = os.path.join(build_dir, 'build_report.json')
             with open(json_file) as f:
                 json_build_report = json.load(f)
@@ -111,7 +111,6 @@ class Adjudicator:
         self.max_read_length = estimated_read_length if self.max_read_length is None else self.max_read_length
         logging.info('Using max_read_length=' + str(self.max_read_length) + ' and read_error_rate=' + str(self.read_error_rate))
 
-
         clusterer = vcf_clusterer.VcfClusterer(
             self.vcf_files,
             self.ref_fasta,
@@ -129,7 +128,7 @@ class Adjudicator:
             raise Error(error_message)
 
 
-        if self.total_splits is not None or self.variants_per_split is not None:
+        if self.total_splits is not None or self.variants_per_split is not None or os.path.exists(os.path.join(self.split_input_dir, 'data.pickle')):
             self._run_gramtools_with_split_vcf()
         else:
             self._run_gramtools_not_split_vcf()
@@ -138,6 +137,7 @@ class Adjudicator:
 
 
     def _run_gramtools_not_split_vcf(self):
+        self.gramtools_kmer_size = Adjudicator._get_gramtools_kmer_size(self.gramtools_build_dir, self.gramtools_kmer_size)
         build_report, quasimap_report = gramtools.run_gramtools(
             self.gramtools_build_dir,
             self.gramtools_quasimap_dir,
@@ -191,6 +191,8 @@ class Adjudicator:
             gramtools_kmer_size=self.gramtools_kmer_size,
         )
         chunker.make_split_files()
+        self.gramtools_kmer_size = chunker.gramtools_kmer_size
+
         logging.info('VCF file split into ' + str(chunker.total_split_files) + ' chunks')
         try:
             os.mkdir(self.split_output_dir)

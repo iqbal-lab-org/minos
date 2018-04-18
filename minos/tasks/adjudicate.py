@@ -15,6 +15,7 @@ def run(options):
         variants_per_split=options.variants_per_split,
         total_splits=options.total_splits,
         clean=not options.debug,
+        gramtools_kmer_size=options.gramtools_kmer_size,
     )
     adj.run()
 
