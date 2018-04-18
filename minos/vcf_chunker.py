@@ -138,10 +138,11 @@ class VcfChunker:
 
         for ref_name, vcf_record_list in vcf_records.items():
             file_end_index = -1
+            use_end_index = -1
             self.vcf_split_files[ref_name] = []
             self.total_input_records += len(vcf_record_list)
 
-            while file_end_index < len(vcf_record_list) - 1:
+            while use_end_index < len(vcf_record_list) - 1:
                 if file_end_index == -1:
                     use_start_index = 0
                 else:
@@ -196,6 +197,6 @@ class VcfChunker:
                         print(records_to_merge[j], file=f)
 
         if self.total_input_records != total_output_records:
-            raise Error('Number of input VCF records != numnber of output VCF records. Cannot continue')
+            raise Error('Number of input VCF records = ' + str(self.total_input_records) + ' != ' + str(total_output_records) + ' = numnber of output VCF records. Cannot continue')
 
         logging.info('Finished making merged VCF file. Total records: ' + str(self.total_input_records))

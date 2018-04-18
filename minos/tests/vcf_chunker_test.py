@@ -90,6 +90,22 @@ class TestVcfChunker(unittest.TestCase):
         self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 21))
 
 
+        # These records caused minos error because variant at 800
+        # was included in the last split file, but the use_end_index was at
+        # position of the variant at 610. So the one at 800 was not getting used.
+        record_list = [
+             cluster_vcf_records.vcf_record.VcfRecord('ref\t75\t.\tA\tG\t.\t.\t.\t.'),
+             cluster_vcf_records.vcf_record.VcfRecord('ref\t150\t.\tG\tA,T\t.\t.\t.\t.'),
+             cluster_vcf_records.vcf_record.VcfRecord('ref\t450\t.\tT\tC\t.\t.\t.\t.'),
+             cluster_vcf_records.vcf_record.VcfRecord('ref\t610\t.\tA\tG\t.\t.\t.\t.'),
+             cluster_vcf_records.vcf_record.VcfRecord('ref\t800\t.\tC\tCA\t.\t.\t.\t.'),
+        ]
+
+        self.assertEqual((0, 1, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, 100))
+        self.assertEqual((2, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 2, 2, 100))
+        self.assertEqual((4, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 2, 100))
+
+
     def test_make_split_files(self):
         '''test make_split_files'''
         infile = os.path.join(data_dir, 'make_split_files.in.vcf')
@@ -159,6 +175,27 @@ class TestVcfChunker(unittest.TestCase):
         self.assertEqual(chunker.max_read_length,chunker2.max_read_length)
         self.assertEqual(chunker.total_split_files,chunker2.total_split_files)
         self.assertEqual(chunker.vcf_split_files,chunker2.vcf_split_files)
+        shutil.rmtree(tmp_out)
+
+
+    def test_make_split_files_2(self):
+        '''test make_split_files with different input from previous test'''
+        # These records cause a minos bug. Last record was not being used
+        # when merging because the index was wrong.
+        # They are test data from multi_sample_pipeline tests
+        infile = os.path.join(data_dir, 'make_split_files2.in.vcf')
+        tmp_out = 'tmp.vcf_chunker.make_split_files2'
+        ref_fa = os.path.join(data_dir, 'make_split_files2.in.ref.fa')
+        if os.path.exists(tmp_out):
+            shutil.rmtree(tmp_out)
+
+        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, total_splits=3, flank_length=200)
+        chunker.make_split_files()
+        self.assertTrue(os.path.exists(chunker.metadata_pickle))
+        chunker2 = vcf_chunker.VcfChunker(tmp_out)
+        self.assertEqual(1, len(chunker2.vcf_split_files))
+        self.assertEqual(3, len(chunker2.vcf_split_files['ref.0']))
+        self.assertEqual(4, chunker2.vcf_split_files['ref.0'][-1].use_end_index)
         shutil.rmtree(tmp_out)
 
 
