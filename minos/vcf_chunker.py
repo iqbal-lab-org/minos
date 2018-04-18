@@ -1,7 +1,11 @@
 from collections import namedtuple
 import os
+import pickle
+import json
 
 import cluster_vcf_records
+
+from minos import gramtools
 
 class Error (Exception): pass
 
@@ -15,26 +19,71 @@ split_file_attributes = [
     'file_end_index',
     'use_start_index',
     'use_end_index',
+    'gramtools_build_dir',
 ]
 SplitFile = namedtuple('SplitFile', split_file_attributes)
 
 
 class VcfChunker:
-    def __init__(self, vcf_infile, outdir, variants_per_split=None, total_splits=100, flank_length=200):
-        self.vcf_infile = os.path.abspath(vcf_infile)
+    def __init__(self, outdir, vcf_infile=None, ref_fasta=None, variants_per_split=None, max_read_length=200, total_splits=100, flank_length=200, gramtools_kmer_size=15):
         self.outdir = os.path.abspath(outdir)
-        self.variants_per_split = variants_per_split
-        self.total_splits = total_splits
-        self.flank_length = flank_length
-        if not os.path.exists(self.vcf_infile):
-            raise Error('VCF file not found: ' + self.vcf_infile)
+        self.metadata_pickle = os.path.join(self.outdir, 'data.pickle')
 
-        try:
-            os.mkdir(self.outdir)
-        except:
-            raise Error('Error mkdir ' + self.outdir)
+        if os.path.exists(self.outdir):
+            self._load_existing_data()
+        else:
+            assert vcf_infile is not None
+            assert ref_fasta is not None
+            self.vcf_infile = os.path.abspath(vcf_infile)
+            self.ref_fasta = os.path.abspath(ref_fasta)
+            self.variants_per_split = variants_per_split
+            self.total_splits = total_splits
+            self.flank_length = flank_length
+            self.gramtools_kmer_size = gramtools_kmer_size
+            self.max_read_length = max_read_length
 
-        self.vcf_split_files = {} # ref name -> list of SplitFile
+            if not os.path.exists(self.vcf_infile):
+                raise Error('VCF file not found: ' + self.vcf_infile)
+            if not os.path.exists(self.ref_fasta):
+                raise Error('Reference FASTA file not found: ' + self.ref_fasta)
+
+            try:
+                os.mkdir(self.outdir)
+            except:
+                raise Error('Error mkdir ' + self.outdir)
+
+            self.vcf_split_files = {} # ref name -> list of SplitFile
+
+
+    def _save_metadata(self):
+        metadata = {
+            'vcf_infile': self.vcf_infile,
+            'ref_fasta': self.ref_fasta,
+            'variants_per_split': self.variants_per_split,
+            'total_splits': self.total_splits,
+            'flank_length': self.flank_length,
+            'gramtools_kmer_size': self.gramtools_kmer_size,
+            'max_read_length': self.max_read_length,
+            'total_split_files': self.total_split_files,
+            'split_files': self.vcf_split_files,
+        }
+        with open(self.metadata_pickle, 'wb') as f:
+            pickle.dump(metadata, f, pickle.HIGHEST_PROTOCOL)
+
+
+    def _load_existing_data(self):
+        with open(self.metadata_pickle, 'rb') as f:
+            metadata = pickle.load(f)
+
+        self.vcf_infile = metadata['vcf_infile']
+        self.ref_fasta = metadata['ref_fasta']
+        self.variants_per_split = metadata['variants_per_split']
+        self.total_splits = metadata['total_splits']
+        self.flank_length = metadata['flank_length']
+        self.gramtools_kmer_size = metadata['gramtools_kmer_size']
+        self.max_read_length = metadata['max_read_length']
+        self.total_split_files = metadata['total_split_files']
+        self.vcf_split_files = metadata['split_files']
 
 
     @classmethod
@@ -100,6 +149,7 @@ class VcfChunker:
                     file_end_index,
                     use_start_index,
                     use_end_index,
+                    os.path.join(self.outdir, 'split.' + str(self.total_split_files) + '.gramtools_build'),
                 )
 
                 self.vcf_split_files[ref_name].append(split_file)
@@ -109,7 +159,10 @@ class VcfChunker:
                     for i in range(file_start_index, file_end_index + 1, 1):
                         print(vcf_record_list[i], file=f)
 
+                gramtools.run_gramtools_build(split_file.gramtools_build_dir, split_file.filename, self.ref_fasta, self.max_read_length, self.gramtools_kmer_size)
                 self.total_split_files += 1
+
+        self._save_metadata()
 
 
     def merge_files(self, files_to_merge, outfile):
