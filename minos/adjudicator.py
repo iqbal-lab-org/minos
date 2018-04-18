@@ -177,6 +177,7 @@ class Adjudicator:
 
 
     def _run_gramtools_with_split_vcf(self):
+        logging.info('Splitting VCF files into chunks')
         chunker = vcf_chunker.VcfChunker(
             self.clustered_vcf,
             self.splitdir,
@@ -185,6 +186,7 @@ class Adjudicator:
             flank_length=self.max_read_length,
         )
         chunker.make_split_files()
+        logging.info('VCF file into ' + str(chunker.total_split_files) + ' chunks')
         unmapped_reads_file = os.path.join(self.splitdir, 'unmapped_reads.bam')
         bam_read_extract.get_unmapped_reads(self.reads_files[0], unmapped_reads_file)
         split_vcf_outfiles = {}
@@ -192,6 +194,7 @@ class Adjudicator:
         for ref_name, split_file_list in chunker.vcf_split_files.items():
             split_vcf_outfiles[ref_name] = []
             for split_file in split_file_list:
+                logging.info('===== Start analysing variants in VCF split file ' + split_file.filename + ' =====')
                 split_reads_file = split_file.filename + '.reads.bam'
                 bam_read_extract.get_region(
                     self.reads_files[0],
@@ -224,7 +227,7 @@ class Adjudicator:
                     sample_name = self.sample_name
                 assert sample_name is not None
                 split_vcf_out = split_reads_file + '.out.vcf'
-                logging.info('Writing VCf output file ' + split_vcf_out)
+                logging.info('Writing VCf output file ' + split_vcf_out + ' for split VCF file ' + split_file.filename)
                 gramtools.write_vcf_annotated_using_coverage_from_gramtools(
                     mean_depth,
                     vcf_records,
@@ -239,6 +242,7 @@ class Adjudicator:
                 split_vcf_outfiles[ref_name].append(split_vcf_out)
 
                 if self.clean:
+                    logging.info('Cleaning gramtools files from split VCF file ' + split_file.filename)
                     os.rename(os.path.join(gramtools_quasimap_dir, 'report.json'), gramtools_quasimap_dir + '.report.json')
                     os.rename(os.path.join(gramtools_build_dir, 'build_report.json'), gramtools_build_dir + '.report.json')
                     shutil.rmtree(gramtools_quasimap_dir)
@@ -246,9 +250,13 @@ class Adjudicator:
                     os.unlink(split_reads_file)
                     os.unlink(split_file.filename)
 
+                logging.info('===== Finish analysing variants in VCF split file ' + split_file.filename + ' =====')
+
+        logging.info('Merging VCF files into one output file ' + self.final_vcf)
         chunker.merge_files(split_vcf_outfiles, self.final_vcf)
 
         if self.clean:
+            logging.info('Deleting temp split VCF files')
             for file_list in split_vcf_outfiles.values():
                 for filename in file_list:
                     os.unlink(filename)
