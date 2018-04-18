@@ -128,8 +128,8 @@ class TestMultiSamplePipeline(unittest.TestCase):
         os.unlink(reads_file)
 
 
-    def test_run(self):
-        '''test run'''
+    def test_run_no_small_var_vcf_chunking(self):
+        '''test run without chunking small variatn VCF file'''
         input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
         ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
         with open(input_tsv, 'w') as f:
@@ -140,8 +140,75 @@ class TestMultiSamplePipeline(unittest.TestCase):
                 print(vcf, reads1, reads2, sep='\t', file=f)
 
         outdir = 'tmp.multi_sample_pipeline.run.out'
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
 
         pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, input_tsv, outdir, min_large_ref_length=10, testing=True)
+        pipeline.run()
+
+        expected_vcf = os.path.join(data_dir, 'run.out.vcf')
+        expected_header, expected_lines = vcf_file_read.vcf_file_to_list(expected_vcf)
+        got_vcf = os.path.join(outdir, 'combined_calls.vcf')
+        self.assertTrue(os.path.exists(got_vcf))
+        got_header, got_lines = vcf_file_read.vcf_file_to_list(got_vcf)
+        # the datei, minos version, and bcftools verisons might not match
+        expected_header = [x for x in expected_header if not (x.startswith('##fileDate') or x.startswith('##source=minos') or x.startswith('##bcftools_mergeVersion'))]
+        got_header = [x for x in got_header if not (x.startswith('##fileDate') or x.startswith('##source=minos') or x.startswith('##bcftools_mergeVersion'))]
+        self.assertEqual(expected_header, got_header)
+        self.assertEqual(expected_lines, got_lines)
+
+        shutil.rmtree(outdir)
+        os.unlink(input_tsv)
+
+
+    def test_run_with_small_var_vcf_chunking_vars_per_split(self):
+        '''test run with chunking small variatn VCF file using variants_per_split option'''
+        input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
+        ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
+        with open(input_tsv, 'w') as f:
+            for i in '1', '2':
+                reads1 = os.path.join(data_dir, 'run.reads.' + i + '.sorted.bam')
+                reads2 = os.path.join(data_dir, 'run.reads.' + i + '.sorted.bam')
+                vcf = os.path.join(data_dir, 'run.calls.' + i + '.vcf')
+                print(vcf, reads1, reads2, sep='\t', file=f)
+
+        outdir = 'tmp.multi_sample_pipeline.run.out'
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+
+        pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, input_tsv, outdir, variants_per_split=3, min_large_ref_length=10, testing=True, clean=False)
+        pipeline.run()
+
+        expected_vcf = os.path.join(data_dir, 'run.out.vcf')
+        expected_header, expected_lines = vcf_file_read.vcf_file_to_list(expected_vcf)
+        got_vcf = os.path.join(outdir, 'combined_calls.vcf')
+        self.assertTrue(os.path.exists(got_vcf))
+        got_header, got_lines = vcf_file_read.vcf_file_to_list(got_vcf)
+        # the datei, minos version, and bcftools verisons might not match
+        expected_header = [x for x in expected_header if not (x.startswith('##fileDate') or x.startswith('##source=minos') or x.startswith('##bcftools_mergeVersion'))]
+        got_header = [x for x in got_header if not (x.startswith('##fileDate') or x.startswith('##source=minos') or x.startswith('##bcftools_mergeVersion'))]
+        self.assertEqual(expected_header, got_header)
+        self.assertEqual(expected_lines, got_lines)
+
+        shutil.rmtree(outdir)
+        os.unlink(input_tsv)
+
+
+    def test_run_with_small_var_vcf_chunking_total_splits(self):
+        '''test run with chunking small variatn VCF file using total_splits option'''
+        input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
+        ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
+        with open(input_tsv, 'w') as f:
+            for i in '1', '2':
+                reads = os.path.join(data_dir, 'run.reads.' + i + '.sorted.bam')
+                vcf = os.path.join(data_dir, 'run.calls.' + i + '.vcf')
+                print(vcf, reads, sep='\t', file=f)
+
+        outdir = 'tmp.multi_sample_pipeline.run.out'
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+
+        pipeline = multi_sample_pipeline.MultiSamplePipeline(ref_fasta, input_tsv, outdir, total_splits=3, min_large_ref_length=10, testing=True, clean=False)
         pipeline.run()
 
         expected_vcf = os.path.join(data_dir, 'run.out.vcf')
