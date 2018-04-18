@@ -121,31 +121,52 @@ class TestGramtools(unittest.TestCase):
 
     def test_update_vcf_record_using_gramtools_allele_depths_heterozygous(self):
         '''test update_using_gramtools_allele_depths heterozygous'''
-        record = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
+        record = vcf_record.VcfRecord('ref\t4\t.\tT\tA,G,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
         allele_combination_cov = {'1': 9, '2': 7, '3': 1}
-        allele_groups_dict = {'1': {0}, '2': {1}, '3': {1,2}}
-        allele_per_base_cov = [[9],[7],[1,0]]
-        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/1:9,7,0:47.69')
+        allele_groups_dict = {'1': {0}, '2': {2}, '3': {2,3}}
+        allele_per_base_cov = [[0], [9],[7],[1,0]]
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tA,G,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/2:9,0,7,0:47.61')
         mean_depth = 15
         error_rate = 0.001
         kmer_size = 42
-        gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
+        got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
         self.assertEqual(expected, record)
+        expected_filtered = vcf_record.VcfRecord('ref\t4\t.\tT\tG\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/1:9,7:47.61')
+        self.assertEqual(expected_filtered, got_filtered)
 
 
     def test_update_vcf_record_using_gramtools_allele_depths_homozygous(self):
         '''test update_using_gramtools_allele_depths homozygous'''
-        record = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
+        record = vcf_record.VcfRecord('ref\t4\t.\tT\tTC,G\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
         allele_depths = {'T': 1, 'G': 80}
         allele_combination_cov = {'1': 1, '2': 80}
-        allele_groups_dict = {'1': {0}, '2': {1}, '3': {1,2}}
-        allele_per_base_cov = [[1],[80],[0,0]]
-        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:1/1:1,80,0:44.79')
+        allele_groups_dict = {'1': {0}, '2': {2}, '3': {1,2}}
+        allele_per_base_cov = [[1],[0,0],[80]]
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tTC,G\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:2/2:1,0,80:44.79')
         mean_depth = 85
         error_rate = 0.001
         kmer_size = 42
-        gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
+        got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
         self.assertEqual(expected, record)
+        expected_filtered = vcf_record.VcfRecord('ref\t4\t.\tT\tG\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:1/1:1,80:44.79')
+        self.assertEqual(expected_filtered, got_filtered)
+
+
+    def test_update_vcf_record_using_gramtools_allele_depths_not_callable(self):
+        '''test update_using_gramtools_allele_depths not callable'''
+        record = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
+        allele_depths = {'T': 0}
+        allele_combination_cov = {'1': 0, '2': 0}
+        allele_groups_dict = {'1': {0}}
+        allele_per_base_cov = [[0],[0],[0,0]]
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t0:./.:0,0,0:0.0')
+        mean_depth = 85
+        error_rate = 0.001
+        kmer_size = 42
+        got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
+        self.assertEqual(expected, record)
+        self.assertEqual(expected, got_filtered)
+
 
 
     def test_write_vcf_annotated_using_coverage_from_gramtools(self):
