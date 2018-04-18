@@ -69,6 +69,7 @@ class VcfChunker:
             'max_read_length': self.max_read_length,
             'total_split_files': self.total_split_files,
             'split_files': self.vcf_split_files,
+            'total_input_records': self.total_input_records,
         }
         with open(self.metadata_pickle, 'wb') as f:
             pickle.dump(metadata, f, pickle.HIGHEST_PROTOCOL)
@@ -87,6 +88,7 @@ class VcfChunker:
         self.max_read_length = metadata['max_read_length']
         self.total_split_files = metadata['total_split_files']
         self.vcf_split_files = metadata['split_files']
+        self.total_input_records = metadata['total_input_records']
         logging.info('Loaded existing data from chunked VCF directory ' + self.outdir)
 
 
