@@ -1,4 +1,5 @@
 from collections import namedtuple
+import logging
 import os
 import pickle
 import json
@@ -32,6 +33,7 @@ class VcfChunker:
         if os.path.exists(self.outdir):
             self._load_existing_data()
         else:
+            logging.info('Setting up new chunked VCF directory ' + self.outdir)
             assert vcf_infile is not None
             assert ref_fasta is not None
             self.vcf_infile = os.path.abspath(vcf_infile)
@@ -84,6 +86,7 @@ class VcfChunker:
         self.max_read_length = metadata['max_read_length']
         self.total_split_files = metadata['total_split_files']
         self.vcf_split_files = metadata['split_files']
+        logging.info('Loaded existing data from chunked VCF directory ' + self.outdir)
 
 
     @classmethod
@@ -120,7 +123,9 @@ class VcfChunker:
 
 
     def make_split_files(self):
-        assert len(self.vcf_split_files) == 0
+        if len(self.vcf_split_files) > 0:
+            return
+
         self.total_split_files = 0
         self.total_input_records = 0
         vcf_header_lines, vcf_records = cluster_vcf_records.vcf_file_read.vcf_file_to_dict(self.vcf_infile)
@@ -161,6 +166,7 @@ class VcfChunker:
 
                 gramtools.run_gramtools_build(split_file.gramtools_build_dir, split_file.filename, self.ref_fasta, self.max_read_length, self.gramtools_kmer_size)
                 self.total_split_files += 1
+                logging.info('Made split VCF file ' + split_file.filename + ' and ran gramtools build. Total split files: ' + str(self.total_split_files))
 
         self._save_metadata()
 
@@ -168,6 +174,7 @@ class VcfChunker:
     def merge_files(self, files_to_merge, outfile):
         total_output_records = 0
         printed_header_lines = False
+        logging.info('Making merged VCF file ' + outfile)
 
         with open(outfile, 'w') as f:
             for ref_name in self.vcf_split_files:
@@ -186,3 +193,5 @@ class VcfChunker:
 
         if self.total_input_records != total_output_records:
             raise Error('Number of input VCF records != numnber of output VCF records. Cannot continue')
+
+        logging.info('Finished making merged VCF file. Total records: ' + str(self.total_input_records))
