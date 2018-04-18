@@ -5,7 +5,7 @@ import shutil
 
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
-from minos import dependencies, gramtools, utils
+from minos import bam_read_extract, dependencies, gramtools, utils, vcf_chunker
 
 class Error (Exception): pass
 
@@ -22,6 +22,8 @@ class Adjudicator:
         gramtools_build_dir=None,
         gramtools_kmer_size=None,
         sample_name=None,
+        variants_per_split=None,
+        total_splits=None,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -30,6 +32,7 @@ class Adjudicator:
         self.max_alleles_per_cluster = max_alleles_per_cluster
         self.sample_name = sample_name
         self.outdir = os.path.abspath(outdir)
+        self.splitdir = os.path.join(self.outdir, 'split')
         self.log_file = os.path.join(self.outdir, 'log.txt')
         self.clustered_vcf = os.path.join(self.outdir, 'gramtools.in.vcf')
         self.final_vcf = os.path.join(self.outdir, 'final.vcf')
@@ -46,7 +49,11 @@ class Adjudicator:
         self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
         self.read_error_rate = read_error_rate
         self.max_read_length = max_read_length
+        self.variants_per_split = variants_per_split
+        self.total_splits = total_splits
 
+        if (self.total_splits is not None or self.variants_per_split is not None) and len(self.reads_files) != 1:
+            raise Error('Error! If using splitting, must input one reads file (which is assumed to be a sorted indexed BAM file)')
 
 
     @classmethod
@@ -114,7 +121,13 @@ class Adjudicator:
             logging.error(error_message)
             raise Error(error_message)
 
-        self._run_gramtools_not_split_vcf()
+
+        if self.total_splits is not None or self.variants_per_split is not None:
+            self._run_gramtools_with_split_vcf()
+        else:
+            self._run_gramtools_not_split_vcf()
+
+        logging.info('All done! Thank you for using minos :)')
 
 
     def _run_gramtools_not_split_vcf(self):
@@ -149,4 +162,68 @@ class Adjudicator:
             max_read_length=self.max_read_length,
         )
 
-        logging.info('All done! Thank you for using minos :)')
+
+    def _run_gramtools_with_split_vcf(self):
+        chunker = vcf_chunker.VcfChunker(
+            self.clustered_vcf,
+            self.splitdir,
+            variants_per_split=self.variants_per_split,
+            total_splits=self.total_splits,
+            flank_length=self.max_read_length,
+        )
+        chunker.make_split_files()
+        unmapped_reads_file = os.path.join(self.splitdir, 'unmapped_reads.bam')
+        bam_read_extract.get_unmapped_reads(self.reads_files[0], unmapped_reads_file)
+        split_vcf_outfiles = {}
+
+        for ref_name, split_file_list in chunker.vcf_split_files.items():
+            split_vcf_outfiles[ref_name] = []
+            for split_file in split_file_list:
+                split_reads_file = split_file.filename + '.reads.bam'
+                bam_read_extract.get_region(
+                    self.reads_files[0],
+                    split_file.chrom,
+                    split_file.chrom_start,
+                    split_file.chrom_end,
+                    split_reads_file,
+                )
+
+                gramtools_build_dir = split_file.filename + '.gramtools.build'
+                gramtools_quasimap_dir = split_file.filename + '.gramtools.quasimap'
+
+                build_report, quasimap_report = gramtools.run_gramtools(
+                    gramtools_build_dir,
+                    gramtools_quasimap_dir,
+                    split_file.filename,
+                    self.ref_fasta,
+                    [unmapped_reads_file, split_reads_file],
+                    self.max_read_length,
+                    kmer_size=self.gramtools_kmer_size,
+                )
+
+                logging.info('Loading split gramtools quasimap output files ' + gramtools_quasimap_dir)
+                perl_generated_vcf = os.path.join(gramtools_build_dir, 'perl_generated_vcf')
+                mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(perl_generated_vcf, gramtools_quasimap_dir)
+                logging.info('Finished loading gramtools files')
+                if self.sample_name is None:
+                    sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
+                else:
+                    sample_name = self.sample_name
+                assert sample_name is not None
+                split_vcf_out = split_reads_file + '.out.vcf'
+                logging.info('Writing VCf output file ' + split_vcf_out)
+                gramtools.write_vcf_annotated_using_coverage_from_gramtools(
+                    mean_depth,
+                    vcf_records,
+                    allele_coverage,
+                    allele_groups,
+                    self.read_error_rate,
+                    split_vcf_out,
+                    self.gramtools_kmer_size,
+                    sample_name=sample_name,
+                    max_read_length=self.max_read_length,
+                )
+                split_vcf_outfiles[ref_name].append(split_vcf_out)
+
+        chunker.merge_files(split_vcf_outfiles, self.final_vcf)
+

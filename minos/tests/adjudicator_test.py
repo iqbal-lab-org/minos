@@ -21,12 +21,23 @@ class TestAdjudicator(unittest.TestCase):
         '''test run'''
         # We're just testing that it doesn't crash.
         # Check the output files exist, but not their contents.
+        # First run using splitting of VCF file.
+        # Then run without splitting.
         outdir = 'tmp.adjudicator.out'
         if os.path.exists(outdir):
             shutil.rmtree(outdir)
         ref_fasta = os.path.join(data_dir, 'run.ref.fa')
         reads_file = os.path.join(data_dir, 'run.bwa.bam')
         vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.1.vcf', 'run.calls.2.vcf']]
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, variants_per_split=3)
+        adj.run()
+        self.assertTrue(os.path.exists(outdir))
+        self.assertTrue(os.path.exists(adj.log_file))
+        self.assertTrue(os.path.exists(adj.final_vcf))
+        self.assertTrue(os.path.exists(adj.clustered_vcf))
+
+        # Clean up and then run without splitting
+        shutil.rmtree(outdir)
         adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files)
         adj.run()
         self.assertTrue(os.path.exists(outdir))
