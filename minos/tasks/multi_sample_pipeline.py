@@ -5,6 +5,7 @@ def run(options):
         options.ref_fasta,
         options.data_tsv,
         options.outdir,
+        max_alleles_per_cluster=options.max_alleles_per_cluster,
         min_large_ref_length=options.min_large_ref_length,
         gramtools_max_read_length=options.max_read_length,
         nextflow_config_file=options.nextflow_config_file,

@@ -13,6 +13,7 @@ class MultiSamplePipeline:
         ref_fasta,
         input_data_tsv,
         output_dir,
+        max_alleles_per_cluster=5000,
         min_large_ref_length=50,
         gramtools_max_read_length=0,
         gramtools_kmer_size=15,
@@ -39,6 +40,7 @@ class MultiSamplePipeline:
 
         self.output_dir = os.path.abspath(output_dir)
         self.nextflow_config_file = None if nextflow_config_file is None else os.path.abspath(nextflow_config_file)
+        self.max_alleles_per_cluster = max_alleles_per_cluster
         self.min_large_ref_length = min_large_ref_length
         self.gramtools_max_read_length = gramtools_max_read_length
         self.gramtools_kmer_size = gramtools_kmer_size
@@ -170,6 +172,7 @@ params.minos_small_vars_ram = 5
 params.bcftools_merge_ram = 2
 params.variants_per_split = 0
 params.total_splits = 0
+params.max_alleles_per_cluster = 5000
 
 
 
@@ -248,7 +251,7 @@ process cluster_small_vars_vcf {
     #!/usr/bin/env python3
     from cluster_vcf_records import vcf_clusterer
     file_list = ["${file_list.join('", "')}"]
-    clusterer = vcf_clusterer.VcfClusterer(file_list, "${ref_fasta}", "small_vars_clustered.vcf")
+    clusterer = vcf_clusterer.VcfClusterer(file_list, "${ref_fasta}", "small_vars_clustered.vcf", max_alleles_per_cluster=${params.max_alleles_per_cluster})
     clusterer.run()
     """
 }
@@ -431,6 +434,7 @@ process bcftools_merge {
             '--bcftools', bcftools,
             '--ref_fasta', self.ref_fasta,
             '--data_in_tsv', self.nextflow_input_tsv,
+            '--max_alleles_per_cluster', str(self.max_alleles_per_cluster),
             '--min_large_ref_length', str(self.min_large_ref_length),
             '--final_outdir', self.output_dir,
             '--gramtools_max_read_length', str(self.gramtools_max_read_length),
