@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
@@ -100,13 +101,14 @@ class Adjudicator:
         formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
         fh.setFormatter(formatter)
         log.addHandler(fh)
+        logging.info('Command run: ' + ' '.join(sys.argv))
         dependencies.check_and_report_dependencies(programs=['gramtools'])
         logging.info('Dependencies look OK')
 
         if self.read_error_rate is None or self.max_read_length is None:
             logging.info('One or both of read_error_rate and max_read_length not known. Estimate from first 10,000 reads...')
             estimated_read_length, estimated_read_error_rate = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(self.reads_files[0])
-            logging.info('Estaimted max_read_length=' + str(estimated_read_length) + ' and read_error_rate=' + str(estimated_read_length))
+            logging.info('Estimated max_read_length=' + str(estimated_read_length) + ' and read_error_rate=' + str(estimated_read_error_rate))
 
         self.read_error_rate = estimated_read_error_rate if self.read_error_rate is None else self.read_error_rate
         self.max_read_length = estimated_read_length if self.max_read_length is None else self.max_read_length
