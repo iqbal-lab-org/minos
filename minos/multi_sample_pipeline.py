@@ -455,6 +455,7 @@ process bcftools_merge {
         if self.no_run:
             print('Prepared nextflow pipeline. --no_run used, so not running. The nextflow command to run is:')
             print(nextflow_command)
+            return
         else:
             logging.info('Start running nextflow: ' + nextflow_command)
             syscall_process = utils.syscall(nextflow_command)
