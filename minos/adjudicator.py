@@ -36,6 +36,7 @@ class Adjudicator:
         self.split_output_dir = os.path.join(self.outdir, 'split.out')
         self.log_file = os.path.join(self.outdir, 'log.txt')
         self.clustered_vcf = os.path.join(self.outdir, 'gramtools.in.vcf')
+        self.unfiltered_vcf_file = os.path.join(self.outdir, 'debug.calls_with_zero_cov_alleles.vcf')
         self.final_vcf = os.path.join(self.outdir, 'final.vcf')
 
         if gramtools_build_dir is None:
@@ -163,10 +164,11 @@ class Adjudicator:
             allele_coverage,
             allele_groups,
             self.read_error_rate,
-            self.final_vcf,
+            self.unfiltered_vcf_file,
             self.gramtools_kmer_size,
             sample_name=sample_name,
             max_read_length=self.max_read_length,
+            filtered_outfile=self.final_vcf
         )
 
         if self.clean:
@@ -202,9 +204,11 @@ class Adjudicator:
         unmapped_reads_file = os.path.join(self.split_output_dir, 'unmapped_reads.bam')
         bam_read_extract.get_unmapped_reads(self.reads_files[0], unmapped_reads_file)
         split_vcf_outfiles = {}
+        split_vcf_outfiles_unfiltered = {}
 
         for ref_name, split_file_list in chunker.vcf_split_files.items():
             split_vcf_outfiles[ref_name] = []
+            split_vcf_outfiles_unfiltered[ref_name] = []
             for split_file in split_file_list:
                 logging.info('===== Start analysing variants in VCF split file ' + split_file.filename + ' =====')
                 split_reads_file = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.reads.bam')
@@ -238,6 +242,7 @@ class Adjudicator:
                     sample_name = self.sample_name
                 assert sample_name is not None
                 split_vcf_out = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.out.vcf')
+                unfiltered_vcf_out = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.out.debug.calls_with_zero_cov_alleles.vcf')
                 logging.info('Writing VCf output file ' + split_vcf_out + ' for split VCF file ' + split_file.filename)
                 gramtools.write_vcf_annotated_using_coverage_from_gramtools(
                     mean_depth,
@@ -245,12 +250,14 @@ class Adjudicator:
                     allele_coverage,
                     allele_groups,
                     self.read_error_rate,
-                    split_vcf_out,
+                    unfiltered_vcf_out,
                     self.gramtools_kmer_size,
                     sample_name=sample_name,
                     max_read_length=self.max_read_length,
+                    filtered_outfile=split_vcf_out,
                 )
                 split_vcf_outfiles[ref_name].append(split_vcf_out)
+                split_vcf_outfiles_unfiltered[ref_name].append(unfiltered_vcf_out)
 
                 if self.clean:
                     logging.info('Cleaning gramtools files from split VCF file ' + split_file.filename)
@@ -267,11 +274,13 @@ class Adjudicator:
 
         logging.info('Merging VCF files into one output file ' + self.final_vcf)
         chunker.merge_files(split_vcf_outfiles, self.final_vcf)
+        chunker.merge_files(split_vcf_outfiles_unfiltered, self.unfiltered_vcf_file)
 
         if self.clean:
             logging.info('Deleting temp split VCF files')
-            for file_list in split_vcf_outfiles.values():
-                for filename in file_list:
-                    os.unlink(filename)
+            for d in split_vcf_outfiles, split_vcf_outfiles_unfiltered:
+                for file_list in d.values():
+                    for filename in file_list:
+                        os.unlink(filename)
             os.unlink(unmapped_reads_file)
 

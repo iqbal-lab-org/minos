@@ -121,31 +121,52 @@ class TestGramtools(unittest.TestCase):
 
     def test_update_vcf_record_using_gramtools_allele_depths_heterozygous(self):
         '''test update_using_gramtools_allele_depths heterozygous'''
-        record = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
+        record = vcf_record.VcfRecord('ref\t4\t.\tT\tA,G,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
         allele_combination_cov = {'1': 9, '2': 7, '3': 1}
-        allele_groups_dict = {'1': {0}, '2': {1}, '3': {1,2}}
-        allele_per_base_cov = [[9],[7],[1,0]]
-        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/1:9,7,0:47.69')
+        allele_groups_dict = {'1': {0}, '2': {2}, '3': {2,3}}
+        allele_per_base_cov = [[0], [9],[7],[1,0]]
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tA,G,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/2:9,0,7,0:47.61')
         mean_depth = 15
         error_rate = 0.001
         kmer_size = 42
-        gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
+        got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
         self.assertEqual(expected, record)
+        expected_filtered = vcf_record.VcfRecord('ref\t4\t.\tT\tG\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/1:9,7:47.61')
+        self.assertEqual(expected_filtered, got_filtered)
 
 
     def test_update_vcf_record_using_gramtools_allele_depths_homozygous(self):
         '''test update_using_gramtools_allele_depths homozygous'''
-        record = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
+        record = vcf_record.VcfRecord('ref\t4\t.\tT\tTC,G\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
         allele_depths = {'T': 1, 'G': 80}
         allele_combination_cov = {'1': 1, '2': 80}
-        allele_groups_dict = {'1': {0}, '2': {1}, '3': {1,2}}
-        allele_per_base_cov = [[1],[80],[0,0]]
-        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:1/1:1,80,0:44.79')
+        allele_groups_dict = {'1': {0}, '2': {2}, '3': {1,2}}
+        allele_per_base_cov = [[1],[0,0],[80]]
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tTC,G\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:2/2:1,0,80:44.79')
         mean_depth = 85
         error_rate = 0.001
         kmer_size = 42
-        gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
+        got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
         self.assertEqual(expected, record)
+        expected_filtered = vcf_record.VcfRecord('ref\t4\t.\tT\tG\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:1/1:1,80:44.79')
+        self.assertEqual(expected_filtered, got_filtered)
+
+
+    def test_update_vcf_record_using_gramtools_allele_depths_not_callable(self):
+        '''test update_using_gramtools_allele_depths not callable'''
+        record = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0')
+        allele_depths = {'T': 0}
+        allele_combination_cov = {'1': 0, '2': 0}
+        allele_groups_dict = {'1': {0}}
+        allele_per_base_cov = [[0],[0],[0,0]]
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tG,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t0:./.:0,0,0:0.0')
+        mean_depth = 85
+        error_rate = 0.001
+        kmer_size = 42
+        got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
+        self.assertEqual(expected, record)
+        self.assertEqual(expected, got_filtered)
+
 
 
     def test_write_vcf_annotated_using_coverage_from_gramtools(self):
@@ -154,24 +175,31 @@ class TestGramtools(unittest.TestCase):
         quasimap_dir = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.quasimap')
         mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups  = gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file_in, quasimap_dir)
         tmp_outfile = 'tmp.gramtools.write_vcf_annotated_using_coverage_from_gramtools.vcf'
+        tmp_outfile_filtered = tmp_outfile + '.filter.vcf'
         error_rate = 0.001
         kmer_size = 42
-        gramtools.write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, allele_coverage, allele_groups, error_rate, tmp_outfile, kmer_size, sample_name='sample_42', max_read_length=200)
+        gramtools.write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, allele_coverage, allele_groups, error_rate, tmp_outfile, kmer_size, sample_name='sample_42', max_read_length=200, filtered_outfile=tmp_outfile_filtered)
         expected_vcf = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.out.vcf')
+        expected_vcf_filtered = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.out.vcf.filter.vcf')
         # Today's date and the verison of minos get added to the header.
         # We'll have to take account
         # of those by fixing what we get from the expected file
-        expected_header, expected_vcf_records = vcf_file_read.vcf_file_to_list(expected_vcf)
-        got_header, got_vcf_records = vcf_file_read.vcf_file_to_list(tmp_outfile)
-        for i in range(len(expected_header)):
-            if expected_header[i].startswith('##fileDate='):
-                expected_header[i] = '##fileDate=' + str(datetime.date.today())
-            elif expected_header[i].startswith('##source=minos'):
-                expected_header[i] = '##source=minos, version ' + minos_version
+        def check_vcfs(expected_vcf, got_vcf):
+            expected_header, expected_vcf_records = vcf_file_read.vcf_file_to_list(expected_vcf)
+            got_header, got_vcf_records = vcf_file_read.vcf_file_to_list(got_vcf)
+            for i in range(len(expected_header)):
+                if expected_header[i].startswith('##fileDate='):
+                    expected_header[i] = '##fileDate=' + str(datetime.date.today())
+                elif expected_header[i].startswith('##source=minos'):
+                    expected_header[i] = '##source=minos, version ' + minos_version
 
-        self.assertEqual(expected_header, got_header)
-        self.assertEqual(expected_vcf_records, got_vcf_records)
+            self.assertEqual(expected_header, got_header)
+            self.assertEqual(expected_vcf_records, got_vcf_records)
+
+        check_vcfs(expected_vcf, tmp_outfile)
+        check_vcfs(expected_vcf_filtered, tmp_outfile_filtered)
         os.unlink(tmp_outfile)
+        os.unlink(tmp_outfile_filtered)
 
 
     def test_load_allele_files(self):

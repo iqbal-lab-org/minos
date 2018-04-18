@@ -1,3 +1,4 @@
+import copy
 import datetime
 import json
 import logging
@@ -34,7 +35,7 @@ def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_l
     Otherwise, just runs quasimap. quasimap output is in new
     directory called quasimap_dir.
     "reads" can be one filename, or a list of filenames.
-    Raises Error if either of the expected json coverage 
+    Raises Error if either of the expected json coverage
     files made by quasimap are not found.'''
     gramtools_exe = dependencies.find_binary('gramtools')
     if not os.path.exists(build_dir):
@@ -106,7 +107,9 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
     '''allele_depths should be a dict of allele -> coverage.
     The REF allele must also be in the dict.
     So keys of dict must be equal to REF + ALTs sequences.
-    This also changes all columns from QUAL onwards'''
+    This also changes all columns from QUAL onwards.
+    Returns a VcfRecord the same as vcf_record, but with all zero
+    coverage alleles removed, and GT and COV fixed accordingly'''
     gtyper = genotyper.Genotyper(mean_depth, read_error_rate, allele_combination_cov, allele_per_base_cov, allele_groups_dict)
     gtyper.run()
     genotype_indexes = set()
@@ -123,10 +126,12 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
         if len(genotype_indexes) == 1:
             genotype_index = genotype_indexes.pop()
             genotype = str(genotype_index) + '/' + str(genotype_index)
+            genotype_indexes.add(genotype_index)
         else:
             genotype = '/'.join([str(x) for x in sorted(list(genotype_indexes))])
 
-    cov_string = ','.join([str(gtyper.singleton_alleles_cov.get(x, 0)) for x in range(1 + len(vcf_record.ALT))])
+    cov_values = [gtyper.singleton_alleles_cov.get(x, 0) for x in range(1 + len(vcf_record.ALT))]
+    cov_string = ','.join([str(x) for x in cov_values])
     vcf_record.QUAL = None
     vcf_record.FILTER = '.'
     vcf_record.INFO = {'KMER': str(kmer_size)}
@@ -138,32 +143,77 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
         'GT_CONF': str(gtyper.genotype_confidence)
     }
 
+    # Make new record where all zero coverage alleles are removed
+    filtered_record = copy.deepcopy(vcf_record)
+    if genotype in ['./.', '0/0']:
+        return filtered_record
 
-def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, kmer_size, sample_name='SAMPLE', max_read_length=None):
+    indexes_to_keep = set([i for i in range(len(cov_values)) if i == 0 or cov_values[i] > 0])
+    indexes_to_keep.update(genotype_indexes)
+    indexes_to_keep = list(indexes_to_keep)
+    indexes_to_keep.sort()
+    filtered_record.FORMAT['COV'] = ','.join([str(cov_values[i]) for i in indexes_to_keep])
+    assert indexes_to_keep[0] == 0
+    filtered_record.ALT = [filtered_record.ALT[i-1] for i in indexes_to_keep[1:]]
+
+    # The indexes of the genotype string 'n/m' are shifted because
+    # we probably removed some alleles
+    genotype_strings = {vcf_record.REF if i == 0 else vcf_record.ALT[i-1] for i in genotype_indexes}
+    new_genotype_indexes = set()
+    if 0 in genotype_indexes:
+        new_genotype_indexes.add(0)
+    for i, genotype_string in enumerate(filtered_record.ALT):
+        if genotype_string in genotype_strings:
+            new_genotype_indexes.add(i+1)
+            if len(genotype_strings) == len(new_genotype_indexes):
+                break
+
+    new_genotype_indexes = list(new_genotype_indexes)
+    if len(new_genotype_indexes) == 1:
+        new_genotype_indexes.append(new_genotype_indexes[0])
+    assert len(new_genotype_indexes) == 2
+    filtered_record.FORMAT['GT'] = '/'.join([str(x) for x in new_genotype_indexes])
+    return filtered_record
+
+
+def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, kmer_size, sample_name='SAMPLE', max_read_length=None, filtered_outfile=None):
     '''mean_depth, vcf_records, all_allele_coverage, allele_groups should be those
     returned by load_gramtools_vcf_and_allele_coverage_files().
     Writes a new VCF that has allele counts for all the ALTs'''
     assert len(vcf_records) == len(all_allele_coverage)
 
+    header_lines = [
+        '##fileformat=VCFv4.2',
+        '##source=minos, version ' + minos_version,
+        '##fileDate=' + str(datetime.date.today()),
+        '##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">',
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">',
+        '##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">',
+        '##INFO=<ID=KMER,Number=1,Type=Integer,Description="Kmer size at which variant was discovered (kmer-size used by gramtools build)">',
+    ]
+
+    if max_read_length is not None:
+        header_lines.append('##minos_max_read_length=' + str(max_read_length))
+
+    header_lines.append('\t'.join(['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_name]))
+
+    if filtered_outfile is not None:
+        f_filter = open(filtered_outfile, 'w')
+        print(*header_lines, sep='\n', file=f_filter)
+
     with open(outfile, 'w') as f:
-        print('##fileformat=VCFv4.2', file=f)
-        print('##source=minos, version', minos_version, file=f)
-        print('##fileDate=', datetime.date.today(), sep='', file=f)
-        print('##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">', file=f)
-        print('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">', file=f)
-        print('##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">', file=f)
-        print('##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">', file=f)
-        print('##INFO=<ID=KMER,Number=1,Type=Integer,Description="Kmer size at which variant was discovered (kmer-size used by gramtools build)">', file=f)
-
-        if max_read_length is not None:
-            print('##minos_max_read_length=' + str(max_read_length), file=f)
-
-        print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_name, sep='\t', file=f)
+        print(*header_lines, sep='\n', file=f)
 
         for i in range(len(vcf_records)):
             logging.debug('Genotyping: ' + str(vcf_records[i]))
-            update_vcf_record_using_gramtools_allele_depths(vcf_records[i], all_allele_coverage[i][0], all_allele_coverage[i][1], allele_groups, mean_depth, read_error_rate, kmer_size)
+            filtered_record = update_vcf_record_using_gramtools_allele_depths(vcf_records[i], all_allele_coverage[i][0], all_allele_coverage[i][1], allele_groups, mean_depth, read_error_rate, kmer_size)
             print(vcf_records[i], file=f)
+            if filtered_outfile is not None:
+                print(filtered_record, file=f_filter)
+
+    if filtered_outfile is not None:
+        f_filter.close()
 
 
 def load_allele_files(allele_base_counts_file, grouped_allele_counts_file):
