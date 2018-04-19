@@ -26,9 +26,10 @@ class VcfFileSplitDeletions:
             print(*header_lines, sep='\n', file=f_small)
             print(*header_lines, sep='\n', file=f_big)
 
-            for record in vcf_records:
-                if len(record.REF) < self.min_large_ref_length:
-                    print(record, file=f_small)
-                else:
-                    print(record, file=f_big)
-
+            for original_record in vcf_records:
+                split_records = original_record.split_into_snps()
+                for record in split_records:
+                    if len(record.REF) < self.min_large_ref_length:
+                        print(record, file=f_small)
+                    else:
+                        print(record, file=f_big)
