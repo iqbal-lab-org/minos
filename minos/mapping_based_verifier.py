@@ -47,7 +47,7 @@ class MappingBasedVerifier:
     outprefix.stats.tsv = summary stats (see dict output by
                           _parse_sam_file_and_update_vcf_records_and_gather_stats()
                           for a description)'''
-    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31, expected_variants_vcf=None, run_dnadiff=True, filter_and_cluster_vcf=True):
+    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31, merge_length=None, expected_variants_vcf=None, run_dnadiff=True, filter_and_cluster_vcf=True, allow_flank_mismatches=True):
         self.vcf_file_in = os.path.abspath(vcf_file_in)
         self.vcf_reference_file = os.path.abspath(vcf_reference_file)
         self.verify_reference_file = os.path.abspath(verify_reference_file)
@@ -62,6 +62,7 @@ class MappingBasedVerifier:
             'FP': os.path.abspath(outprefix + '.gt_conf_hist.FP.tsv'),
         }
         self.flank_length = flank_length
+        self.merge_length = flank_length if merge_length is None else merge_length
         self.expected_variants_vcf = expected_variants_vcf
         self.run_dnadiff = run_dnadiff
         if self.run_dnadiff and self.expected_variants_vcf is not None:
@@ -69,6 +70,7 @@ class MappingBasedVerifier:
         self.dnadiff_outprefix = os.path.abspath(outprefix + '.dnadiff')
         self.vcf_false_negatives_file_out = os.path.abspath(outprefix + '.false_negatives.vcf')
         self.filter_and_cluster_vcf = filter_and_cluster_vcf
+        self.allow_flank_mismatches = allow_flank_mismatches
 
         if self.filter_and_cluster_vcf:
             self.vcf_to_check = self.clustered_vcf
@@ -154,9 +156,17 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None):
+    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
         if sam_record.is_unmapped:
             return False
+
+        if not allow_mismatches:
+            try:
+                nm = sam_record.get_tag('NM')
+            except:
+                raise Error('No NM tag foung in sam record:' + str(sam_record))
+
+            return nm == 0
 
         # don't allow too many soft clipped bases
         if (sam_record.cigartuples[0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
@@ -213,7 +223,7 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length, ref_seqs):
+    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length, ref_seqs, allow_mismatches=True):
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
         Adds validation info to each VCF record. Returns a dict of stats that
@@ -252,7 +262,7 @@ class MappingBasedVerifier:
             for allele_sam_list in sam_records_by_allele:
                 # Important! only the first hit actually has the sequence!
                 # So give that to MappingBasedVerifier._check_if_sam_match_is_good()
-                indexes_of_good_matches = [i for i in range(len(allele_sam_list)) if MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence)]
+                indexes_of_good_matches = [i for i in range(len(allele_sam_list)) if MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches)]
 
                 if len(indexes_of_good_matches) > 0:
                     results['MINOS_CHECK_PASS'].append('1')
@@ -329,7 +339,7 @@ class MappingBasedVerifier:
     def run(self):
         if self.filter_and_cluster_vcf:
             MappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file_in, self.filtered_vcf)
-            clusterer = vcf_clusterer.VcfClusterer([self.filtered_vcf], self.vcf_reference_file, self.clustered_vcf, merge_method='simple', max_distance_between_variants=self.flank_length)
+            clusterer = vcf_clusterer.VcfClusterer([self.filtered_vcf], self.vcf_reference_file, self.clustered_vcf, merge_method='simple', max_distance_between_variants=self.merge_length)
             clusterer.run()
 
         vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_to_check, sort=True, remove_useless_start_nucleotides=True)
@@ -344,7 +354,7 @@ class MappingBasedVerifier:
         MappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out, vcf_records, vcf_ref_seqs, self.flank_length)
         MappingBasedVerifier._map_seqs_to_ref(self.seqs_out, self.verify_reference_file, self.sam_file_out)
         os.unlink(self.seqs_out)
-        stats, gt_conf_hists = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs)
+        stats, gt_conf_hists = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs, allow_mismatches=self.allow_flank_mismatches)
 
         with open(self.vcf_file_out, 'w') as f:
             print(*vcf_header, sep='\n', file=f)
