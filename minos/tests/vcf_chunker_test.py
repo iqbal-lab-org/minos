@@ -114,13 +114,13 @@ class TestVcfChunker(unittest.TestCase):
         if os.path.exists(tmp_out):
             shutil.rmtree(tmp_out)
 
-        vcf1 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t1\t.\tG\tT\t.\t.\t.\t.\t.')
-        vcf2 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t2\t.\tC\tT\t.\t.\t.\t.\t.')
-        vcf3 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t3\t.\tT\tA\t.\t.\t.\t.\t.')
-        vcf4 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t5\t.\tAGAGTCACGTA\tG\t.\t.\t.\t.\t.')
-        vcf5 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t18\t.\tA\tG\t.\t.\t.\t.\t.')
-        vcf6 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t21\t.\tG\tT\t.\t.\t.\t.\t.')
-        vcf7 = cluster_vcf_records.vcf_record.VcfRecord('ref2\t42\t.\tC\tG\t.\t.\t.\t.\t.')
+        vcf1 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t1\t.\tG\tT\t.\tPASS\t.\t.\t.')
+        vcf2 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t2\t.\tC\tT\t.\tPASS\t.\t.\t.')
+        vcf3 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t3\t.\tT\tA\t.\tPASS\t.\t.\t.')
+        vcf4 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t5\t.\tAGAGTCACGTA\tG\t.\tPASS\t.\t.\t.')
+        vcf5 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t18\t.\tA\tG\t.\tPASS\t.\t.\t.')
+        vcf6 = cluster_vcf_records.vcf_record.VcfRecord('ref1\t21\t.\tG\tT\t.\tPASS\t.\t.\t.')
+        vcf7 = cluster_vcf_records.vcf_record.VcfRecord('ref2\t42\t.\tC\tG\t.\tPASS\t.\t.\t.')
         header_lines = ['##header1', '##header2', '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample_name']
 
         chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=1)

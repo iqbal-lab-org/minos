@@ -1,10 +1,10 @@
 ##header1
 ##header2
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
-ref1	1	.	G	T	.	.	.	.	.
-ref1	2	.	C	T	.	.	.	.	.
-ref1	3	.	T	A	.	.	.	.	.
-ref1	5	.	AGAGTCACGTA	G	.	.	.	.	.
-ref1	18	.	A	G	.	.	.	.	.
-ref1	21	.	G	T	.	.	.	.	.
-ref2	42	.	C	G	.	.	.	.	.
+ref1	1	.	G	T	.	PASS	.	.	.
+ref1	2	.	C	T	.	PASS	.	.	.
+ref1	3	.	T	A	.	PASS	.	.	.
+ref1	5	.	AGAGTCACGTA	G	.	PASS	.	.	.
+ref1	18	.	A	G	.	PASS	.	.	.
+ref1	21	.	G	T	.	PASS	.	.	.
+ref2	42	.	C	G	.	PASS	.	.	.
