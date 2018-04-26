@@ -12,6 +12,22 @@ from minos import __version__ as minos_version
 class Error (Exception): pass
 
 
+def _build_json_file_is_good(json_build_report):
+    '''Returns true iff looks like gramtools build_report.json
+    says that gramtools build ran successfully'''
+    if not os.path.exists(json_build_report):
+        return False
+
+    with open(json_build_report) as f:
+        build_report = json.load(f)
+        try:
+            returned_zero = build_report['gramtools_cpp_build']['return_value_is_0']
+        except:
+            return False
+
+        return returned_zero
+
+
 def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=15):
     '''Runs gramtools build. Makes new directory called 'outdir' for
     the output'''
