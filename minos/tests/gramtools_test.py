@@ -13,6 +13,18 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'gramtools')
 
 
 class TestGramtools(unittest.TestCase):
+    def test_build_json_file_is_good(self):
+        '''test _build_json_file_is_good'''
+        build_file = os.path.join(data_dir, 'build_json_file_is_good.good.json')
+        self.assertTrue(gramtools._build_json_file_is_good(build_file))
+        build_file = os.path.join(data_dir, 'build_json_file_is_good.bad.1.json')
+        self.assertFalse(gramtools._build_json_file_is_good(build_file))
+        build_file = os.path.join(data_dir, 'build_json_file_is_good.bad.2.json')
+        self.assertFalse(gramtools._build_json_file_is_good(build_file))
+        build_file = os.path.join(data_dir, 'build_json_file_is_good.bad.2.json_thisfiledoesnotexist')
+        self.assertFalse(gramtools._build_json_file_is_good(build_file))
+
+
     def test_run_gramtools_build(self):
         '''test run_gramtools_build'''
         tmp_out_build = 'tmp.run_gramtools.out.build'
@@ -68,7 +80,6 @@ class TestGramtools(unittest.TestCase):
         with self.assertRaises(gramtools.Error):
             gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150)
         shutil.rmtree(tmp_out_build)
-        shutil.rmtree(tmp_out_quasimap)
 
 
     def test_run_gramtools_two_reads_files(self):

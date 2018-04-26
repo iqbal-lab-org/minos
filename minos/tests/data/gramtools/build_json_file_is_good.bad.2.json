@@ -1,0 +1,15 @@
+{
+    "start_time": "1524153313",
+    "end_time": "1524153329",
+    "total_runtime": 16,
+    "kmer_size": 15,
+    "max_read_length": 200,
+    "prg_build_report": {
+        "command": "perl foo bar baz",
+        "return_value_is_0": true,
+        "stdout": [
+            "Finished printing linear PRG. Final number in alphabet is  78"
+        ]
+    },
+    "current_working_directory": "/home/kryten/"
+}
