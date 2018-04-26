@@ -327,8 +327,8 @@ process minos_all_small_vars {
     sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
     minos_outdir=small_vars.minos.${tsv_fields['sample_id']}
     minos adjudicate --sample_name \$sample_name --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} \$minos_outdir ${ref_fasta} "small_vars_clustered.vcf"
-    bgzip \$minos_outdir/final.vcf
-    tabix -p vcf \$minos_outdir/final.vcf.gz
+    bgzip \$minos_outdir/debug.calls_with_zero_cov_alleles.vcf
+    tabix -p vcf \$minos_outdir/debug.calls_with_zero_cov_alleles.vcf.gz
     """
 }
 
@@ -359,7 +359,7 @@ process make_bcftools_small_vars_fofn {
 
     with open('vcf_file_list_for_bcftools.txt', 'w') as f:
         for t in tuple_list:
-            vcf = os.path.join(t[1] + '.' + str(t[0]), 'final.vcf.gz')
+            vcf = os.path.join(t[1] + '.' + str(t[0]), 'debug.calls_with_zero_cov_alleles.vcf.gz')
             print(vcf, file=f)
     """
 }
