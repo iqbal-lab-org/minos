@@ -11,10 +11,20 @@ modules_dir = os.path.dirname(os.path.abspath(vcf_chunker.__file__))
 data_dir = os.path.join(modules_dir, 'tests', 'data', 'vcf_chunker')
 
 class TestVcfChunker(unittest.TestCase):
-    def test_total_variants_in_vcf_dict(self):
-        '''test _total_variants_in_vcf_dict'''
-        test_dict = {'chrom1': [1,2,3], 'chrom2': [1,2]}
-        self.assertEqual(5, vcf_chunker.VcfChunker._total_variants_in_vcf_dict(test_dict))
+    def test_total_variants_and_alleles_in_vcf_dict(self):
+        '''test _total_variants_and_alleles_in_vcf_dict'''
+        class FakeVcf:
+            def __init__(self, alt):
+                self.ALT = alt
+
+        test_dict = {
+            'chrom1': [FakeVcf('123'), FakeVcf('1'), FakeVcf('123456789')],
+            'chrom2': [FakeVcf('12'), FakeVcf('1234')]}
+        expect_variants = 5
+        expect_alleles = 24
+        got_variants, got_alleles = vcf_chunker.VcfChunker._total_variants_and_alleles_in_vcf_dict(test_dict)
+        self.assertEqual(expect_variants, got_variants)
+        self.assertEqual(expect_alleles, got_alleles)
 
 
     def test_chunk_end_indexes_from_vcf_record_list(self):

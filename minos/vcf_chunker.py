@@ -122,8 +122,13 @@ class VcfChunker:
 
 
     @classmethod
-    def _total_variants_in_vcf_dict(cls, vcf_dict):
-        return sum([len(x) for x in vcf_dict.values()])
+    def _total_variants_and_alleles_in_vcf_dict(cls, vcf_dict):
+        total_variants = 0
+        total_alleles = 0
+        for ref, vcf_list in vcf_dict.items():
+            total_variants += len(vcf_list)
+            total_alleles += sum([1 + len(x.ALT) for x in vcf_list])
+        return total_variants, total_alleles
 
 
     def make_split_files(self):
@@ -134,7 +139,7 @@ class VcfChunker:
         self.total_input_records = 0
         vcf_header_lines, vcf_records = cluster_vcf_records.vcf_file_read.vcf_file_to_dict(self.vcf_infile)
         if self.variants_per_split is None:
-            total_records = VcfChunker._total_variants_in_vcf_dict(vcf_records)
+            total_records, total_alleles = VcfChunker._total_variants_and_alleles_in_vcf_dict(vcf_records)
             self.variants_per_split = 1 + int(total_records / self.total_splits)
 
         for ref_name, vcf_record_list in vcf_records.items():
