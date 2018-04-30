@@ -212,7 +212,7 @@ class TestVcfChunker(unittest.TestCase):
         if os.path.exists(tmp_out):
             shutil.rmtree(tmp_out)
 
-        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, total_splits=3, flank_length=200)
+        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=200)
         chunker.make_split_files()
         self.assertTrue(os.path.exists(chunker.metadata_pickle))
         chunker2 = vcf_chunker.VcfChunker(tmp_out)
