@@ -11,83 +11,106 @@ modules_dir = os.path.dirname(os.path.abspath(vcf_chunker.__file__))
 data_dir = os.path.join(modules_dir, 'tests', 'data', 'vcf_chunker')
 
 class TestVcfChunker(unittest.TestCase):
-    def test_total_variants_in_vcf_dict(self):
-        '''test _total_variants_in_vcf_dict'''
-        test_dict = {'chrom1': [1,2,3], 'chrom2': [1,2]}
-        self.assertEqual(5, vcf_chunker.VcfChunker._total_variants_in_vcf_dict(test_dict))
+    def test_total_variants_and_alleles_in_vcf_dict(self):
+        '''test _total_variants_and_alleles_in_vcf_dict'''
+        class FakeVcf:
+            def __init__(self, alt):
+                self.ALT = alt
+
+        test_dict = {
+            'chrom1': [FakeVcf('123'), FakeVcf('1'), FakeVcf('123456789')],
+            'chrom2': [FakeVcf('12'), FakeVcf('1234')]}
+        expect_variants = 5
+        expect_alleles = 24
+        got_variants, got_alleles = vcf_chunker.VcfChunker._total_variants_and_alleles_in_vcf_dict(test_dict)
+        self.assertEqual(expect_variants, got_variants)
+        self.assertEqual(expect_alleles, got_alleles)
 
 
     def test_chunk_end_indexes_from_vcf_record_list(self):
         '''test _chunk_end_indexes_from_vcf_record_list'''
         record_list = [
             cluster_vcf_records.vcf_record.VcfRecord('ref\t1\t.\tA\tG\t.\t.\t.\t.'),
-            cluster_vcf_records.vcf_record.VcfRecord('ref\t2\t.\tC\tT\t.\t.\t.\t.'),
-            cluster_vcf_records.vcf_record.VcfRecord('ref\t3\t.\tT\tA\t.\t.\t.\t.'),
+            cluster_vcf_records.vcf_record.VcfRecord('ref\t2\t.\tC\tT,A,G,TA\t.\t.\t.\t.'),
+            cluster_vcf_records.vcf_record.VcfRecord('ref\t3\t.\tT\tA,C\t.\t.\t.\t.'),
             cluster_vcf_records.vcf_record.VcfRecord('ref\t5\t.\tAGAGTCACGTA\tG\t.\t.\t.\t.'),
             cluster_vcf_records.vcf_record.VcfRecord('ref\t18\t.\tA\tG\t.\t.\t.\t.'),
             cluster_vcf_records.vcf_record.VcfRecord('ref\t21\t.\tG\tT\t.\t.\t.\t.'),
         ]
 
-        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, 1))
-        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, 1))
-        self.assertEqual((0, 2, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, 1))
-        self.assertEqual((0, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, 1))
-        self.assertEqual((0, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 5, 1))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 6, 1))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 7, 1))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 8, 1))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=1))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=2))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=3))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=4))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=5))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=6))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=7))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=8))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=9))
+        self.assertEqual((0, 2, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=10))
+        self.assertEqual((0, 2, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=11))
+        self.assertEqual((0, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=12))
 
-        self.assertEqual((0, 0, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, 2))
-        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, 2))
-        self.assertEqual((0, 2, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, 2))
-        self.assertEqual((0, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, 2))
-        self.assertEqual((0, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 5, 2))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 6, 2))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 7, 2))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 8, 2))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=1))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=2))
+        self.assertEqual((0, 2, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=3))
+        self.assertEqual((0, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=4))
+        self.assertEqual((0, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=5))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=6))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=7))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=8))
 
-        self.assertEqual((0, 0, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, 3))
-        self.assertEqual((0, 1, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, 3))
-        self.assertEqual((0, 2, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, 3))
-        self.assertEqual((0, 3, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, 3))
-        self.assertEqual((0, 4, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 5, 3))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 6, 3))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 7, 3))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 8, 3))
+        self.assertEqual((0, 0, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, total_sites=1))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, total_sites=2))
+        self.assertEqual((0, 2, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, total_sites=3))
+        self.assertEqual((0, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, total_sites=4))
+        self.assertEqual((0, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, total_sites=5))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, total_sites=6))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, total_sites=7))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, total_sites=8))
 
-        self.assertEqual((0, 0, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, 4))
-        self.assertEqual((0, 1, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, 4))
-        self.assertEqual((0, 2, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, 4))
-        self.assertEqual((0, 3, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, 4))
-        self.assertEqual((0, 4, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 5, 4))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 6, 4))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 7, 4))
+        self.assertEqual((0, 0, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, total_sites=1))
+        self.assertEqual((0, 1, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, total_sites=2))
+        self.assertEqual((0, 2, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, total_sites=3))
+        self.assertEqual((0, 3, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, total_sites=4))
+        self.assertEqual((0, 4, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, total_sites=5))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, total_sites=6))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, total_sites=7))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 3, total_sites=8))
 
-        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 1, 1))
-        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 1, 2))
-        self.assertEqual((0, 1, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 1, 3))
-        self.assertEqual((0, 1, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 1, 15))
-        self.assertEqual((0, 1, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 1, 16))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 6, 1))
+        self.assertEqual((0, 0, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, total_sites=1))
+        self.assertEqual((0, 1, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, total_sites=2))
+        self.assertEqual((0, 2, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, total_sites=3))
+        self.assertEqual((0, 3, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, total_sites=4))
+        self.assertEqual((0, 4, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, total_sites=5))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, total_sites=6))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 4, total_sites=7))
 
-        self.assertEqual((4, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 1, 1))
-        self.assertEqual((4, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 1, 2))
-        self.assertEqual((3, 4, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 1, 3))
-        self.assertEqual((4, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 2, 1))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 1, total_sites=1))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 2, total_sites=1))
+        self.assertEqual((0, 1, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 3, total_sites=1))
+        self.assertEqual((0, 1, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 15, total_sites=1))
+        self.assertEqual((0, 1, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 16, total_sites=1))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 1, 1, total_sites=6))
 
-        self.assertEqual((5, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 1, 1))
-        self.assertEqual((5, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 1))
-        self.assertEqual((5, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 2))
-        self.assertEqual((4, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 3))
-        self.assertEqual((4, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 4))
-        self.assertEqual((4, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 5))
-        self.assertEqual((3, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 6))
-        self.assertEqual((3, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 7))
-        self.assertEqual((3, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 17))
-        self.assertEqual((2, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 18))
-        self.assertEqual((1, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 19))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 20))
-        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, 21))
+        self.assertEqual((4, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 1, total_sites=1))
+        self.assertEqual((4, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 2, total_sites=1))
+        self.assertEqual((3, 4, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 3, total_sites=1))
+        self.assertEqual((4, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 1, total_sites=2))
+
+        self.assertEqual((5, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 1, total_sites=1))
+        self.assertEqual((5, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 1, total_sites=2))
+        self.assertEqual((5, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 2, total_sites=2))
+        self.assertEqual((4, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 3, total_sites=2))
+        self.assertEqual((4, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 4, total_sites=2))
+        self.assertEqual((4, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 5, total_sites=2))
+        self.assertEqual((3, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 6, total_sites=2))
+        self.assertEqual((3, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 7, total_sites=2))
+        self.assertEqual((3, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 17, total_sites=2))
+        self.assertEqual((2, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 18, total_sites=2))
+        self.assertEqual((1, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 19, total_sites=2))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 20, total_sites=2))
+        self.assertEqual((0, 5, 5), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 5, 21, total_sites=2))
 
 
         # These records caused minos error because variant at 800
@@ -101,9 +124,9 @@ class TestVcfChunker(unittest.TestCase):
              cluster_vcf_records.vcf_record.VcfRecord('ref\t800\t.\tC\tCA\t.\t.\t.\t.'),
         ]
 
-        self.assertEqual((0, 1, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 2, 100))
-        self.assertEqual((2, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 2, 2, 100))
-        self.assertEqual((4, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 2, 100))
+        self.assertEqual((0, 1, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 100, total_sites=2))
+        self.assertEqual((2, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 2, 100, total_sites=2))
+        self.assertEqual((4, 4, 4), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 4, 100, total_sites=2))
 
 
     def test_make_split_files(self):
@@ -189,7 +212,7 @@ class TestVcfChunker(unittest.TestCase):
         if os.path.exists(tmp_out):
             shutil.rmtree(tmp_out)
 
-        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, total_splits=3, flank_length=200)
+        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=200)
         chunker.make_split_files()
         self.assertTrue(os.path.exists(chunker.metadata_pickle))
         chunker2 = vcf_chunker.VcfChunker(tmp_out)

@@ -27,7 +27,7 @@ SplitFile = namedtuple('SplitFile', split_file_attributes)
 
 
 class VcfChunker:
-    def __init__(self, outdir, vcf_infile=None, ref_fasta=None, variants_per_split=None, max_read_length=200, total_splits=100, flank_length=200, gramtools_kmer_size=15):
+    def __init__(self, outdir, vcf_infile=None, ref_fasta=None, variants_per_split=None, max_read_length=200, total_splits=100, flank_length=200, gramtools_kmer_size=15, alleles_per_split=None):
         self.outdir = os.path.abspath(outdir)
         self.metadata_pickle = os.path.join(self.outdir, 'data.pickle')
 
@@ -37,9 +37,11 @@ class VcfChunker:
             logging.info('Setting up new chunked VCF directory ' + self.outdir)
             assert vcf_infile is not None
             assert ref_fasta is not None
+            assert None in {variants_per_split, alleles_per_split}
             self.vcf_infile = os.path.abspath(vcf_infile)
             self.ref_fasta = os.path.abspath(ref_fasta)
             self.variants_per_split = variants_per_split
+            self.alleles_per_split = alleles_per_split
             self.total_splits = total_splits
             self.flank_length = flank_length
             self.gramtools_kmer_size = gramtools_kmer_size
@@ -63,6 +65,7 @@ class VcfChunker:
             'vcf_infile': self.vcf_infile,
             'ref_fasta': self.ref_fasta,
             'variants_per_split': self.variants_per_split,
+            'alleles_per_split': self.alleles_per_split,
             'total_splits': self.total_splits,
             'flank_length': self.flank_length,
             'gramtools_kmer_size': self.gramtools_kmer_size,
@@ -82,6 +85,7 @@ class VcfChunker:
         self.vcf_infile = metadata['vcf_infile']
         self.ref_fasta = metadata['ref_fasta']
         self.variants_per_split = metadata['variants_per_split']
+        self.alleles_per_split = metadata['alleles_per_split']
         self.total_splits = metadata['total_splits']
         self.flank_length = metadata['flank_length']
         self.gramtools_kmer_size = metadata['gramtools_kmer_size']
@@ -93,11 +97,12 @@ class VcfChunker:
 
 
     @classmethod
-    def _chunk_end_indexes_from_vcf_record_list(cls, record_list, start_index, total_sites, flank_length):
+    def _chunk_end_indexes_from_vcf_record_list(cls, record_list, start_index, flank_length, total_sites=None, total_alleles=None):
         '''Returns tuple of:
            1. last index of VCF record that we want to use for variant calling
            2. index of last variant in the chunk, which can't be used for variant calling
               but should end up in the gramtools graph'''
+        assert total_sites != total_alleles and (total_sites is not None or total_alleles is not None)
         file_start_index = start_index
         while file_start_index > 0:
             distance_to_previous_variant = record_list[start_index].POS - record_list[file_start_index - 1].ref_end_pos()
@@ -105,7 +110,16 @@ class VcfChunker:
                 break
             file_start_index -= 1
 
-        use_vcf_end_index = min(start_index + total_sites - 1, len(record_list) - 1)
+        if total_sites is not None:
+            use_vcf_end_index = min(start_index + total_sites - 1, len(record_list) - 1)
+        else:
+            use_vcf_end_index = start_index
+            alleles = 1 + len(record_list[start_index].ALT)
+            while use_vcf_end_index < len(record_list) - 1 and alleles <= total_alleles:
+                use_vcf_end_index += 1
+                alleles += 1 + len(record_list[use_vcf_end_index].ALT)
+            use_vcf_end_index = max(start_index, use_vcf_end_index - 1)
+
         if use_vcf_end_index == len(record_list) - 1:
             return file_start_index, use_vcf_end_index, use_vcf_end_index
 
@@ -121,8 +135,13 @@ class VcfChunker:
 
 
     @classmethod
-    def _total_variants_in_vcf_dict(cls, vcf_dict):
-        return sum([len(x) for x in vcf_dict.values()])
+    def _total_variants_and_alleles_in_vcf_dict(cls, vcf_dict):
+        total_variants = 0
+        total_alleles = 0
+        for ref, vcf_list in vcf_dict.items():
+            total_variants += len(vcf_list)
+            total_alleles += sum([1 + len(x.ALT) for x in vcf_list])
+        return total_variants, total_alleles
 
 
     def make_split_files(self):
@@ -132,9 +151,9 @@ class VcfChunker:
         self.total_split_files = 0
         self.total_input_records = 0
         vcf_header_lines, vcf_records = cluster_vcf_records.vcf_file_read.vcf_file_to_dict(self.vcf_infile)
-        if self.variants_per_split is None:
-            total_records = VcfChunker._total_variants_in_vcf_dict(vcf_records)
-            self.variants_per_split = 1 + int(total_records / self.total_splits)
+        if self.variants_per_split is None and self.alleles_per_split is None:
+            total_records, total_alleles = VcfChunker._total_variants_and_alleles_in_vcf_dict(vcf_records)
+            self.alleles_per_split = 1 + int(total_alleles / self.total_splits)
 
         for ref_name, vcf_record_list in vcf_records.items():
             file_end_index = -1
@@ -148,7 +167,7 @@ class VcfChunker:
                 else:
                     use_start_index = self.vcf_split_files[ref_name][-1].use_end_index + 1
 
-                file_start_index, use_end_index, file_end_index = VcfChunker._chunk_end_indexes_from_vcf_record_list(vcf_record_list, use_start_index, self.variants_per_split, self.flank_length)
+                file_start_index, use_end_index, file_end_index = VcfChunker._chunk_end_indexes_from_vcf_record_list(vcf_record_list, use_start_index, self.flank_length, total_sites=self.variants_per_split, total_alleles=self.alleles_per_split)
                 split_file = SplitFile(
                     os.path.join(self.outdir, 'split.' + str(self.total_split_files) + '.in.vcf'),
                     self.total_split_files,

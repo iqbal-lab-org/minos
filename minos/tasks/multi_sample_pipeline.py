@@ -15,6 +15,7 @@ def run(options):
         no_run=options.no_run,
         clean=not options.no_clean,
         variants_per_split=options.variants_per_split,
+        alleles_per_split=options.alleles_per_split,
         total_splits=options.total_splits,
         nf_ram_cluster_small_vars=options.nf_ram_cluster_small_vars,
         nf_ram_gramtools_build_small=options.nf_ram_gramtools_build_small,

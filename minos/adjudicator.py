@@ -24,6 +24,7 @@ class Adjudicator:
         gramtools_kmer_size=15,
         sample_name=None,
         variants_per_split=None,
+        alleles_per_split=None,
         total_splits=None,
         clean=True,
     ):
@@ -57,9 +58,10 @@ class Adjudicator:
         self.read_error_rate = read_error_rate
         self.max_read_length = max_read_length
         self.variants_per_split = variants_per_split
+        self.alleles_per_split = alleles_per_split
         self.total_splits = total_splits
 
-        if (self.total_splits is not None or self.variants_per_split is not None) and len(self.reads_files) != 1:
+        if (self.total_splits is not None or self.variants_per_split is not None or self.alleles_per_split is not None) and len(self.reads_files) != 1:
             raise Error('Error! If using splitting, must input one reads file (which is assumed to be a sorted indexed BAM file)')
 
         self.clean = clean
@@ -131,7 +133,7 @@ class Adjudicator:
             raise Error(error_message)
 
 
-        if self.total_splits is not None or self.variants_per_split is not None or os.path.exists(os.path.join(self.split_input_dir, 'data.pickle')):
+        if self.total_splits is not None or self.variants_per_split is not None or self.alleles_per_split is not None or os.path.exists(os.path.join(self.split_input_dir, 'data.pickle')):
             self._run_gramtools_with_split_vcf()
         else:
             self._run_gramtools_not_split_vcf()
@@ -189,6 +191,7 @@ class Adjudicator:
             vcf_infile=self.clustered_vcf,
             ref_fasta=self.ref_fasta,
             variants_per_split=self.variants_per_split,
+            alleles_per_split=self.alleles_per_split,
             max_read_length=self.max_read_length,
             total_splits=self.total_splits,
             flank_length=self.max_read_length,
