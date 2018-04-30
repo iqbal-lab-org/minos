@@ -31,12 +31,25 @@ class TestVcfChunker(unittest.TestCase):
         '''test _chunk_end_indexes_from_vcf_record_list'''
         record_list = [
             cluster_vcf_records.vcf_record.VcfRecord('ref\t1\t.\tA\tG\t.\t.\t.\t.'),
-            cluster_vcf_records.vcf_record.VcfRecord('ref\t2\t.\tC\tT\t.\t.\t.\t.'),
-            cluster_vcf_records.vcf_record.VcfRecord('ref\t3\t.\tT\tA\t.\t.\t.\t.'),
+            cluster_vcf_records.vcf_record.VcfRecord('ref\t2\t.\tC\tT,A,G,TA\t.\t.\t.\t.'),
+            cluster_vcf_records.vcf_record.VcfRecord('ref\t3\t.\tT\tA,C\t.\t.\t.\t.'),
             cluster_vcf_records.vcf_record.VcfRecord('ref\t5\t.\tAGAGTCACGTA\tG\t.\t.\t.\t.'),
             cluster_vcf_records.vcf_record.VcfRecord('ref\t18\t.\tA\tG\t.\t.\t.\t.'),
             cluster_vcf_records.vcf_record.VcfRecord('ref\t21\t.\tG\tT\t.\t.\t.\t.'),
         ]
+
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=1))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=2))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=3))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=4))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=5))
+        self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=6))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=7))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=8))
+        self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=9))
+        self.assertEqual((0, 2, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=10))
+        self.assertEqual((0, 2, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=11))
+        self.assertEqual((0, 3, 3), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_alleles=12))
 
         self.assertEqual((0, 0, 1), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=1))
         self.assertEqual((0, 1, 2), vcf_chunker.VcfChunker._chunk_end_indexes_from_vcf_record_list(record_list, 0, 1, total_sites=2))

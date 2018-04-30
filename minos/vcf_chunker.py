@@ -106,7 +106,16 @@ class VcfChunker:
                 break
             file_start_index -= 1
 
-        use_vcf_end_index = min(start_index + total_sites - 1, len(record_list) - 1)
+        if total_sites is not None:
+            use_vcf_end_index = min(start_index + total_sites - 1, len(record_list) - 1)
+        else:
+            use_vcf_end_index = start_index
+            alleles = 1 + len(record_list[start_index].ALT)
+            while use_vcf_end_index < len(record_list) - 1 and alleles <= total_alleles:
+                use_vcf_end_index += 1
+                alleles += 1 + len(record_list[use_vcf_end_index].ALT)
+            use_vcf_end_index = max(start_index, use_vcf_end_index - 1)
+
         if use_vcf_end_index == len(record_list) - 1:
             return file_start_index, use_vcf_end_index, use_vcf_end_index
 
