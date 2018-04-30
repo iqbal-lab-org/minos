@@ -93,11 +93,12 @@ class VcfChunker:
 
 
     @classmethod
-    def _chunk_end_indexes_from_vcf_record_list(cls, record_list, start_index, total_sites, flank_length):
+    def _chunk_end_indexes_from_vcf_record_list(cls, record_list, start_index, flank_length, total_sites=None, total_alleles=None):
         '''Returns tuple of:
            1. last index of VCF record that we want to use for variant calling
            2. index of last variant in the chunk, which can't be used for variant calling
               but should end up in the gramtools graph'''
+        assert total_sites != total_alleles and (total_sites is not None or total_alleles is not None)
         file_start_index = start_index
         while file_start_index > 0:
             distance_to_previous_variant = record_list[start_index].POS - record_list[file_start_index - 1].ref_end_pos()
@@ -148,7 +149,7 @@ class VcfChunker:
                 else:
                     use_start_index = self.vcf_split_files[ref_name][-1].use_end_index + 1
 
-                file_start_index, use_end_index, file_end_index = VcfChunker._chunk_end_indexes_from_vcf_record_list(vcf_record_list, use_start_index, self.variants_per_split, self.flank_length)
+                file_start_index, use_end_index, file_end_index = VcfChunker._chunk_end_indexes_from_vcf_record_list(vcf_record_list, use_start_index, self.flank_length, total_sites=self.variants_per_split)
                 split_file = SplitFile(
                     os.path.join(self.outdir, 'split.' + str(self.total_split_files) + '.in.vcf'),
                     self.total_split_files,
