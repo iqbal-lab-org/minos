@@ -24,6 +24,7 @@ class MultiSamplePipeline:
         clean=True,
         testing=False,
         variants_per_split=None,
+        alleles_per_split=None,
         total_splits=None,
         nf_ram_cluster_small_vars=2,
         nf_ram_gramtools_build_small=12,
@@ -57,6 +58,7 @@ class MultiSamplePipeline:
         self.clean = clean
         self.testing = testing
         self.variants_per_split = variants_per_split
+        self.alleles_per_split = alleles_per_split
         self.total_splits = total_splits
         self.nf_ram_cluster_small_vars =  nf_ram_cluster_small_vars
         self.nf_ram_gramtools_build_small = nf_ram_gramtools_build_small
@@ -171,6 +173,7 @@ params.gramtools_build_small_vars_ram = 12
 params.minos_small_vars_ram = 5
 params.bcftools_merge_ram = 2
 params.variants_per_split = 0
+params.alleles_per_split = 0
 params.total_splits = 0
 params.max_alleles_per_cluster = 5000
 
@@ -284,10 +287,12 @@ process gramtools_build_small_vars {
 
     total_splits = ${params.total_splits} if ${params.total_splits} > 0 else None
     variants_per_split = ${params.variants_per_split} if ${params.variants_per_split} > 0 else None
+    alleles_per_split = ${params.alleles_per_split} if ${params.alleles_per_split} > 0 else None
     print("total_splits", total_splits)
     print("variants_per_split", variants_per_split)
+    print("alleles_per_split", alleles_per_split)
 
-    if total_splits is None and variants_per_split is None:
+    if total_splits is None and variants_per_split is None and alleles_per_split is None:
         gramtools.run_gramtools_build(
             "small_vars_clustered.gramtools.build",
             "small_vars_clustered.vcf",
@@ -300,6 +305,7 @@ process gramtools_build_small_vars {
             vcf_infile="small_vars_clustered.vcf",
             ref_fasta="${params.ref_fasta}",
             variants_per_split=variants_per_split,
+            alleles_per_split=alleles_per_split,
             max_read_length=max_read_length,
             total_splits=total_splits,
             flank_length=max_read_length,
@@ -451,6 +457,8 @@ process bcftools_merge {
 
         if self.variants_per_split is not None:
             nextflow_command.append('--variants_per_split ' + str(self.variants_per_split))
+        if self.alleles_per_split is not None:
+            nextflow_command.append('--alleles_per_split ' + str(self.alleles_per_split))
         elif self.total_splits is not None:
             nextflow_command.append('--total_splits ' + str(self.total_splits))
 

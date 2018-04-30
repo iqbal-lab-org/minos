@@ -13,6 +13,7 @@ def run(options):
         gramtools_build_dir=options.gramtools_build_dir,
         sample_name=options.sample_name,
         variants_per_split=options.variants_per_split,
+        alleles_per_split=options.alleles_per_split,
         total_splits=options.total_splits,
         clean=not options.debug,
         gramtools_kmer_size=options.gramtools_kmer_size,
