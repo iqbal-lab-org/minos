@@ -96,6 +96,7 @@ subparser_make_split_gramtools_build.add_argument('--variants_per_split', type=i
 subparser_make_split_gramtools_build.add_argument('--alleles_per_split', type=int, help='Split VCF, aiming for this many alleles in each split. If used, --total_splits is ignored', metavar='INT')
 subparser_make_split_gramtools_build.add_argument('--max_read_length', type=int, help='This number is used with gramtools build --max-read-length [%(default)s]', default=200)
 subparser_make_split_gramtools_build.add_argument('--gramtools_kmer_size', type=int, help='This number is used with gramtools build --kmer-size [%(default)s]', default=15, metavar='INT')
+subparser_make_split_gramtools_build.add_argument('--threads', type=int, help='Number of gramtools builds to run in parallel [%(default)s]', default=1, metavar='INT')
 subparser_make_split_gramtools_build.set_defaults(func=minos.tasks.make_split_gramtools_build.run)
 
 
@@ -116,6 +117,7 @@ subparser_multi_sample_pipeline.add_argument('--max_alleles_per_cluster', type=i
 subparser_multi_sample_pipeline.add_argument('--min_large_ref_length', type=int, help='Variants with REF string at least this long are counted as large. These are currently removed from the analysis [%(default)s]', default=50, metavar='INT')
 subparser_multi_sample_pipeline.add_argument('--max_read_length', type=int, help='Maximum read length (--max-read-length option of gramtools build). If not given, determined from header of VCF files (if made by minos). The default of zero means determine from VCF files.', default=0, metavar='INT')
 subparser_multi_sample_pipeline.add_argument('--gramtools_kmer_size', type=int, help='This number is used with gramtools build --kmer-size [%(default)s]', default=15, metavar='INT')
+subparser_multi_sample_pipeline.add_argument('--gramtools_build_threads', type=int, help='Number of gramtools builds to run in parallel (only used if --total_splits,--variants_per_split, or --alleles_per_split used) [%(default)s]', default=1, metavar='INT')
 subparser_multi_sample_pipeline.add_argument('--total_splits', type=int, help='Split VCF, aiming for this many chunks with the same number of variants in each chunk. Increases run time, but saves RAM (see also --variants_per_split and --alleles_per_split). If used, then reads for each sample must be in one sorted indexed BAM file', metavar='INT')
 subparser_multi_sample_pipeline.add_argument('--variants_per_split', type=int, help='Split VCF, aiming for this many variants in each split. Takes precedence over --total_splits. Increases run time, but saves RAM. If used, then reads for each sample must be in one sorted indexed BAM file', metavar='INT')
 subparser_multi_sample_pipeline.add_argument('--alleles_per_split', type=int, help='Split VCF, aiming for this many alleles in each split. Takes precedence over --total_splits. Increases run time, but saves RAM. If used, then reads for each sample must be in one sorted indexed BAM file', metavar='INT')

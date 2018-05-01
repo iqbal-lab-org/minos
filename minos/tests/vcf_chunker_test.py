@@ -221,6 +221,16 @@ class TestVcfChunker(unittest.TestCase):
         self.assertEqual(4, chunker2.vcf_split_files['ref.0'][-1].use_end_index)
         shutil.rmtree(tmp_out)
 
+        # Test with two threads
+        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=200, threads=2)
+        chunker.make_split_files()
+        self.assertTrue(os.path.exists(chunker.metadata_pickle))
+        chunker2 = vcf_chunker.VcfChunker(tmp_out)
+        self.assertEqual(1, len(chunker2.vcf_split_files))
+        self.assertEqual(3, len(chunker2.vcf_split_files['ref.0']))
+        self.assertEqual(4, chunker2.vcf_split_files['ref.0'][-1].use_end_index)
+        shutil.rmtree(tmp_out)
+
 
     def test_merge_files(self):
         '''test merge_files'''
