@@ -1,5 +1,7 @@
 from collections import namedtuple
+import itertools
 import logging
+import multiprocessing
 import os
 import pickle
 import json
@@ -26,10 +28,17 @@ split_file_attributes = [
 SplitFile = namedtuple('SplitFile', split_file_attributes)
 
 
+def _run_gramtools_build(split_file, ref_fasta, max_read_length, kmer_size):
+    logging.info('Start gramtools build ' + split_file.filename)
+    gramtools.run_gramtools_build(split_file.gramtools_build_dir, split_file.filename, ref_fasta, max_read_length, kmer_size)
+    logging.info('Finish gramtools build ' + split_file.filename)
+
+
 class VcfChunker:
-    def __init__(self, outdir, vcf_infile=None, ref_fasta=None, variants_per_split=None, max_read_length=200, total_splits=100, flank_length=200, gramtools_kmer_size=15, alleles_per_split=None):
+    def __init__(self, outdir, vcf_infile=None, ref_fasta=None, variants_per_split=None, max_read_length=200, total_splits=100, flank_length=200, gramtools_kmer_size=15, alleles_per_split=None, threads=1):
         self.outdir = os.path.abspath(outdir)
         self.metadata_pickle = os.path.join(self.outdir, 'data.pickle')
+        self.threads = threads
 
         if os.path.exists(self.outdir):
             self._load_existing_data()
@@ -195,9 +204,20 @@ class VcfChunker:
 
 
     def run_gramtools_build_on_each_split(self):
-        for file_list in self.vcf_split_files.values():
-            for split_file in file_list:
-                gramtools.run_gramtools_build(split_file.gramtools_build_dir, split_file.filename, self.ref_fasta, self.max_read_length, self.gramtools_kmer_size)
+        if self.threads == 1:
+            for file_list in self.vcf_split_files.values():
+                for split_file in file_list:
+                    gramtools.run_gramtools_build(split_file.gramtools_build_dir, split_file.filename, self.ref_fasta, self.max_read_length, self.gramtools_kmer_size)
+        else:
+            assert self.threads > 1
+            split_files = []
+            for file_list in self.vcf_split_files.values():
+                split_files.extend(file_list)
+
+            pool = multiprocessing.Pool(self.threads)
+            pool.starmap(_run_gramtools_build, zip(file_list, itertools.repeat(self.ref_fasta), itertools.repeat(self.max_read_length), itertools.repeat(self.gramtools_kmer_size)))
+            pool.close()
+            pool.join()
 
 
     def make_split_files(self):
