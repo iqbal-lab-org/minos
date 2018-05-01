@@ -11,6 +11,7 @@ def run(options):
         max_read_length=options.max_read_length,
         flank_length=options.max_read_length,
         gramtools_kmer_size=options.gramtools_kmer_size,
+        threads=options.threads,
     )
     chunker.make_split_files()
 

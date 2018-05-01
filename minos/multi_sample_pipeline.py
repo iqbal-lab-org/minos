@@ -17,6 +17,7 @@ class MultiSamplePipeline:
         min_large_ref_length=50,
         gramtools_max_read_length=0,
         gramtools_kmer_size=15,
+        gramtools_build_threads=1,
         nextflow_config_file=None,
         nextflow_work_dir=None,
         force=False,
@@ -45,6 +46,7 @@ class MultiSamplePipeline:
         self.min_large_ref_length = min_large_ref_length
         self.gramtools_max_read_length = gramtools_max_read_length
         self.gramtools_kmer_size = gramtools_kmer_size
+        self.gramtools_build_threads = gramtools_build_threads
 
         if nextflow_work_dir is None:
             self.nextflow_work_dir = os.path.join(self.output_dir, 'nextflow.work')
@@ -165,6 +167,7 @@ params.ref_fasta = ""
 params.min_large_ref_length = 0
 params.gramtools_max_read_length = 0
 params.gramtools_kmer_size = 0
+params.gramtools_build_threads = 1
 params.final_outdir = ""
 params.bcftools = "bcftools"
 params.testing = false
@@ -264,6 +267,7 @@ process gramtools_build_small_vars {
     errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
     memory {params.testing ? '0.5 GB' : 1.GB * params.gramtools_build_small_vars_ram * task.attempt}
     maxRetries 3
+    cpus params.gramtools_build_threads
 
     input:
     file('small_vars_clustered.vcf') from cluster_small_vars_vcf_out
@@ -310,6 +314,7 @@ process gramtools_build_small_vars {
             total_splits=total_splits,
             flank_length=max_read_length,
             gramtools_kmer_size=${params.gramtools_kmer_size},
+            threads=${params.gramtools_build_threads},
         )
         chunker.make_split_files()
     """
@@ -447,6 +452,7 @@ process bcftools_merge {
             '--cluster_small_vars_ram', str(self.nf_ram_cluster_small_vars),
             '--gramtools_build_small_vars_ram', str(self.nf_ram_gramtools_build_small),
             '--gramtools_kmer_size', str(self.gramtools_kmer_size),
+            '--gramtools_build_threads', str(self.gramtools_build_threads),
             '--minos_small_vars_ram', str(self.nf_ram_minos_small_vars),
             '--bcftools_merge_ram', str(self.nf_ram_bcftools_merge),
         ]
