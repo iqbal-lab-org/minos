@@ -51,6 +51,9 @@ class Adjudicator:
             self.user_supplied_gramtools_build_dir = True
             if not os.path.exists(self.gramtools_build_dir):
                 raise Error('Error! gramtools_build_dir=' + self.gramtools_build_dir + ' used, but directory not found on disk. Cannot continue')
+            if len(self.vcf_files) != 1:
+                raise Error('Error! If gramtools_build_dir is used, then There Can Be Only One input VCF file (which is assumed to be clustered')
+
 
         self.gramtools_kmer_size = gramtools_kmer_size
         self.gramtools_quasimap_dir = os.path.join(self.outdir, 'gramtools.quasimap')
@@ -116,16 +119,22 @@ class Adjudicator:
         self.max_read_length = estimated_read_length if self.max_read_length is None else self.max_read_length
         logging.info('Using max_read_length=' + str(self.max_read_length) + ' and read_error_rate=' + str(self.read_error_rate))
 
-        clusterer = vcf_clusterer.VcfClusterer(
-            self.vcf_files,
-            self.ref_fasta,
-            self.clustered_vcf,
-            max_distance_between_variants=1,
-            max_alleles_per_cluster=self.max_alleles_per_cluster,
-        )
-        clusterer.run()
+        if self.user_supplied_gramtools_build_dir:
+            logging.info('User supplied gramtools build dir. Assuming VCF already clustered, so skipping clustering')
+            assert len(self.vcf_files) == 1
+            self.clustered_vcf = self.vcf_files[0]
+        else:
+            logging.info('Clustering VCF file(s), to make one VCF input file for gramtools')
+            clusterer = vcf_clusterer.VcfClusterer(
+                self.vcf_files,
+                self.ref_fasta,
+                self.clustered_vcf,
+                max_distance_between_variants=1,
+                max_alleles_per_cluster=self.max_alleles_per_cluster,
+            )
+            clusterer.run()
 
-        logging.info('Clustered VCF files, to make one VCF input file for gramtools')
+            logging.info('Finished clustering VCF file(s)')
 
         if not vcf_file_read.vcf_file_has_at_least_one_record(self.clustered_vcf):
             error_message = 'No VCF records. Cannot continue. Please check that the input VCF files contained at least one variant'

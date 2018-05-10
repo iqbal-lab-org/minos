@@ -56,7 +56,11 @@ class TestAdjudicator(unittest.TestCase):
             shutil.rmtree(outdir2)
         ref_fasta = os.path.join(data_dir, 'run.ref.fa')
         reads_file = os.path.join(data_dir, 'run.bwa.bam')
-        vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.1.vcf', 'run.calls.2.vcf']]
+        # When gramtools build dir supplied, the Adjudicator assumes
+        # one clsutered VCF file that matches the gramtools build run.
+        # This is the clustered VCF made by the Adjudicator, so we
+        # use that instead of the list of original VCF files
+        vcf_files = [adj.clustered_vcf]
         adj = adjudicator.Adjudicator(outdir2, ref_fasta, [reads_file], vcf_files, gramtools_build_dir=gramtools_build_dir, clean=False)
         adj.run()
         self.assertTrue(os.path.exists(outdir2))
