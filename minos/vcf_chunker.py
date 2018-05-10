@@ -221,6 +221,9 @@ class VcfChunker:
 
 
     def make_split_files(self):
+        if len(self.vcf_split_files) > 0:
+            return
+
         self.make_split_vcf_files()
         self.run_gramtools_build_on_each_split()
 
