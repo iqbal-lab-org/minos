@@ -27,7 +27,7 @@ subparser_adjudicate = subparsers.add_parser(
 )
 
 subparser_adjudicate.add_argument('--reads', action='append', required=True, help='REQUIRED. Reads file. Can be any format compatible with htslib. Use this option more than once for >1 reads files. If splitting (with one of --total_splits,--variants_per_split,--alleles_per_split), must provide one sorted indexed BAM file of reads', metavar='FILENAME')
-subparser_adjudicate.add_argument('--gramtools_build_dir', help='Gramtools build directory corresponding to input VCF file. If used, skips gramtools build stage and uses the provided directory instead', metavar='DIRNAME')
+subparser_adjudicate.add_argument('--gramtools_build_dir', help='Gramtools build directory corresponding to input VCF file. If used, assumes VCF is clustered, skips clustering and gramtools build stages and uses the provided directory instead', metavar='DIRNAME')
 subparser_adjudicate.add_argument('--gramtools_kmer_size', type=int, help='This number is used with gramtools build --kmer-size. Ignored if --gramtools_build_dir used.  [%(default)s]', default=15, metavar='INT')
 subparser_adjudicate.add_argument('--max_read_length', type=int, help='Maximum read length, this is used by gramtools. If not given, estimated by taking longest of first 10,000 reads', metavar='INT')
 subparser_adjudicate.add_argument('--read_error_rate', type=float, help='Read error rate. If not given, is estimated from quality scores of first 10,000 reads', metavar='FLOAT')
