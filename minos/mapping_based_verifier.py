@@ -258,7 +258,7 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length, ref_seqs, allow_mismatches=True):
+    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length, ref_seqs, allow_mismatches=True, exclude_regions=None):
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
         Adds validation info to each VCF record. Returns a dict of stats that
@@ -266,8 +266,12 @@ class MappingBasedVerifier:
             total => total number of VCF records
             HET => number of records with a heterozygous call
             'gt_wrong' => number of records where genotype is incorrect
-            'gt_correct' => number of records where genotype is correct'''
-        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT']}
+            'gt_correct' => number of records where genotype is correct
+            'gt_excluded' => number of records excluded because matched to a position in exclude_regions'''
+        if  exclude_regions is None:
+            exclude_regions = {}
+
+        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT', 'E']}
         gt_conf_hists = {'TP': {}, 'FP': {}}
         sreader = sam_reader(infile)
 
@@ -297,10 +301,39 @@ class MappingBasedVerifier:
             for allele_sam_list in sam_records_by_allele:
                 # Important! only the first hit actually has the sequence!
                 # So give that to MappingBasedVerifier._check_if_sam_match_is_good()
-                indexes_of_good_matches = [i for i in range(len(allele_sam_list)) if MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches)]
+                match_result_types = set()
+                for i in range(len(allele_sam_list)):
+                    if allele_sam_list[i].is_unmapped:
+                        match_result_types.add('0')
+                    else:
+                        exclude = False
+                        if ref_name in exclude_regions:
+                            start = allele_sam_list[0].reference_start
+                            end = allele_sam_list[0].reference_end - 1
+                            interval = pyfastaq.intervals.Interval(start, end)
+                            exclude = MappingBasedVerifier._interval_intersects_an_interval_in_list(interval, exclude_regions[ref_name])
 
-                if len(indexes_of_good_matches) > 0:
+                        if exclude:
+                            match_result_types.add('E')
+                        else:
+                            good_match = MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches)
+                            if good_match:
+                                match_result_types.add('1')
+                            else:
+                                match_result_types.add('0')
+
+
+                #indexes_of_good_matches = [i for i in range(len(allele_sam_list)) if MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches)]
+
+                #if len(indexes_of_good_matches) > 0:
+                #    results['MINOS_CHECK_PASS'].append('1')
+                #else:
+                #    results['MINOS_CHECK_PASS'].append('0')
+
+                if '1' in match_result_types:
                     results['MINOS_CHECK_PASS'].append('1')
+                elif 'E' in match_result_types:
+                    results['MINOS_CHECK_PASS'].append('E')
                 else:
                     results['MINOS_CHECK_PASS'].append('0')
 
@@ -321,6 +354,8 @@ class MappingBasedVerifier:
         del stats['0']
         stats['gt_correct'] = stats['1']
         del stats['1']
+        stats['gt_excluded'] = stats['E']
+        del stats['E']
         return stats, gt_conf_hists
 
 
@@ -389,7 +424,7 @@ class MappingBasedVerifier:
         MappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out, vcf_records, vcf_ref_seqs, self.flank_length)
         MappingBasedVerifier._map_seqs_to_ref(self.seqs_out, self.verify_reference_file, self.sam_file_out)
         os.unlink(self.seqs_out)
-        stats, gt_conf_hists = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs, allow_mismatches=self.allow_flank_mismatches)
+        stats, gt_conf_hists = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs, allow_mismatches=self.allow_flank_mismatches, exclude_regions=self.exclude_regions)
 
         with open(self.vcf_file_out, 'w') as f:
             print(*vcf_header, sep='\n', file=f)
@@ -429,7 +464,7 @@ class MappingBasedVerifier:
 
         # write stats file
         with open(self.stats_out, 'w') as f:
-            keys = ['total', 'gt_correct', 'gt_wrong', 'HET', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
+            keys = ['total', 'gt_correct', 'gt_wrong', 'gt_excluded', 'HET', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
             print(*keys, sep='\t', file=f)
             print(*[stats[x] for x in keys], sep='\t', file=f)
 
