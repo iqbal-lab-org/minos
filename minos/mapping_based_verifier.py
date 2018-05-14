@@ -101,16 +101,16 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _point_is_in_interval_list(cls, position, interval_list):
+    def _interval_intersects_an_interval_in_list(cls, interval, interval_list):
         # This could be faster by doing something like a binary search.
         # But we're looking for points in intervals, so fiddly to implement.
         # Not expecting a log interval list, so just do a simple check
         # from start to end for now
         i = 0
-        while i < len(interval_list) and position > interval_list[i].end:
+        while i < len(interval_list) and interval.start > interval_list[i].end:
             i += 1
 
-        return i < len(interval_list) and interval_list[i].start <= position <= interval_list[i].end
+        return i < len(interval_list) and interval.intersects(interval_list[i])
 
 
     @classmethod

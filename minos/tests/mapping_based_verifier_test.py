@@ -37,26 +37,27 @@ class TestMappingBasedVerifier(unittest.TestCase):
         os.unlink(tmp_bed)
 
 
-    def test_point_is_in_interval_list(self):
-        '''test _point_is_in_interval_list'''
-        intervals = [
+    def test_interval_intersects_an_interval_in_list(self):
+        '''test _interval_intersects_an_interval_in_list'''
+        interval_list = [
             pyfastaq.intervals.Interval(10, 15),
             pyfastaq.intervals.Interval(20, 30),
             pyfastaq.intervals.Interval(40, 50),
             pyfastaq.intervals.Interval(60, 70),
         ]
 
-        for i in intervals:
-            for j in range(i.start, i.end-1, 1):
-                self.assertTrue(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(j, intervals))
+        tests = [
+            (pyfastaq.intervals.Interval(1, 9), False),
+            (pyfastaq.intervals.Interval(1, 10), True),
+            (pyfastaq.intervals.Interval(1, 20), True),
+            (pyfastaq.intervals.Interval(11, 12), True),
+            (pyfastaq.intervals.Interval(16, 19), False),
+            (pyfastaq.intervals.Interval(15, 75), True),
+            (pyfastaq.intervals.Interval(71, 100), False),
+        ]
 
-        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(9, intervals))
-        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(16, intervals))
-        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(17, intervals))
-        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(18, intervals))
-        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(19, intervals))
-        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(31, intervals))
-        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(71, intervals))
+        for interval, true_or_false in tests:
+            self.assertEqual(true_or_false, mapping_based_verifier.MappingBasedVerifier._interval_intersects_an_interval_in_list(interval, interval_list))
 
 
     def test_filter_vcf_for_clustering(self):
