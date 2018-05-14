@@ -57,6 +57,7 @@ subparser_check_with_ref.add_argument('--flank_length', type=int, help='Number o
 subparser_check_with_ref.add_argument('--variant_merge_length', type=int, help='Variants up to this distance apart are merged, unless they conflict with each other [%(default)s]', default=31, metavar='INT')
 subparser_check_with_ref.add_argument('--allow_flank_mismatches', action='store_true', help='Allow mismatches in flanking regions when mapping to the truth reference. By default, only exact matches allowed')
 subparser_check_with_ref.add_argument('--no_filter_cluster', action='store_true', help='Do not filter and cluster the input VCF before checking accuracy')
+subparser_check_with_ref.add_argument('--exclude_bed', help='BED file of regions of the truth reference to ignore (col1=seq name, col2=start, col3=end)', metavar='FILENAME')
 subparser_check_with_ref.add_argument('vcf_file', help='Name of VCF file to be checked')
 subparser_check_with_ref.add_argument('vcf_ref', help='Reference FASTA file used to make VCF (must match VCF file)')
 subparser_check_with_ref.add_argument('truth_ref', help='Reference FASTA file that we assume to tbe the truth')

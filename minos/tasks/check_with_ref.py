@@ -12,6 +12,7 @@ def run(options):
         filter_and_cluster_vcf=not options.no_filter_cluster,
         allow_flank_mismatches=options.allow_flank_mismatches,
         merge_length=options.variant_merge_length,
+        exclude_regions_bed_file=options.exclude_bed,
     )
     verifier.run()
 
