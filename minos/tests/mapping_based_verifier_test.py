@@ -13,6 +13,28 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'mapping_based_verifier')
 
 
 class TestMappingBasedVerifier(unittest.TestCase):
+    def test_point_is_in_interval_list(self):
+        '''test _point_is_in_interval_list'''
+        intervals = [
+            pyfastaq.intervals.Interval(10, 15),
+            pyfastaq.intervals.Interval(20, 30),
+            pyfastaq.intervals.Interval(40, 50),
+            pyfastaq.intervals.Interval(60, 70),
+        ]
+
+        for i in intervals:
+            for j in range(i.start, i.end-1, 1):
+                self.assertTrue(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(j, intervals))
+
+        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(9, intervals))
+        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(16, intervals))
+        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(17, intervals))
+        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(18, intervals))
+        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(19, intervals))
+        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(31, intervals))
+        self.assertFalse(mapping_based_verifier.MappingBasedVerifier._point_is_in_interval_list(71, intervals))
+
+
     def test_filter_vcf_for_clustering(self):
         '''test _filter_vcf_for_clustering'''
         vcf_in = os.path.join(data_dir, 'filter_vcf_for_clustering.in.vcf')

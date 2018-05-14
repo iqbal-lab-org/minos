@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 
 import pyfastaq
@@ -76,6 +77,19 @@ class MappingBasedVerifier:
             self.vcf_to_check = self.clustered_vcf
         else:
             self.vcf_to_check = self.vcf_file_in
+
+
+    @classmethod
+    def _point_is_in_interval_list(cls, position, interval_list):
+        # This could be faster by doing something like a binary search.
+        # But we're looking for points in intervals, so fiddly to implement.
+        # Not expecting a log interval list, so just do a simple check
+        # from start to end for now
+        i = 0
+        while i < len(interval_list) and position > interval_list[i].end:
+            i += 1
+
+        return i < len(interval_list) and interval_list[i].start <= position <= interval_list[i].end
 
 
     @classmethod
