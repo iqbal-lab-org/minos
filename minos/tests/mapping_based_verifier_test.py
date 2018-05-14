@@ -13,6 +13,53 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'mapping_based_verifier')
 
 
 class TestMappingBasedVerifier(unittest.TestCase):
+    def test_load_exclude_regions_bed_file(self):
+        '''test _load_exclude_regions_bed_file'''
+        i1 = pyfastaq.intervals.Interval(42, 43)
+        i2 = pyfastaq.intervals.Interval(50, 60)
+        i3 = pyfastaq.intervals.Interval(100, 102)
+
+        expected = {
+            'ref1': [i1, i2],
+            'ref2': [i3],
+        }
+
+        tmp_bed = 'tmp.load_exclude_regions_bed_file.bed'
+        with open(tmp_bed, 'w') as f:
+            print('ref1',  43, 44, sep='\t', file=f)
+            print('ref1',  51, 55, sep='\t', file=f)
+            print('ref1',  56, 61, sep='\t', file=f)
+            print('ref2',  101, 103, sep='\t', file=f)
+
+        self.assertEqual({}, mapping_based_verifier.MappingBasedVerifier._load_exclude_regions_bed_file(None))
+        got = mapping_based_verifier.MappingBasedVerifier._load_exclude_regions_bed_file(tmp_bed)
+        self.assertEqual(expected, got)
+        os.unlink(tmp_bed)
+
+
+    def test_interval_intersects_an_interval_in_list(self):
+        '''test _interval_intersects_an_interval_in_list'''
+        interval_list = [
+            pyfastaq.intervals.Interval(10, 15),
+            pyfastaq.intervals.Interval(20, 30),
+            pyfastaq.intervals.Interval(40, 50),
+            pyfastaq.intervals.Interval(60, 70),
+        ]
+
+        tests = [
+            (pyfastaq.intervals.Interval(1, 9), False),
+            (pyfastaq.intervals.Interval(1, 10), True),
+            (pyfastaq.intervals.Interval(1, 20), True),
+            (pyfastaq.intervals.Interval(11, 12), True),
+            (pyfastaq.intervals.Interval(16, 19), False),
+            (pyfastaq.intervals.Interval(15, 75), True),
+            (pyfastaq.intervals.Interval(71, 100), False),
+        ]
+
+        for interval, true_or_false in tests:
+            self.assertEqual(true_or_false, mapping_based_verifier.MappingBasedVerifier._interval_intersects_an_interval_in_list(interval, interval_list))
+
+
     def test_filter_vcf_for_clustering(self):
         '''test _filter_vcf_for_clustering'''
         vcf_in = os.path.join(data_dir, 'filter_vcf_for_clustering.in.vcf')
@@ -181,6 +228,28 @@ class TestMappingBasedVerifier(unittest.TestCase):
         verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=False)
         verifier.run()
         expected_out = os.path.join(data_dir, 'run.out.no_filter_cluster')
+        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf', '.gt_conf_hist.TP.tsv', '.gt_conf_hist.FP.tsv']:
+            expected_file = expected_out + suffix
+            got_file = tmp_out + suffix
+            self.assertTrue(filecmp.cmp(expected_file, got_file, shallow=False))
+            os.unlink(got_file)
+        samfile = tmp_out + '.sam'
+        self.assertTrue(os.path.exists(samfile))
+        os.unlink(samfile)
+        for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps']:
+            os.unlink(tmp_out + suffix)
+
+
+    def test_run_no_filter_cluster_with_exclude_region(self):
+        '''test run without filtering and clustering but with region excluded'''
+        vcf_file_in = os.path.join(data_dir, 'run.calls.vcf')
+        vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
+        verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
+        exclude_regions_bed_file = os.path.join(data_dir, 'run.exclude.bed')
+        tmp_out = 'tmp.mapping_based_verifier.out.no_filter_cluster'
+        verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=False, exclude_regions_bed_file=exclude_regions_bed_file)
+        verifier.run()
+        expected_out = os.path.join(data_dir, 'run.out.no_filter_cluster_with_exclude')
         for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf', '.gt_conf_hist.TP.tsv', '.gt_conf_hist.FP.tsv']:
             expected_file = expected_out + suffix
             got_file = tmp_out + suffix
