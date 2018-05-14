@@ -80,6 +80,25 @@ class MappingBasedVerifier:
 
 
     @classmethod
+    def _load_exclude_regions_bed_file(cls, infile):
+        regions = {}
+        if infile is not None:
+            with open(infile) as f:
+                for line in f:
+                    fields = line.rstrip().split('\t')
+                    if fields[0] not in regions:
+                        regions[fields[0]] = []
+                    start = int(fields[1]) - 1
+                    end = int(fields[2]) - 1
+                    regions[fields[0]].append(pyfastaq.intervals.Interval(start, end))
+
+            for ref_name in regions:
+                pyfastaq.intervals.merge_overlapping_in_list(regions[ref_name])
+
+        return regions
+
+
+    @classmethod
     def _point_is_in_interval_list(cls, position, interval_list):
         # This could be faster by doing something like a binary search.
         # But we're looking for points in intervals, so fiddly to implement.

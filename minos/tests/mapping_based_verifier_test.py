@@ -13,6 +13,30 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'mapping_based_verifier')
 
 
 class TestMappingBasedVerifier(unittest.TestCase):
+    def test_load_exclude_regions_bed_file(self):
+        '''test _load_exclude_regions_bed_file'''
+        i1 = pyfastaq.intervals.Interval(42, 43)
+        i2 = pyfastaq.intervals.Interval(50, 60)
+        i3 = pyfastaq.intervals.Interval(100, 102)
+
+        expected = {
+            'ref1': [i1, i2],
+            'ref2': [i3],
+        }
+
+        tmp_bed = 'tmp.load_exclude_regions_bed_file.bed'
+        with open(tmp_bed, 'w') as f:
+            print('ref1',  43, 44, sep='\t', file=f)
+            print('ref1',  51, 55, sep='\t', file=f)
+            print('ref1',  56, 61, sep='\t', file=f)
+            print('ref2',  101, 103, sep='\t', file=f)
+
+        self.assertEqual({}, mapping_based_verifier.MappingBasedVerifier._load_exclude_regions_bed_file(None))
+        got = mapping_based_verifier.MappingBasedVerifier._load_exclude_regions_bed_file(tmp_bed)
+        self.assertEqual(expected, got)
+        os.unlink(tmp_bed)
+
+
     def test_point_is_in_interval_list(self):
         '''test _point_is_in_interval_list'''
         intervals = [
