@@ -302,6 +302,7 @@ process gramtools_build_small_vars {
             "small_vars_clustered.vcf",
             "${params.ref_fasta}",
             max_read_length,
+            kmer_size=${params.gramtools_kmer_size},
         )
     else:
         chunker = vcf_chunker.VcfChunker(
