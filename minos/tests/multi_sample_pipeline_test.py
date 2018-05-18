@@ -57,6 +57,20 @@ class TestMultiSamplePipeline(unittest.TestCase):
             os.unlink(filename)
 
 
+    def test_merge_vcf_files(self):
+        '''test merge_vcf_files'''
+        tmp_fofn = 'tmp.merge_vcf_files.fofn'
+        with open(tmp_fofn, 'w') as f:
+            for i in (1, 2, 3):
+                print(os.path.join(data_dir, 'merge_vcf_files.in.' + str(i) + '.vcf'), file=f)
+        tmp_out = 'tmp.merge_vcf_files.out.vcf'
+        expected = os.path.join(data_dir, 'merge_vcf_files.out.vcf')
+        multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(tmp_fofn, tmp_out)
+        self.assertTrue(filecmp.cmp(expected, tmp_out, shallow=False))
+        os.unlink(tmp_fofn)
+        os.unlink(tmp_out)
+
+
     def test_filter_input_file_for_clustering(self):
         infile = os.path.join(data_dir, 'filter_input_file_for_clustering.in.vcf')
         expect = os.path.join(data_dir, 'filter_output_file_for_clusteroutg.out.vcf')

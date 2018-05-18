@@ -93,6 +93,47 @@ class MultiSamplePipeline:
 
 
     @classmethod
+    def _merge_vcf_files(cls, infiles_fofn, outfile):
+        '''Reimplementation of bcftools merge. Load all files into
+        memory, then write output. bcftools opens all files at the same
+        time, which doesn't work for lots of files'''
+        vcf_file_data_list_per_sample = []
+        sample_names = []
+        header_lines = []
+        common_first_column_data = []
+        first_file = True
+
+        with open(infiles_fofn) as f_fofn:
+            for line in f_fofn:
+                new_data = []
+
+                with open(line.rstrip()) as f_vcf:
+                    for vcf_line in f_vcf:
+                        if vcf_line.startswith('#'):
+                            if first_file and vcf_line.startswith('##'):
+                                header_lines.append(vcf_line.rstrip())
+                            elif vcf_line.startswith('#CHROM'):
+                                fields = vcf_line.rstrip().split('\t')
+                                assert len(fields) == 10
+                                sample_names.append(fields[-1])
+                        else:
+                            first_columns, last_column = vcf_line.rstrip().rsplit('\t', maxsplit=1)
+                            new_data.append(last_column)
+                            if first_file:
+                                common_first_column_data.append(first_columns)
+
+                vcf_file_data_list_per_sample.append(new_data)
+                first_file = False
+
+        with open(outfile, 'w') as f:
+            print(*header_lines, sep='\n', file=f)
+            print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', *sample_names, sep='\t', file=f)
+            for i, common_first_data in enumerate(common_first_column_data):
+                sample_data_cols = [vcf_file_data_list_per_sample[j][i] for j in range(len(vcf_file_data_list_per_sample))]
+                print(common_first_data, *sample_data_cols, sep='\t', file=f)
+
+
+    @classmethod
     def _filter_input_file_for_clustering(cls, infile, outfile):
         header_lines, vcf_records = vcf_file_read.vcf_file_to_dict(infile, sort=True, homozygous_only=False, remove_asterisk_alts=True, remove_useless_start_nucleotides=True)
         with open(outfile, 'w') as f:
