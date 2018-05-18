@@ -16,7 +16,7 @@ class MultiSamplePipeline:
         max_alleles_per_cluster=5000,
         min_large_ref_length=50,
         gramtools_max_read_length=0,
-        gramtools_kmer_size=15,
+        gramtools_kmer_size=5,
         gramtools_build_threads=1,
         nextflow_config_file=None,
         nextflow_work_dir=None,
