@@ -139,7 +139,7 @@ class TestMultiSamplePipeline(unittest.TestCase):
 
 
     def test_run_no_small_var_vcf_chunking(self):
-        '''test run without chunking small variatn VCF file'''
+        '''test run without chunking small variant VCF file'''
         input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
         ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
         with open(input_tsv, 'w') as f:
