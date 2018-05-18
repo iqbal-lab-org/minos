@@ -379,61 +379,38 @@ process minos_all_small_vars {
     sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
     minos_outdir=small_vars.minos.${tsv_fields['sample_id']}
     minos adjudicate --sample_name \$sample_name --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} \$minos_outdir ${ref_fasta} "small_vars_clustered.vcf"
-    bgzip \$minos_outdir/debug.calls_with_zero_cov_alleles.vcf
-    tabix -p vcf \$minos_outdir/debug.calls_with_zero_cov_alleles.vcf.gz
     """
 }
 
 
-// This just takes the list of files output by minos_all_small_vars
-// and writes a new file, with them sorted. Have this as a separate
-// process from the bash script that runs bcftools because the number
-// of files could go over bash's character/length limits
-process make_bcftools_small_vars_fofn {
+// This takes the list of files output by minos_all_small_vars
+// and merges them.
+process merge_small_vars_vcfs {
     memory '1 GB'
+    publishDir path: final_outdir, mode: 'move', overwrite: true
 
     input:
     val(minos_dir_list) from minos_all_small_vars_out.collect()
 
     output:
-    file('vcf_file_list_for_bcftools.txt') into make_bcftools_small_vars_fofn_out
+    file('combined_calls.vcf')
 
     """
     #!/usr/bin/env python3
     # Files end with .N (N=0,1,2,3,...) Sort numerically on this N
     import os
+    from minos import multi_sample_pipeline
+
     minos_dir_list = ["${minos_dir_list.join('", "')}"]
     tuple_list = []
     for filename in minos_dir_list:
         fields = filename.rsplit('.', maxsplit=1)
-        tuple_list.append((int(fields[1]), fields[0]))
+        tuple_list.append((int(fields[1]), filename))
     tuple_list.sort()
-
-    with open('vcf_file_list_for_bcftools.txt', 'w') as f:
-        for t in tuple_list:
-            vcf = os.path.join(t[1] + '.' + str(t[0]), 'debug.calls_with_zero_cov_alleles.vcf.gz')
-            print(vcf, file=f)
+    filenames = [os.path.join(x[1], 'debug.calls_with_zero_cov_alleles.vcf')  for x in tuple_list]
+    multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(filenames, 'combined_calls.vcf')
     """
 }
-
-
-process bcftools_merge {
-    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
-    memory {params.testing ? '0.5 GB' : 1.GB * params.bcftools_merge_ram * task.attempt}
-    maxRetries 3
-
-    publishDir path: final_outdir, mode: 'move', overwrite: true
-    input:
-    file('vcf_file_list_for_bcftools.txt') from make_bcftools_small_vars_fofn_out
-
-    output:
-    file('combined_calls.vcf')
-
-    """
-    ${params.bcftools} merge -l vcf_file_list_for_bcftools.txt -o combined_calls.vcf
-    """
-}
-
 
 ''', file=f)
 
