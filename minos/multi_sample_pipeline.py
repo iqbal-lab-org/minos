@@ -30,7 +30,7 @@ class MultiSamplePipeline:
         nf_ram_cluster_small_vars=2,
         nf_ram_gramtools_build_small=12,
         nf_ram_minos_small_vars=5,
-        nf_ram_bcftools_merge=2,
+        nf_ram_merge_small_vars=4,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
@@ -65,7 +65,7 @@ class MultiSamplePipeline:
         self.nf_ram_cluster_small_vars =  nf_ram_cluster_small_vars
         self.nf_ram_gramtools_build_small = nf_ram_gramtools_build_small
         self.nf_ram_minos_small_vars = nf_ram_minos_small_vars
-        self.nf_ram_bcftools_merge = nf_ram_bcftools_merge
+        self.nf_ram_merge_small_vars = nf_ram_merge_small_vars
 
 
 
@@ -213,7 +213,7 @@ params.testing = false
 params.cluster_small_vars_ram = 2
 params.gramtools_build_small_vars_ram = 12
 params.minos_small_vars_ram = 5
-params.bcftools_merge_ram = 2
+params.merge_small_vars_ram = 4
 params.variants_per_split = 0
 params.alleles_per_split = 0
 params.total_splits = 0
@@ -468,7 +468,7 @@ process merge_small_vars_vcfs {
             '--gramtools_kmer_size', str(self.gramtools_kmer_size),
             '--gramtools_build_threads', str(self.gramtools_build_threads),
             '--minos_small_vars_ram', str(self.nf_ram_minos_small_vars),
-            '--bcftools_merge_ram', str(self.nf_ram_bcftools_merge),
+            '--merge_small_vars_ram', str(self.nf_ram_merge_small_vars),
         ]
 
         if self.testing:

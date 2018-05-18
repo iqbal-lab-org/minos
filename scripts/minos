@@ -130,7 +130,7 @@ subparser_multi_sample_pipeline.add_argument('--no_clean', action='store_true', 
 subparser_multi_sample_pipeline.add_argument('--nf_ram_cluster_small_vars', type=float, help='Nextflow RAM limit when clustering small variants [%(default)s]', metavar='FLOAT', default=2)
 subparser_multi_sample_pipeline.add_argument('--nf_ram_gramtools_build_small', type=float, help='Nextflow RAM limit when running gramtools build on small variants [%(default)s]', metavar='FLOAT', default=12)
 subparser_multi_sample_pipeline.add_argument('--nf_ram_minos_small_vars', type=float, help='Nextflow RAM limit when running minos on small variants [%(default)s]', metavar='FLOAT', default=5)
-subparser_multi_sample_pipeline.add_argument('--nf_ram_bcftools_merge', type=float, help='Nextflow RAM limit when running vcftools merge [%(default)s]', metavar='FLOAT', default=2)
+subparser_multi_sample_pipeline.add_argument('--nf_ram_merge_small_vars', type=float, help='Nextflow RAM limit when merging small variant vcf files [%(default)s]', metavar='FLOAT', default=2)
 subparser_multi_sample_pipeline.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
 subparser_multi_sample_pipeline.set_defaults(func=minos.tasks.multi_sample_pipeline.run)
 
