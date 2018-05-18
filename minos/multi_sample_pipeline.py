@@ -209,7 +209,6 @@ params.gramtools_max_read_length = 0
 params.gramtools_kmer_size = 0
 params.gramtools_build_threads = 1
 params.final_outdir = ""
-params.bcftools = "bcftools"
 params.testing = false
 params.cluster_small_vars_ram = 2
 params.gramtools_build_small_vars_ram = 12
@@ -436,7 +435,7 @@ process merge_small_vars_vcfs {
         formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
         fh.setFormatter(formatter)
         log.addHandler(fh)
-        dependencies.check_and_report_dependencies(programs=['bcftools', 'nextflow'])
+        dependencies.check_and_report_dependencies(programs=['nextflow'])
 
         self._prepare_nextflow_input_files()
         original_dir = os.getcwd()
@@ -456,11 +455,8 @@ process merge_small_vars_vcfs {
         if self.nextflow_config_file is not None:
             nextflow_command.extend(['-c', self.nextflow_config_file])
 
-        bcftools = dependencies.find_binary('bcftools')
-
         nextflow_command += [
             nextflow_script,
-            '--bcftools', bcftools,
             '--ref_fasta', self.ref_fasta,
             '--data_in_tsv', self.nextflow_input_tsv,
             '--max_alleles_per_cluster', str(self.max_alleles_per_cluster),

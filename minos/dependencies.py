@@ -102,7 +102,7 @@ def find_binaries_and_versions(programs=None):
     data = {}
 
     if programs is None:
-        programs = ['bcftools', 'bwa', 'dnadiff', 'gramtools', 'nextflow']
+        programs = ['bwa', 'dnadiff', 'gramtools', 'nextflow']
 
     for program in programs:
         binary = find_binary(program, allow_fail=True)
@@ -130,7 +130,7 @@ def dependencies_report(programs=None):
     lines = ['minos ' + __version__]
 
     if programs is None:
-        programs = ['bcftools', 'bwa', 'dnadiff', 'gramtools', 'nextflow']
+        programs = ['bwa', 'dnadiff', 'gramtools', 'nextflow']
     programs_data = find_binaries_and_versions(programs=programs)
 
     for program in programs:
