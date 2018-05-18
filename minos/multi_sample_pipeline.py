@@ -93,7 +93,7 @@ class MultiSamplePipeline:
 
 
     @classmethod
-    def _merge_vcf_files(cls, infiles_fofn, outfile):
+    def _merge_vcf_files(cls, infiles_list, outfile):
         '''Reimplementation of bcftools merge. Load all files into
         memory, then write output. bcftools opens all files at the same
         time, which doesn't work for lots of files'''
@@ -103,27 +103,26 @@ class MultiSamplePipeline:
         common_first_column_data = []
         first_file = True
 
-        with open(infiles_fofn) as f_fofn:
-            for line in f_fofn:
-                new_data = []
+        for filename in infiles_list:
+            new_data = []
 
-                with open(line.rstrip()) as f_vcf:
-                    for vcf_line in f_vcf:
-                        if vcf_line.startswith('#'):
-                            if first_file and vcf_line.startswith('##'):
-                                header_lines.append(vcf_line.rstrip())
-                            elif vcf_line.startswith('#CHROM'):
-                                fields = vcf_line.rstrip().split('\t')
-                                assert len(fields) == 10
-                                sample_names.append(fields[-1])
-                        else:
-                            first_columns, last_column = vcf_line.rstrip().rsplit('\t', maxsplit=1)
-                            new_data.append(last_column)
-                            if first_file:
-                                common_first_column_data.append(first_columns)
+            with open(filename) as f_vcf:
+                for vcf_line in f_vcf:
+                    if vcf_line.startswith('#'):
+                        if first_file and vcf_line.startswith('##'):
+                            header_lines.append(vcf_line.rstrip())
+                        elif vcf_line.startswith('#CHROM'):
+                            fields = vcf_line.rstrip().split('\t')
+                            assert len(fields) == 10
+                            sample_names.append(fields[-1])
+                    else:
+                        first_columns, last_column = vcf_line.rstrip().rsplit('\t', maxsplit=1)
+                        new_data.append(last_column)
+                        if first_file:
+                            common_first_column_data.append(first_columns)
 
-                vcf_file_data_list_per_sample.append(new_data)
-                first_file = False
+            vcf_file_data_list_per_sample.append(new_data)
+            first_file = False
 
         with open(outfile, 'w') as f:
             print(*header_lines, sep='\n', file=f)

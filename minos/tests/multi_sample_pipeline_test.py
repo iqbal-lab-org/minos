@@ -59,15 +59,11 @@ class TestMultiSamplePipeline(unittest.TestCase):
 
     def test_merge_vcf_files(self):
         '''test merge_vcf_files'''
-        tmp_fofn = 'tmp.merge_vcf_files.fofn'
-        with open(tmp_fofn, 'w') as f:
-            for i in (1, 2, 3):
-                print(os.path.join(data_dir, 'merge_vcf_files.in.' + str(i) + '.vcf'), file=f)
+        file_list = [os.path.join(data_dir, 'merge_vcf_files.in.' + str(i) + '.vcf') for i in (1, 2, 3)]
         tmp_out = 'tmp.merge_vcf_files.out.vcf'
         expected = os.path.join(data_dir, 'merge_vcf_files.out.vcf')
-        multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(tmp_fofn, tmp_out)
+        multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(file_list, tmp_out)
         self.assertTrue(filecmp.cmp(expected, tmp_out, shallow=False))
-        os.unlink(tmp_fofn)
         os.unlink(tmp_out)
 
 
