@@ -42,10 +42,10 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
         '--kmer-size', str(kmer_size),
     ])
     logging.info('Running gramtools build: ' + build_command)
-    utils.syscall(build_command)
-    logging.info('Finished running gramtools build')
+    completed_process = utils.syscall(build_command, allow_fail=True)
+    logging.info('Finished running gramtools build. Return code: ' + str(completed_process.returncode))
     build_report = os.path.join(outdir, 'build_report.json')
-    ran_ok = _build_json_file_is_good(build_report)
+    ran_ok = _build_json_file_is_good(build_report) and completed_process.returncode == 0
     if not ran_ok:
         logging.info('Error running gramtools build. See build report file ' + build_report)
         raise Error('Error running gramtools build: ' + build_command)
