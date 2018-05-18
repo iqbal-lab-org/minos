@@ -57,6 +57,16 @@ class TestMultiSamplePipeline(unittest.TestCase):
             os.unlink(filename)
 
 
+    def test_merge_vcf_files(self):
+        '''test merge_vcf_files'''
+        file_list = [os.path.join(data_dir, 'merge_vcf_files.in.' + str(i) + '.vcf') for i in (1, 2, 3)]
+        tmp_out = 'tmp.merge_vcf_files.out.vcf'
+        expected = os.path.join(data_dir, 'merge_vcf_files.out.vcf')
+        multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(file_list, tmp_out)
+        self.assertTrue(filecmp.cmp(expected, tmp_out, shallow=False))
+        os.unlink(tmp_out)
+
+
     def test_filter_input_file_for_clustering(self):
         infile = os.path.join(data_dir, 'filter_input_file_for_clustering.in.vcf')
         expect = os.path.join(data_dir, 'filter_output_file_for_clusteroutg.out.vcf')
@@ -129,7 +139,7 @@ class TestMultiSamplePipeline(unittest.TestCase):
 
 
     def test_run_no_small_var_vcf_chunking(self):
-        '''test run without chunking small variatn VCF file'''
+        '''test run without chunking small variant VCF file'''
         input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
         ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
         with open(input_tsv, 'w') as f:

@@ -21,7 +21,7 @@ def run(options):
         nf_ram_cluster_small_vars=options.nf_ram_cluster_small_vars,
         nf_ram_gramtools_build_small=options.nf_ram_gramtools_build_small,
         nf_ram_minos_small_vars=options.nf_ram_minos_small_vars,
-        nf_ram_bcftools_merge=options.nf_ram_bcftools_merge,
+        nf_ram_merge_small_vars=options.nf_ram_merge_small_vars,
         testing=options.testing,
     )
     pipeline.run()

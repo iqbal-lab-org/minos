@@ -30,7 +30,7 @@ class MultiSamplePipeline:
         nf_ram_cluster_small_vars=2,
         nf_ram_gramtools_build_small=12,
         nf_ram_minos_small_vars=5,
-        nf_ram_bcftools_merge=2,
+        nf_ram_merge_small_vars=4,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
@@ -65,7 +65,7 @@ class MultiSamplePipeline:
         self.nf_ram_cluster_small_vars =  nf_ram_cluster_small_vars
         self.nf_ram_gramtools_build_small = nf_ram_gramtools_build_small
         self.nf_ram_minos_small_vars = nf_ram_minos_small_vars
-        self.nf_ram_bcftools_merge = nf_ram_bcftools_merge
+        self.nf_ram_merge_small_vars = nf_ram_merge_small_vars
 
 
 
@@ -90,6 +90,46 @@ class MultiSamplePipeline:
 
         logging.info('Finish reading file ' + infile + '. Loaded ' + str(len(data)) + ' samples')
         return data
+
+
+    @classmethod
+    def _merge_vcf_files(cls, infiles_list, outfile):
+        '''Reimplementation of bcftools merge. Load all files into
+        memory, then write output. bcftools opens all files at the same
+        time, which doesn't work for lots of files'''
+        vcf_file_data_list_per_sample = []
+        sample_names = []
+        header_lines = []
+        common_first_column_data = []
+        first_file = True
+
+        for filename in infiles_list:
+            new_data = []
+
+            with open(filename) as f_vcf:
+                for vcf_line in f_vcf:
+                    if vcf_line.startswith('#'):
+                        if first_file and vcf_line.startswith('##'):
+                            header_lines.append(vcf_line.rstrip())
+                        elif vcf_line.startswith('#CHROM'):
+                            fields = vcf_line.rstrip().split('\t')
+                            assert len(fields) == 10
+                            sample_names.append(fields[-1])
+                    else:
+                        first_columns, last_column = vcf_line.rstrip().rsplit('\t', maxsplit=1)
+                        new_data.append(last_column)
+                        if first_file:
+                            common_first_column_data.append(first_columns)
+
+            vcf_file_data_list_per_sample.append(new_data)
+            first_file = False
+
+        with open(outfile, 'w') as f:
+            print(*header_lines, sep='\n', file=f)
+            print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', *sample_names, sep='\t', file=f)
+            for i, common_first_data in enumerate(common_first_column_data):
+                sample_data_cols = [vcf_file_data_list_per_sample[j][i] for j in range(len(vcf_file_data_list_per_sample))]
+                print(common_first_data, *sample_data_cols, sep='\t', file=f)
 
 
     @classmethod
@@ -169,12 +209,11 @@ params.gramtools_max_read_length = 0
 params.gramtools_kmer_size = 0
 params.gramtools_build_threads = 1
 params.final_outdir = ""
-params.bcftools = "bcftools"
 params.testing = false
 params.cluster_small_vars_ram = 2
 params.gramtools_build_small_vars_ram = 12
 params.minos_small_vars_ram = 5
-params.bcftools_merge_ram = 2
+params.merge_small_vars_ram = 4
 params.variants_per_split = 0
 params.alleles_per_split = 0
 params.total_splits = 0
@@ -339,61 +378,38 @@ process minos_all_small_vars {
     sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
     minos_outdir=small_vars.minos.${tsv_fields['sample_id']}
     minos adjudicate --sample_name \$sample_name --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} \$minos_outdir ${ref_fasta} "small_vars_clustered.vcf"
-    bgzip \$minos_outdir/debug.calls_with_zero_cov_alleles.vcf
-    tabix -p vcf \$minos_outdir/debug.calls_with_zero_cov_alleles.vcf.gz
     """
 }
 
 
-// This just takes the list of files output by minos_all_small_vars
-// and writes a new file, with them sorted. Have this as a separate
-// process from the bash script that runs bcftools because the number
-// of files could go over bash's character/length limits
-process make_bcftools_small_vars_fofn {
+// This takes the list of files output by minos_all_small_vars
+// and merges them.
+process merge_small_vars_vcfs {
     memory '1 GB'
+    publishDir path: final_outdir, mode: 'move', overwrite: true
 
     input:
     val(minos_dir_list) from minos_all_small_vars_out.collect()
 
     output:
-    file('vcf_file_list_for_bcftools.txt') into make_bcftools_small_vars_fofn_out
+    file('combined_calls.vcf')
 
     """
     #!/usr/bin/env python3
     # Files end with .N (N=0,1,2,3,...) Sort numerically on this N
     import os
+    from minos import multi_sample_pipeline
+
     minos_dir_list = ["${minos_dir_list.join('", "')}"]
     tuple_list = []
     for filename in minos_dir_list:
         fields = filename.rsplit('.', maxsplit=1)
-        tuple_list.append((int(fields[1]), fields[0]))
+        tuple_list.append((int(fields[1]), filename))
     tuple_list.sort()
-
-    with open('vcf_file_list_for_bcftools.txt', 'w') as f:
-        for t in tuple_list:
-            vcf = os.path.join(t[1] + '.' + str(t[0]), 'debug.calls_with_zero_cov_alleles.vcf.gz')
-            print(vcf, file=f)
+    filenames = [os.path.join(x[1], 'debug.calls_with_zero_cov_alleles.vcf')  for x in tuple_list]
+    multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(filenames, 'combined_calls.vcf')
     """
 }
-
-
-process bcftools_merge {
-    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
-    memory {params.testing ? '0.5 GB' : 1.GB * params.bcftools_merge_ram * task.attempt}
-    maxRetries 3
-
-    publishDir path: final_outdir, mode: 'move', overwrite: true
-    input:
-    file('vcf_file_list_for_bcftools.txt') from make_bcftools_small_vars_fofn_out
-
-    output:
-    file('combined_calls.vcf')
-
-    """
-    ${params.bcftools} merge -l vcf_file_list_for_bcftools.txt -o combined_calls.vcf
-    """
-}
-
 
 ''', file=f)
 
@@ -419,7 +435,7 @@ process bcftools_merge {
         formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
         fh.setFormatter(formatter)
         log.addHandler(fh)
-        dependencies.check_and_report_dependencies(programs=['bcftools', 'nextflow'])
+        dependencies.check_and_report_dependencies(programs=['nextflow'])
 
         self._prepare_nextflow_input_files()
         original_dir = os.getcwd()
@@ -439,11 +455,8 @@ process bcftools_merge {
         if self.nextflow_config_file is not None:
             nextflow_command.extend(['-c', self.nextflow_config_file])
 
-        bcftools = dependencies.find_binary('bcftools')
-
         nextflow_command += [
             nextflow_script,
-            '--bcftools', bcftools,
             '--ref_fasta', self.ref_fasta,
             '--data_in_tsv', self.nextflow_input_tsv,
             '--max_alleles_per_cluster', str(self.max_alleles_per_cluster),
@@ -455,7 +468,7 @@ process bcftools_merge {
             '--gramtools_kmer_size', str(self.gramtools_kmer_size),
             '--gramtools_build_threads', str(self.gramtools_build_threads),
             '--minos_small_vars_ram', str(self.nf_ram_minos_small_vars),
-            '--bcftools_merge_ram', str(self.nf_ram_bcftools_merge),
+            '--merge_small_vars_ram', str(self.nf_ram_merge_small_vars),
         ]
 
         if self.testing:
