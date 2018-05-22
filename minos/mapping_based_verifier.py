@@ -115,6 +115,15 @@ class MappingBasedVerifier:
 
 
     @classmethod
+    def _edit_distance_between_seqs(cls, seq1, seq2):
+        '''Input is two strings). They are globally aligned
+        and the edit distance is returned. An indel of any length
+        is counted as one edit'''
+        aln1, aln2 = MappingBasedVerifier._needleman_wunsch(seq1, seq2)
+        return MappingBasedVerifier._edit_distance_from_alignment_strings(aln1, aln2)
+
+
+    @classmethod
     def _load_exclude_regions_bed_file(cls, infile):
         regions = {}
         if infile is not None:

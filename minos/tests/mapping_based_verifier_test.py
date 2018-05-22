@@ -44,6 +44,14 @@ class TestMappingBasedVerifier(unittest.TestCase):
         self.assertEqual(3, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('AGT--ACTG-', 'A--TCAC-GG'))
 
 
+    def test_edit_distance_between_seqs(self):
+        '''test _edit_distance_between_seqs'''
+        self.assertEqual(0, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('A', 'A'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('A', 'C'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('AG', 'ACG'))
+        self.assertEqual(2, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('AGTGCAT', 'ACGTGCGT'))
+
+
     def test_load_exclude_regions_bed_file(self):
         '''test _load_exclude_regions_bed_file'''
         i1 = pyfastaq.intervals.Interval(42, 43)
