@@ -5,6 +5,8 @@ import os
 import pyfastaq
 import pysam
 
+from Bio import pairwise2
+
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
 from minos import dependencies, dnadiff, utils
@@ -79,6 +81,37 @@ class MappingBasedVerifier:
             self.vcf_to_check = self.vcf_file_in
 
         self.exclude_regions = MappingBasedVerifier._load_exclude_regions_bed_file(exclude_regions_bed_file)
+
+
+    @classmethod
+    def _needleman_wunsch(cls, seq1, seq2, match=1, mismatch=-3, gap_open=-11, gap_extend=-4):
+        '''Returns global alignment strings from NM alignment of the
+        two sequences. Dashes for gaps'''
+        alignments = pairwise2.align.globalms(seq1, seq2, match, mismatch, gap_open, gap_extend)
+        assert len(alignments[0][0]) == len(alignments[0][1])
+        return alignments[0][0], alignments[0][1]
+
+
+    @classmethod
+    def _edit_distance_from_alignment_strings(cls, str1, str2):
+        '''Input should be seqs output by _needleman_wunsch().
+        Returns the edit distance between the sequences'''
+        assert len(str1) == len(str2)
+        edit_distance = 0
+        in_gap = False
+
+        for i, char1 in enumerate(str1):
+            if char1 == '-' or str2[i] == '-':
+                if not in_gap:
+                    in_gap = True
+                    edit_distance += 1
+            else:
+                in_gap = False
+
+                if char1 != str2[i]:
+                    edit_distance += 1
+
+        return edit_distance
 
 
     @classmethod
