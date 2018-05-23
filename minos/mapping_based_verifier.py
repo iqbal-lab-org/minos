@@ -124,6 +124,13 @@ class MappingBasedVerifier:
 
 
     @classmethod
+    def _add_edit_distances_to_vcf_record(cls, record):
+        '''Adds EDIT_DISTANCE => list of numbers, one for each allele'''
+        edit_distances = [MappingBasedVerifier._edit_distance_between_seqs(record.REF, x) for x in record.ALT]
+        record.INFO['EDIT_DIST'] = ','.join([str(x) for x in edit_distances])
+
+
+    @classmethod
     def _load_exclude_regions_bed_file(cls, infile):
         regions = {}
         if infile is not None:

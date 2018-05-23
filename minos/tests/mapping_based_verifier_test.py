@@ -52,6 +52,14 @@ class TestMappingBasedVerifier(unittest.TestCase):
         self.assertEqual(2, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('AGTGCAT', 'ACGTGCGT'))
 
 
+    def test_add_edit_distances_to_vcf_record(self):
+        '''test _add_edit_distances_to_vcf_record'''
+        vcf = vcf_record.VcfRecord('ref1\t3\tid_1\tT\tC,TC\t42.42\tPASS\tKMER=31;SVLEN=0;SVTYPE=SNP\tGT:COV:GT_CONF\t1/1:0,52:39.80')
+        mapping_based_verifier.MappingBasedVerifier._add_edit_distances_to_vcf_record(vcf)
+        self.assertIn('EDIT_DIST', vcf.INFO)
+        self.assertEqual(vcf.INFO['EDIT_DIST'], '1,1')
+
+
     def test_load_exclude_regions_bed_file(self):
         '''test _load_exclude_regions_bed_file'''
         i1 = pyfastaq.intervals.Interval(42, 43)
