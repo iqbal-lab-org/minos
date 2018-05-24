@@ -332,7 +332,7 @@ class MappingBasedVerifier:
         if  exclude_regions is None:
             exclude_regions = {}
 
-        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT', 'E']}
+        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT', 'E', 'tp_edit_dist', 'fp_edit_dist']}
         gt_conf_hists = {'TP': {}, 'FP': {}}
         sreader = sam_reader(infile)
 
@@ -411,6 +411,14 @@ class MappingBasedVerifier:
                 tp_or_fp = {'1': 'TP', '0': 'FP'}[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']]
                 gt_conf = int(float(vcf_record.FORMAT['GT_CONF']))
                 gt_conf_hists[tp_or_fp][gt_conf] = gt_conf_hists[tp_or_fp].get(gt_conf, 0) + 1
+
+            # if it's a homozygous call, update the edit distance totals
+            if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
+                if vcf_record.FORMAT['MINOS_CHECK_GENOTYPE'] == '1':
+                    stats['tp_edit_dist'] += int(float(vcf_record.FORMAT['GT_EDIT_DIST']))
+                elif vcf_record.FORMAT['MINOS_CHECK_GENOTYPE'] == '0':
+                    stats['fp_edit_dist'] += int(float(vcf_record.FORMAT['GT_EDIT_DIST']))
+
 
         stats['gt_wrong'] = stats['0']
         del stats['0']
@@ -526,7 +534,7 @@ class MappingBasedVerifier:
 
         # write stats file
         with open(self.stats_out, 'w') as f:
-            keys = ['total', 'gt_correct', 'gt_wrong', 'gt_excluded', 'HET', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
+            keys = ['total', 'gt_correct', 'gt_wrong', 'gt_excluded', 'HET', 'tp_edit_dist', 'fp_edit_dist', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
             print(*keys, sep='\t', file=f)
             print(*[stats[x] for x in keys], sep='\t', file=f)
 
