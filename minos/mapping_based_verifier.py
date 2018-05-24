@@ -262,10 +262,11 @@ class MappingBasedVerifier:
             except:
                 raise Error('No NM tag foung in sam record:' + str(sam_record))
 
-            return nm == 0
+            all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
+            return all_mapped and sam_record.get_tag('NM') == 0
 
         # don't allow too many soft clipped bases
-        if (sam_record.cigartuples[0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
+        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
             return False
 
         if query_sequence is None:

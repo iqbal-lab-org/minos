@@ -170,9 +170,14 @@ class TestMappingBasedVerifier(unittest.TestCase):
             expected = {'yes': True, 'no': False}[sam_record.query_name.split('.')[-1]]
             self.assertEqual(expected, mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=True))
 
+        samfile = pysam.AlignmentFile(sam_in, "r")
+        first = True
         for sam_record in samfile.fetch(until_eof=True):
-            expected = {'yes': True, 'no': False}[sam_record.query_name.split('.')[-1]]
-            self.assertEqual('no', mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=False))
+            if first:
+                self.assertTrue(mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=False))
+                first = False
+            else:
+                self.assertFalse(mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=False))
 
 
     def test_check_called_genotype(self):
