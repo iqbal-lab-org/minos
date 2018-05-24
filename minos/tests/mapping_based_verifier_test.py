@@ -13,6 +13,55 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'mapping_based_verifier')
 
 
 class TestMappingBasedVerifier(unittest.TestCase):
+    def test_needleman_wunsch(self):
+        '''test _needleman_wunsch'''
+        seq1 = 'ACGTGTCACAG'
+        seq2 = 'AGTCTGACATG'
+        aln1, aln2 = mapping_based_verifier.MappingBasedVerifier._needleman_wunsch(seq1, seq2)
+        expect1 = 'ACGTGTCACA-G'
+        expect2 = 'A-GTCTGACATG'
+        self.assertEqual(expect1, aln1)
+        self.assertEqual(expect2, aln2)
+
+
+    def test_edit_distance_from_alignment_strings(self):
+        '''test _edit_distance_from_alignment_strings'''
+        self.assertEqual(0, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A', 'A'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A', 'C'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A-G', 'ACG'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A--G', 'ACTG'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('ACG', 'A-G'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('ACTG', 'A--G'))
+        self.assertEqual(2, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('ACTC', 'A--G'))
+        self.assertEqual(2, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A--G', 'ACTC'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A-TG', 'AC-G'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('AC-G', 'A-TG'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A--G', 'A-CG'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A-CG', 'A--G'))
+        self.assertEqual(2, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A--TCAC-G', 'AGT--ACTG'))
+        self.assertEqual(2, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('AGT--ACTG', 'A--TCAC-G'))
+        self.assertEqual(3, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('A--TCAC-GG', 'AGT--ACTG-'))
+        self.assertEqual(3, mapping_based_verifier.MappingBasedVerifier._edit_distance_from_alignment_strings('AGT--ACTG-', 'A--TCAC-GG'))
+
+
+    def test_edit_distance_between_seqs(self):
+        '''test _edit_distance_between_seqs'''
+        self.assertEqual(0, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('A', 'A'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('A', 'C'))
+        self.assertEqual(1, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('AG', 'ACG'))
+        self.assertEqual(2, mapping_based_verifier.MappingBasedVerifier._edit_distance_between_seqs('AGTGCAT', 'ACGTGCGT'))
+
+
+    def test_add_edit_distances_to_vcf_record(self):
+        '''test _add_edit_distances_to_vcf_record'''
+        vcf = vcf_record.VcfRecord('ref1\t3\tid_1\tTCGA\tTCCA,TAAA\t42.42\tPASS\tKMER=31;SVLEN=0;SVTYPE=SNP\tGT:COV:GT_CONF\t2/2:0,52:39.80:1')
+        mapping_based_verifier.MappingBasedVerifier._add_edit_distances_to_vcf_record(vcf)
+        self.assertIn('EDIT_DIST', vcf.INFO)
+        self.assertEqual(vcf.INFO['EDIT_DIST'], '1,2')
+        self.assertIn('GT_EDIT_DIST', vcf.FORMAT)
+        self.assertEqual(vcf.FORMAT['GT_EDIT_DIST'], '2.0')
+
+
     def test_load_exclude_regions_bed_file(self):
         '''test _load_exclude_regions_bed_file'''
         i1 = pyfastaq.intervals.Interval(42, 43)
@@ -246,7 +295,7 @@ class TestMappingBasedVerifier(unittest.TestCase):
         vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
         verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
         exclude_regions_bed_file = os.path.join(data_dir, 'run.exclude.bed')
-        tmp_out = 'tmp.mapping_based_verifier.out.no_filter_cluster'
+        tmp_out = 'tmp.mapping_based_verifier.out.no_filter_cluster.with_exclude'
         verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=False, exclude_regions_bed_file=exclude_regions_bed_file)
         verifier.run()
         expected_out = os.path.join(data_dir, 'run.out.no_filter_cluster_with_exclude')

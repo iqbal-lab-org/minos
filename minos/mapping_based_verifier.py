@@ -5,6 +5,8 @@ import os
 import pyfastaq
 import pysam
 
+from Bio import pairwise2
+
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
 from minos import dependencies, dnadiff, utils
@@ -79,6 +81,65 @@ class MappingBasedVerifier:
             self.vcf_to_check = self.vcf_file_in
 
         self.exclude_regions = MappingBasedVerifier._load_exclude_regions_bed_file(exclude_regions_bed_file)
+
+
+    @classmethod
+    def _needleman_wunsch(cls, seq1, seq2, match=1, mismatch=-3, gap_open=-11, gap_extend=-4):
+        '''Returns global alignment strings from NM alignment of the
+        two sequences. Dashes for gaps'''
+        alignments = pairwise2.align.globalms(seq1, seq2, match, mismatch, gap_open, gap_extend)
+        assert len(alignments[0][0]) == len(alignments[0][1])
+        return alignments[0][0], alignments[0][1]
+
+
+    @classmethod
+    def _edit_distance_from_alignment_strings(cls, str1, str2):
+        '''Input should be seqs output by _needleman_wunsch().
+        Returns the edit distance between the sequences'''
+        assert len(str1) == len(str2)
+        edit_distance = 0
+        in_gap = False
+
+        for i, char1 in enumerate(str1):
+            if char1 == '-' or str2[i] == '-':
+                if not in_gap:
+                    in_gap = True
+                    edit_distance += 1
+            else:
+                in_gap = False
+
+                if char1 != str2[i]:
+                    edit_distance += 1
+
+        return edit_distance
+
+
+    @classmethod
+    def _edit_distance_between_seqs(cls, seq1, seq2):
+        '''Input is two strings). They are globally aligned
+        and the edit distance is returned. An indel of any length
+        is counted as one edit'''
+        aln1, aln2 = MappingBasedVerifier._needleman_wunsch(seq1, seq2)
+        return MappingBasedVerifier._edit_distance_from_alignment_strings(aln1, aln2)
+
+
+    @classmethod
+    def _add_edit_distances_to_vcf_record(cls, record):
+        '''Adds EDIT_DIST => list of numbers, one for each allele, to the INFO column.
+        Also adds GT_EDIT_DIST => float, which is the edit distance between the genotyped allele
+        and the ref. If het call, takes the mean edit distance of the two calls'''
+        edit_distances = [MappingBasedVerifier._edit_distance_between_seqs(record.REF, x) for x in record.ALT]
+        record.INFO['EDIT_DIST'] = ','.join([str(x) for x in edit_distances])
+        if 'GT' in record.FORMAT:
+            genotypes = set([int(x) for x in record.FORMAT['GT'].split('/')])
+            geno_edit_distances = []
+            for genotype in genotypes:
+                if genotype == 0:
+                    geno_edit_distances.append(0)
+                else:
+                    geno_edit_distances.append(edit_distances[genotype - 1])
+            gt_edit_dist = round(sum(geno_edit_distances) / len(geno_edit_distances), 1)
+            record.set_format_key_value('GT_EDIT_DIST', str(gt_edit_dist))
 
 
     @classmethod
@@ -271,7 +332,7 @@ class MappingBasedVerifier:
         if  exclude_regions is None:
             exclude_regions = {}
 
-        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT', 'E']}
+        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT', 'E', 'tp_edit_dist', 'fp_edit_dist']}
         gt_conf_hists = {'TP': {}, 'FP': {}}
         sreader = sam_reader(infile)
 
@@ -344,11 +405,20 @@ class MappingBasedVerifier:
 
             MappingBasedVerifier._check_called_genotype(vcf_record)
             stats[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']] += 1
+            MappingBasedVerifier._add_edit_distances_to_vcf_record(vcf_record)
 
             if 'GT_CONF' in vcf_record.FORMAT and vcf_record.FORMAT['MINOS_CHECK_GENOTYPE'] in {'0', '1'}:
                 tp_or_fp = {'1': 'TP', '0': 'FP'}[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']]
                 gt_conf = int(float(vcf_record.FORMAT['GT_CONF']))
                 gt_conf_hists[tp_or_fp][gt_conf] = gt_conf_hists[tp_or_fp].get(gt_conf, 0) + 1
+
+            # if it's a homozygous call, update the edit distance totals
+            if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
+                if vcf_record.FORMAT['MINOS_CHECK_GENOTYPE'] == '1':
+                    stats['tp_edit_dist'] += int(float(vcf_record.FORMAT['GT_EDIT_DIST']))
+                elif vcf_record.FORMAT['MINOS_CHECK_GENOTYPE'] == '0':
+                    stats['fp_edit_dist'] += int(float(vcf_record.FORMAT['GT_EDIT_DIST']))
+
 
         stats['gt_wrong'] = stats['0']
         del stats['0']
@@ -464,7 +534,7 @@ class MappingBasedVerifier:
 
         # write stats file
         with open(self.stats_out, 'w') as f:
-            keys = ['total', 'gt_correct', 'gt_wrong', 'gt_excluded', 'HET', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
+            keys = ['total', 'gt_correct', 'gt_wrong', 'gt_excluded', 'HET', 'tp_edit_dist', 'fp_edit_dist', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
             print(*keys, sep='\t', file=f)
             print(*[stats[x] for x in keys], sep='\t', file=f)
 
