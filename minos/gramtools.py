@@ -72,7 +72,7 @@ def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_l
         gramtools_exe,
         'quasimap',
         '--gram-directory', build_dir,
-        '--run-directory', quasimap_dir,
+        '--output-directory', quasimap_dir,
         ' '.join(['--reads ' + x for x in reads]),
     ])
     logging.info('Running gramtools quasimap: ' + quasimap_command)
