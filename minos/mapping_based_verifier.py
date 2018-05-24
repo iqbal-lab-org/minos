@@ -393,6 +393,7 @@ class MappingBasedVerifier:
 
             MappingBasedVerifier._check_called_genotype(vcf_record)
             stats[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']] += 1
+            MappingBasedVerifier._add_edit_distances_to_vcf_record(vcf_record)
 
             if 'GT_CONF' in vcf_record.FORMAT and vcf_record.FORMAT['MINOS_CHECK_GENOTYPE'] in {'0', '1'}:
                 tp_or_fp = {'1': 'TP', '0': 'FP'}[vcf_record.FORMAT['MINOS_CHECK_GENOTYPE']]

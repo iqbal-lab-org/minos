@@ -293,7 +293,7 @@ class TestMappingBasedVerifier(unittest.TestCase):
         vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
         verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
         exclude_regions_bed_file = os.path.join(data_dir, 'run.exclude.bed')
-        tmp_out = 'tmp.mapping_based_verifier.out.no_filter_cluster'
+        tmp_out = 'tmp.mapping_based_verifier.out.no_filter_cluster.with_exclude'
         verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=False, exclude_regions_bed_file=exclude_regions_bed_file)
         verifier.run()
         expected_out = os.path.join(data_dir, 'run.out.no_filter_cluster_with_exclude')
