@@ -54,10 +54,12 @@ class TestMappingBasedVerifier(unittest.TestCase):
 
     def test_add_edit_distances_to_vcf_record(self):
         '''test _add_edit_distances_to_vcf_record'''
-        vcf = vcf_record.VcfRecord('ref1\t3\tid_1\tT\tC,TC\t42.42\tPASS\tKMER=31;SVLEN=0;SVTYPE=SNP\tGT:COV:GT_CONF\t1/1:0,52:39.80')
+        vcf = vcf_record.VcfRecord('ref1\t3\tid_1\tTCGA\tTCCA,TAAA\t42.42\tPASS\tKMER=31;SVLEN=0;SVTYPE=SNP\tGT:COV:GT_CONF\t2/2:0,52:39.80:1')
         mapping_based_verifier.MappingBasedVerifier._add_edit_distances_to_vcf_record(vcf)
         self.assertIn('EDIT_DIST', vcf.INFO)
-        self.assertEqual(vcf.INFO['EDIT_DIST'], '1,1')
+        self.assertEqual(vcf.INFO['EDIT_DIST'], '1,2')
+        self.assertIn('GT_EDIT_DIST', vcf.FORMAT)
+        self.assertEqual(vcf.FORMAT['GT_EDIT_DIST'], '2.0')
 
 
     def test_load_exclude_regions_bed_file(self):

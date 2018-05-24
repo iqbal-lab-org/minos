@@ -125,9 +125,21 @@ class MappingBasedVerifier:
 
     @classmethod
     def _add_edit_distances_to_vcf_record(cls, record):
-        '''Adds EDIT_DISTANCE => list of numbers, one for each allele'''
+        '''Adds EDIT_DIST => list of numbers, one for each allele, to the INFO column.
+        Also adds GT_EDIT_DIST => float, which is the edit distance between the genotyped allele
+        and the ref. If het call, takes the mean edit distance of the two calls'''
         edit_distances = [MappingBasedVerifier._edit_distance_between_seqs(record.REF, x) for x in record.ALT]
         record.INFO['EDIT_DIST'] = ','.join([str(x) for x in edit_distances])
+        if 'GT' in record.FORMAT:
+            genotypes = set([int(x) for x in record.FORMAT['GT'].split('/')])
+            geno_edit_distances = []
+            for genotype in genotypes:
+                if genotype == 0:
+                    geno_edit_distances.append(0)
+                else:
+                    geno_edit_distances.append(edit_distances[genotype - 1])
+            gt_edit_dist = round(sum(geno_edit_distances) / len(geno_edit_distances), 1)
+            record.set_format_key_value('GT_EDIT_DIST', str(gt_edit_dist))
 
 
     @classmethod
