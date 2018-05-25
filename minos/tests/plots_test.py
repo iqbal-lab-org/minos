@@ -97,3 +97,30 @@ class TestPlots(unittest.TestCase):
         infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.no_dp_and_gt_conf.in.vcf')
         self.assertIsNone(plots.minos_vcf_to_plot_data(infile, tmpfile))
         self.assertFalse(os.path.exists(tmpfile))
+
+
+    def test_plots_from_minos_vcf(self):
+        outprefix = 'tmp.plots_from_minos_vcf.out'
+        expect_files = [outprefix + x + '.pdf' for x in ['.gt_conf_dp_scatter', '.dp_hist', '.gt_conf_hist']]
+        expect_files.append(outprefix + '.data.tsv')
+
+        infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.in.vcf')
+        plots.plots_from_minos_vcf(infile, outprefix)
+        for f in expect_files:
+            self.assertTrue(os.path.exists(f))
+            self.assertNotEqual(0, os.stat(f).st_size)
+            os.unlink(f)
+
+        infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.no_check_geno.in.vcf')
+        plots.plots_from_minos_vcf(infile, outprefix)
+        for f in expect_files:
+            self.assertTrue(os.path.exists(f))
+            self.assertNotEqual(0, os.stat(f).st_size)
+            os.unlink(f)
+
+        infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.no_dp_and_gt_conf.in.vcf')
+        plots.plots_from_minos_vcf(infile, outprefix)
+        for f in expect_files:
+            self.assertFalse(os.path.exists(f))
+
+

@@ -98,3 +98,24 @@ def minos_vcf_to_plot_data(infile, outfile):
 
     return has_tp_and_fp
 
+
+def plots_from_minos_vcf(infile, outprefix):
+    data_tsv = outprefix + '.data.tsv'
+    has_tp_and_fp = minos_vcf_to_plot_data(infile, data_tsv)
+    if has_tp_and_fp is None:
+        return
+
+    data = load_dp_and_gt_conf_data_from_file(data_tsv)
+    scatter_file = outprefix + '.gt_conf_dp_scatter.pdf'
+    dp_hist_file = outprefix + '.dp_hist.pdf'
+    gt_conf_hist_file = outprefix + '.gt_conf_hist.pdf'
+
+    if has_tp_and_fp:
+        scatter_plot_gt_conf_vs_dp_colour_by_tp_fp(data, scatter_file)
+        histogram_of_one_dataframe_column_color_by_tp_fp(data, 'DP', dp_hist_file)
+        histogram_of_one_dataframe_column_color_by_tp_fp(data, 'GT_CONF', gt_conf_hist_file)
+    else:
+        scatter_plot_gt_conf_vs_dp(data, scatter_file)
+        histogram_of_one_dataframe_column(data, 'DP', dp_hist_file)
+        histogram_of_one_dataframe_column(data, 'GT_CONF', gt_conf_hist_file)
+
