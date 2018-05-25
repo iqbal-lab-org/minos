@@ -17,10 +17,13 @@ setup(
         'biopython',
         'cluster_vcf_records >= 0.6.0',
         'gramtools',
+        'matplotlib',
+        'pandas',
         'pyfastaq >= 3.14.0',
         'pymummer >= 0.10.3',
         'pysam >= 0.12',
         'scipy >= 1.0.0',
+        'seaborn',
     ],
     license='GPLv3',
     classifiers=[
