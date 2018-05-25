@@ -72,28 +72,28 @@ class TestPlots(unittest.TestCase):
         infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.in.vcf')
         expect_file = os.path.join(data_dir, 'minos_vcf_to_plot_data.expect.tsv')
         tmpfile = 'tmp.test.minos_vcf_to_plot_data.tsv'
-        plots.minos_vcf_to_plot_data(infile, tmpfile)
+        self.assertTrue(plots.minos_vcf_to_plot_data(infile, tmpfile))
         self.assertTrue(filecmp.cmp(expect_file, tmpfile, shallow=False))
         os.unlink(tmpfile)
 
         infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.partial_check_geno.in.vcf')
         expect_file = os.path.join(data_dir, 'minos_vcf_to_plot_data.no_tp_or_fp.expect.tsv')
-        plots.minos_vcf_to_plot_data(infile, tmpfile)
+        self.assertFalse(plots.minos_vcf_to_plot_data(infile, tmpfile))
         self.assertTrue(filecmp.cmp(expect_file, tmpfile, shallow=False))
         os.unlink(tmpfile)
 
         infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.no_check_geno.in.vcf')
         expect_file = os.path.join(data_dir, 'minos_vcf_to_plot_data.no_tp_or_fp.expect.tsv')
-        plots.minos_vcf_to_plot_data(infile, tmpfile)
+        self.assertFalse(plots.minos_vcf_to_plot_data(infile, tmpfile))
         self.assertTrue(filecmp.cmp(expect_file, tmpfile, shallow=False))
         os.unlink(tmpfile)
 
         infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.partial_dp_and_gt_conf.in.vcf')
         expect_file = os.path.join(data_dir, 'minos_vcf_to_plot_data.partial_dp_and_gt_conf.expect.tsv')
-        plots.minos_vcf_to_plot_data(infile, tmpfile)
+        self.assertFalse(plots.minos_vcf_to_plot_data(infile, tmpfile))
         self.assertTrue(filecmp.cmp(expect_file, tmpfile, shallow=False))
         os.unlink(tmpfile)
 
         infile = os.path.join(data_dir, 'minos_vcf_to_plot_data.no_dp_and_gt_conf.in.vcf')
-        plots.minos_vcf_to_plot_data(infile, tmpfile)
+        self.assertIsNone(plots.minos_vcf_to_plot_data(infile, tmpfile))
         self.assertFalse(os.path.exists(tmpfile))

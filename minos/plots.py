@@ -86,7 +86,7 @@ def minos_vcf_to_plot_data(infile, outfile):
 
     if len(data) == 0:
         logging.warning('No DP and GT_CONF data found in VCF file ' + infile + ' therefore no plots will be made')
-        return
+        return None
 
     if has_tp_and_fp:
         output_cols.append('TP_OR_FP')
@@ -95,4 +95,6 @@ def minos_vcf_to_plot_data(infile, outfile):
         print(*output_cols, sep='\t', file=f)
         for l in data:
             print(*l[:len(output_cols)], sep='\t', file=f)
+
+    return has_tp_and_fp
 
