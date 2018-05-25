@@ -6,7 +6,7 @@ import sys
 
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
-from minos import bam_read_extract, dependencies, gramtools, utils, vcf_chunker
+from minos import bam_read_extract, dependencies, gramtools, plots, utils, vcf_chunker
 
 class Error (Exception): pass
 
@@ -40,6 +40,7 @@ class Adjudicator:
         self.clustered_vcf = os.path.join(self.outdir, 'gramtools.in.vcf')
         self.unfiltered_vcf_file = os.path.join(self.outdir, 'debug.calls_with_zero_cov_alleles.vcf')
         self.final_vcf = os.path.join(self.outdir, 'final.vcf')
+        self.plots_prefix = os.path.join(self.outdir, 'final.vcf.plots')
 
         if gramtools_build_dir is None:
             self.split_input_dir = os.path.join(self.outdir, 'split.in')
@@ -146,6 +147,9 @@ class Adjudicator:
             self._run_gramtools_with_split_vcf()
         else:
             self._run_gramtools_not_split_vcf()
+
+        logging.info('Making plots from final.vcf')
+        plots.plots_from_minos_vcf(self.final_vcf, self.plots_prefix)
 
         logging.info('All done! Thank you for using minos :)')
 
