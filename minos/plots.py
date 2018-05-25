@@ -4,7 +4,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 matplotlib.style.use('ggplot')
-#from matplotlib.lines import Line2D
 
 
 def load_dp_and_gt_conf_data_from_file(infile):
