@@ -16,7 +16,7 @@ def scatter_plot_gt_conf_vs_dp(data, outfile):
         y="GT_CONF",
         data=data,
         fit_reg=False,
-        legend=True,
+        legend=False,
         markers=["o"],
         scatter_kws={"s": 5},
     )
@@ -32,10 +32,12 @@ def scatter_plot_gt_conf_vs_dp_colour_by_tp_fp(data, outfile):
         fit_reg=False,
         hue='TP_OR_FP',
         legend=True,
+        legend_out=True,
         markers=["o", "x"],
         scatter_kws={"s": 5},
         palette=dict(TP="g", FP="m")
     )
+    p._legend.set_title(None)
     p.savefig(outfile)
     plt.clf()
 
@@ -49,8 +51,9 @@ def histogram_of_one_dataframe_column(data, column_name, outfile):
 def histogram_of_one_dataframe_column_color_by_tp_fp(data, column_name, outfile):
     tps = data[data['TP_OR_FP'] == 'TP']
     fps = data[data['TP_OR_FP'] == 'FP']
-    p = sns.distplot(tps[column_name], color="g", kde=False)
-    p = sns.distplot(fps[column_name], color="m", kde=False)
+    p = sns.distplot(tps[column_name], label='True positive', color="g", kde=False)
+    p = sns.distplot(fps[column_name], label='False positive', color="m", kde=False)
+    plt.legend()
     p.figure.savefig(outfile)
     plt.clf()
 
