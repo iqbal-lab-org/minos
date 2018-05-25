@@ -1,3 +1,5 @@
+import logging
+
 import matplotlib
 matplotlib.use('Agg')
 import pandas as pd
@@ -5,6 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 matplotlib.style.use('ggplot')
 
+from cluster_vcf_records import vcf_file_read
 
 def load_dp_and_gt_conf_data_from_file(infile):
     return pd.read_csv(infile, header=0, sep='\t')
@@ -56,4 +59,40 @@ def histogram_of_one_dataframe_column_color_by_tp_fp(data, column_name, outfile)
     plt.legend()
     p.figure.savefig(outfile)
     plt.clf()
+
+
+def minos_vcf_to_plot_data(infile, outfile):
+    header, records = vcf_file_read.vcf_file_to_list(infile)
+    data = []
+    has_tp_and_fp = True
+    output_cols = ['DP', 'GT_CONF']
+
+    for record in records:
+        if record.FORMAT is None:
+            continue
+
+        check_geno = record.FORMAT.get('MINOS_CHECK_GENOTYPE', None)
+        dp = record.FORMAT.get('DP', None)
+        gt_conf = record.FORMAT.get('GT_CONF', None)
+        if dp is not None and gt_conf is not None:
+            to_append = [dp, gt_conf]
+
+            if check_geno is None:
+                has_tp_and_fp = False
+            else:
+                to_append.append({'1': 'TP', '0': 'FP'}[check_geno])
+
+            data.append(to_append)
+
+    if len(data) == 0:
+        logging.warning('No DP and GT_CONF data found in VCF file ' + infile + ' therefore no plots will be made')
+        return
+
+    if has_tp_and_fp:
+        output_cols.append('TP_OR_FP')
+
+    with open(outfile, 'w') as f:
+        print(*output_cols, sep='\t', file=f)
+        for l in data:
+            print(*l[:len(output_cols)], sep='\t', file=f)
 
