@@ -14,6 +14,7 @@ __all__ = [
     'gramtools',
     'mapping_based_verifier',
     'multi_sample_pipeline',
+    'plots',
     'tasks',
     'utils',
     'vcf_chunker',
