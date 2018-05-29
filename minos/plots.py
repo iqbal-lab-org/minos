@@ -27,7 +27,10 @@ def scatter_plot_gt_conf_vs_dp(data, outfile):
     plt.clf()
 
 
-def scatter_plot_gt_conf_vs_dp_colour_by_tp_fp(data, outfile):
+def scatter_plot_gt_conf_vs_dp_colour_by_tp_fp(data, outfile, tp_or_fp_types):
+    colours = {'TP': 'g', 'FP':'m', 'Unknown': 'black'}
+    palette = {x: colours[x] for x in tp_or_fp_types}
+
     p = sns.lmplot(
         x="DP",
         y="GT_CONF",
@@ -36,9 +39,9 @@ def scatter_plot_gt_conf_vs_dp_colour_by_tp_fp(data, outfile):
         hue='TP_OR_FP',
         legend=True,
         legend_out=True,
-        markers=["o", "x"],
+        markers=["o"] * len(palette),
         scatter_kws={"s": 5},
-        palette=dict(TP="g", FP="m")
+        palette=palette
     )
     p._legend.set_title(None)
     p.savefig(outfile)
@@ -64,7 +67,7 @@ def histogram_of_one_dataframe_column_color_by_tp_fp(data, column_name, outfile)
 def minos_vcf_to_plot_data(infile, outfile):
     header, records = vcf_file_read.vcf_file_to_list(infile)
     data = []
-    has_tp_and_fp = True
+    tp_or_fp_types = set()
     output_cols = ['DP', 'GT_CONF']
 
     for record in records:
@@ -77,10 +80,16 @@ def minos_vcf_to_plot_data(infile, outfile):
         if dp is not None and gt_conf is not None:
             to_append = [dp, gt_conf]
 
-            if check_geno is None:
-                has_tp_and_fp = False
-            else:
-                to_append.append({'1': 'TP', '0': 'FP'}[check_geno])
+            if check_geno is not None:
+                if check_geno == '0':
+                    tp_or_fp_type = 'FP'
+                elif check_geno == '1':
+                    tp_or_fp_type = 'TP'
+                else:
+                    tp_or_fp_type = 'Unknown'
+
+                tp_or_fp_types.add(tp_or_fp_type)
+                to_append.append(tp_or_fp_type)
 
             data.append(to_append)
 
@@ -88,21 +97,23 @@ def minos_vcf_to_plot_data(infile, outfile):
         logging.warning('No DP and GT_CONF data found in VCF file ' + infile + ' therefore no plots will be made')
         return None
 
-    if has_tp_and_fp:
+    if 'TP' in tp_or_fp_types or 'FP' in tp_or_fp_types:
         output_cols.append('TP_OR_FP')
 
     with open(outfile, 'w') as f:
         print(*output_cols, sep='\t', file=f)
         for l in data:
+            if len(l) < len(output_cols):
+                l.append('Unknown')
             print(*l[:len(output_cols)], sep='\t', file=f)
 
-    return has_tp_and_fp
+    return tp_or_fp_types
 
 
 def plots_from_minos_vcf(infile, outprefix):
     data_tsv = outprefix + '.data.tsv'
-    has_tp_and_fp = minos_vcf_to_plot_data(infile, data_tsv)
-    if has_tp_and_fp is None:
+    tp_or_fp_types = minos_vcf_to_plot_data(infile, data_tsv)
+    if tp_or_fp_types is None:
         return
 
     data = load_dp_and_gt_conf_data_from_file(data_tsv)
@@ -110,12 +121,12 @@ def plots_from_minos_vcf(infile, outprefix):
     dp_hist_file = outprefix + '.dp_hist.pdf'
     gt_conf_hist_file = outprefix + '.gt_conf_hist.pdf'
 
-    if has_tp_and_fp:
-        scatter_plot_gt_conf_vs_dp_colour_by_tp_fp(data, scatter_file)
-        histogram_of_one_dataframe_column_color_by_tp_fp(data, 'DP', dp_hist_file)
-        histogram_of_one_dataframe_column_color_by_tp_fp(data, 'GT_CONF', gt_conf_hist_file)
-    else:
+    if len(tp_or_fp_types) == 0 or tp_or_fp_types == {'Unknown'}:
         scatter_plot_gt_conf_vs_dp(data, scatter_file)
         histogram_of_one_dataframe_column(data, 'DP', dp_hist_file)
         histogram_of_one_dataframe_column(data, 'GT_CONF', gt_conf_hist_file)
+    else:
+        scatter_plot_gt_conf_vs_dp_colour_by_tp_fp(data, scatter_file, tp_or_fp_types)
+        histogram_of_one_dataframe_column_color_by_tp_fp(data, 'DP', dp_hist_file)
+        histogram_of_one_dataframe_column_color_by_tp_fp(data, 'GT_CONF', gt_conf_hist_file)
 
