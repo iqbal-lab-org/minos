@@ -9,7 +9,7 @@ from Bio import pairwise2
 
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
-from minos import dependencies, dnadiff, utils
+from minos import dependencies, dnadiff, plots, utils
 
 class Error (Exception): pass
 
@@ -55,6 +55,7 @@ class MappingBasedVerifier:
         self.vcf_reference_file = os.path.abspath(vcf_reference_file)
         self.verify_reference_file = os.path.abspath(verify_reference_file)
         self.vcf_file_out = os.path.abspath(outprefix + '.vcf')
+        self.vcf_file_plots_out = os.path.abspath(outprefix + '.vcf.plots')
         self.sam_file_out = os.path.abspath(outprefix + '.sam')
         self.filtered_vcf = os.path.abspath(outprefix + '.filter.vcf')
         self.clustered_vcf = os.path.abspath(outprefix + '.filter.cluster.vcf')
@@ -546,4 +547,6 @@ class MappingBasedVerifier:
                 print('GT_CONF\tCount', file=f)
                 for gt_conf, count in sorted(gt_conf_hists[key].items()):
                     print(gt_conf, count, sep='\t', file=f)
+
+        plots.plots_from_minos_vcf(self.vcf_file_out, self.vcf_file_plots_out)
 
