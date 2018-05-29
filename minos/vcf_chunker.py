@@ -4,7 +4,6 @@ import logging
 import multiprocessing
 import os
 import pickle
-import json
 
 import cluster_vcf_records
 
