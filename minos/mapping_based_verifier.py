@@ -192,7 +192,7 @@ class MappingBasedVerifier:
                     genotype = vcf_record.FORMAT['GT']
                     genotypes = genotype.split('/')
                     called_alleles = set(genotypes)
-                    if len(called_alleles) != 1 or (self.discard_ref_calls and called_alleles == {'0'}) or '.' in called_alleles:
+                    if len(called_alleles) != 1 or (discard_ref_calls and called_alleles == {'0'}) or '.' in called_alleles:
                         continue
 
                     if len(vcf_record.ALT) > 1:
