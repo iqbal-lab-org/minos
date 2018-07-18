@@ -195,7 +195,7 @@ class MappingBasedVerifier:
                         continue
 
                     if len(vcf_record.ALT) > 1:
-                        if called_alleles[0] != '0':
+                        if called_alleles != {'0'}:
                             vcf_record.set_format_key_value('GT', '1/1')
                             try:
                                 vcf_record.ALT = [vcf_record.ALT[int(genotypes[0]) - 1]]
