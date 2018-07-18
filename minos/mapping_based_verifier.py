@@ -175,7 +175,7 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _filter_vcf_for_clustering(cls, infile, outfile):
+    def _filter_vcf_for_clustering(cls, infile, outfile, discard_ref_alleles=True):
         header_lines, vcf_records = vcf_file_read.vcf_file_to_dict(infile, sort=True, homozygous_only=False, remove_asterisk_alts=True, remove_useless_start_nucleotides=True)
 
         with open(outfile, 'w') as f:
@@ -191,7 +191,7 @@ class MappingBasedVerifier:
                     genotype = vcf_record.FORMAT['GT']
                     genotypes = genotype.split('/')
                     called_alleles = set(genotypes)
-                    if len(called_alleles) != 1 or called_alleles == {'0'} or '.' in called_alleles:
+                    if len(called_alleles) != 1 or (discard_ref_alleles and called_alleles == {'0'}) or '.' in called_alleles:
                         continue
 
                     vcf_record.set_format_key_value('GT', '1/1')
