@@ -10,6 +10,7 @@ def run(options):
         expected_variants_vcf=options.expected_variants_vcf,
         run_dnadiff=options.run_dnadiff,
         filter_and_cluster_vcf=not options.no_filter_cluster,
+        discard_ref_calls=not options.include_ref_calls,
         allow_flank_mismatches=options.allow_flank_mismatches,
         merge_length=options.variant_merge_length,
         exclude_regions_bed_file=options.exclude_bed,
