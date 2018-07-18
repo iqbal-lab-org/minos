@@ -194,12 +194,16 @@ class MappingBasedVerifier:
                     if len(called_alleles) != 1 or (discard_ref_alleles and called_alleles == {'0'}) or '.' in called_alleles:
                         continue
 
-                    vcf_record.set_format_key_value('GT', '1/1')
-
-                    try:
-                        vcf_record.ALT = [vcf_record.ALT[int(genotypes[0]) - 1]]
-                    except:
-                        raise Error('BAD VCf line:' + str(vcf_record))
+                    if len(vcf_record.ALT) > 1:
+                        if called_alleles[0] != '0':
+                            vcf_record.set_format_key_value('GT', '1/1')
+                            try:
+                                vcf_record.ALT = [vcf_record.ALT[int(genotypes[0]) - 1]]
+                            except:
+                                raise Error('BAD VCf line:' + str(vcf_record))
+                        else:
+                            vcf_record.set_format_key_value('GT', '0/0')
+                            vcf_record.ALT = [vcf_record.ALT[0]]
 
                     print(vcf_record, file=f)
 

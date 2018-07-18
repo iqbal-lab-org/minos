@@ -118,6 +118,15 @@ class TestMappingBasedVerifier(unittest.TestCase):
         self.assertTrue(filecmp.cmp(expected_vcf, tmp_out, shallow=False))
         os.unlink(tmp_out)
 
+    def test_filter_vcf_for_clustering_keep_ref_calls(self):
+        '''test _filter_vcf_for_clustering'''
+        vcf_in = os.path.join(data_dir, 'filter_vcf_for_clustering.in.vcf')
+        expected_vcf = os.path.join(data_dir, 'filter_vcf_for_clustering.with_ref_calls.expect.vcf')
+        tmp_out = 'tmp.filter_vcf_for_clustering.out.vcf'
+        discard_ref_alleles = False
+        mapping_based_verifier.MappingBasedVerifier._filter_vcf_for_clustering(vcf_in, tmp_out, discard_ref_alleles)
+        self.assertTrue(filecmp.cmp(expected_vcf, tmp_out, shallow=False))
+        os.unlink(tmp_out)
 
     def test_write_vars_plus_flanks_to_fasta(self):
         '''test _write_vars_plus_flanks_to_fasta'''
