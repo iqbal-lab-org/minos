@@ -206,6 +206,11 @@ class MappingBasedVerifier:
                             vcf_record.set_format_key_value('GT', '0/0')
                             vcf_record.ALT = [vcf_record.ALT[0]]
 
+                    if vcf_record.FORMAT['GT'] == '0':
+                        vcf_record.FORMAT['GT'] = '0/0'
+                    elif vcf_record.FORMAT['GT'] == '1':
+                        vcf_record.FORMAT['GT'] = '1/1'
+
                     print(vcf_record, file=f)
 
 
