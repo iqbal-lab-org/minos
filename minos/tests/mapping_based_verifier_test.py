@@ -345,6 +345,26 @@ class TestMappingBasedVerifier(unittest.TestCase):
         for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps', '.filter.vcf', '.filter.cluster.vcf']:
             os.unlink(tmp_out + suffix)
 
+    def test_run_with_filter_cluster_include_ref_alleles(self):
+        '''test run with filtering and clustering'''
+        vcf_file_in = os.path.join(data_dir, 'run.calls.include_ref_calls.vcf')
+        vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
+        verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
+        tmp_out = 'tmp.mapping_based_verifier.out.include_ref_calls'
+        verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=True, discard_ref_calls=False)
+        verifier.run()
+        expected_out = os.path.join(data_dir, 'run.out.include_ref_calls')
+        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf', '.gt_conf_hist.TP.tsv', '.gt_conf_hist.FP.tsv']:
+            expected_file = expected_out + suffix
+            got_file = tmp_out + suffix
+            self.assertTrue(filecmp.cmp(expected_file, got_file, shallow=False))
+            os.unlink(got_file)
+        samfile = tmp_out + '.sam'
+        self.assertTrue(os.path.exists(samfile))
+        os.unlink(samfile)
+        #for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps', '.filter.vcf', '.filter.cluster.vcf']:
+        #    os.unlink(tmp_out + suffix)
+
 
 class TestOther(unittest.TestCase):
     def test_sam_reader(self):
