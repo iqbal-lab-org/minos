@@ -362,8 +362,8 @@ class TestMappingBasedVerifier(unittest.TestCase):
         samfile = tmp_out + '.sam'
         self.assertTrue(os.path.exists(samfile))
         os.unlink(samfile)
-        #for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps', '.filter.vcf', '.filter.cluster.vcf']:
-        #    os.unlink(tmp_out + suffix)
+        for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps', '.filter.vcf', '.filter.cluster.vcf']:
+            os.unlink(tmp_out + suffix)
 
 
 class TestOther(unittest.TestCase):
