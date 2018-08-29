@@ -211,6 +211,14 @@ class MappingBasedVerifier:
                     elif vcf_record.FORMAT['GT'] == '1':
                         vcf_record.FORMAT['GT'] = '1/1'
 
+                    if "GL" in vcf_record.FORMAT.keys() and "GT_CONF" not in vcf_record.FORMAT.keys():
+                        likelihoods = vcf_record.FORMAT["GL"].split(",")
+                        assert(len(likelihoods) > 2)
+                        if called_alleles == {'0'}:
+                            vcf_record.FORMAT["GT_CONF"] = likelihoods[0] - likelihoods[1]
+                        else:
+                            vcf_record.FORMAT["GT_CONF"] = likelihoods[int(genotypes[0])] - likelihoods[0]
+
                     print(vcf_record, file=f)
 
 
