@@ -215,9 +215,9 @@ class MappingBasedVerifier:
                         likelihoods = vcf_record.FORMAT["GL"].split(",")
                         assert(len(likelihoods) > 2)
                         if called_alleles == {'0'}:
-                            vcf_record.FORMAT["GT_CONF"] = likelihoods[0] - likelihoods[1]
+                            vcf_record.FORMAT["GT_CONF"] = float(likelihoods[0]) - float(likelihoods[1])
                         else:
-                            vcf_record.FORMAT["GT_CONF"] = likelihoods[int(genotypes[0])] - likelihoods[0]
+                            vcf_record.FORMAT["GT_CONF"] = float(likelihoods[int(genotypes[0])]) - float(likelihoods[0])
 
                     print(vcf_record, file=f)
 
