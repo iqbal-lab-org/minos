@@ -136,7 +136,7 @@ class TestMappingBasedVerifier(unittest.TestCase):
         discard_ref_calls = False
         mapping_based_verifier.MappingBasedVerifier._filter_vcf_for_clustering(vcf_in, tmp_out, discard_ref_calls)
         self.assertTrue(filecmp.cmp(expected_vcf, tmp_out, shallow=False))
-        os.unlink(tmp_out)
+        #os.unlink(tmp_out)
 
     def test_write_vars_plus_flanks_to_fasta(self):
         '''test _write_vars_plus_flanks_to_fasta'''
