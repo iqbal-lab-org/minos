@@ -29,8 +29,8 @@
 ##bcftools_callVersion=1.3.1+htslib-1.3.1
 ##bcftools_callCommand=call -vm -O v -o run.calls.vcf
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
-ref	100	.	T	A	58.0	.	DP=42	GT:GL:GT_CONF	1/1:-41,-3,0:38.00
+ref	100	.	T	A	58.0	.	DP=42	GT:GL:GT_CONF	1/1:-41,-3,0:38.0
 ref	140	.	T	A	58.0	.	DP=42	GT:GT_CONF	0/0:42.42
-ref	150	.	T	G	58.0	.	DP=42	GT:GL:GT_CONF	1/1:-46,-35,-2:44.00
-ref	160	.	T	A	58.0	.	DP=42	GT:GL:GT_CONF	1/1:-47,-36,-2:11.00
-ref	170	.	T	A	58.0	.	DP=42	GT:GL:GT_CONF	0/0:-2,-30,-43,0:28.00
+ref	150	.	T	G	58.0	.	DP=42	GT:GL:GT_CONF	1/1:-46,-35,-2:44.0
+ref	160	.	T	A	58.0	.	DP=42	GT:GL:GT_CONF	1/1:-47,-36,-2:11.0
+ref	170	.	T	A	58.0	.	DP=42	GT:GL:GT_CONF	0/0:-2,-30,-43,0:28.0
