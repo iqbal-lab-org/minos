@@ -35,3 +35,4 @@ ref	150	.	T	G	58.0	.	DP=42	GT:GL:GT_CONF	1/1:-46,-35,-2:44.0
 ref	160	.	T	A	58.0	.	DP=42	GT:GL:GT_CONF	1/1:-47,-36,-2:11.0
 ref	170	.	T	A	58.0	.	DP=42	GT:GL:GT_CONF	0/0:-2,-30,-43,0:28.0
 ref	180	.	A	G	71.8	PASS	AlleleCount=1;BaseCalledFraction=0.718391;BaseCalledReadsWithVariant=375;SupportFraction=0.759647;TotalReads=444	GT:GT_CONF	1/1:75.9647
+ref	180	.	A	G	71.8	PASS	AlleleCount=1;BaseCalledFraction=0.718391;BaseCalledReadsWithVariant=375;SupportFraction=0.759647;TotalReads=444	GT:GT_CONF	1/1:75.9647
