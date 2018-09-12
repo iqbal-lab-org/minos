@@ -221,6 +221,7 @@ class MappingBasedVerifier:
                     if 'SupportFraction' in vcf_record.INFO.keys() and 'GT_CONF' not in vcf_record.FORMAT.keys():
                         vcf_record.set_format_key_value('GT_CONF',
                                                         str(vcf_record.INFO['SupportFraction']*100))
+                    print(vcf_record)
                     print(vcf_record, file=f)
 
 
