@@ -500,9 +500,9 @@ class MappingBasedVerifier:
 
     def run(self):
         if self.filter_and_cluster_vcf:
+            MappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file_in, self.filtered_vcf, self.discard_ref_calls)
             clusterer = vcf_clusterer.VcfClusterer([self.filtered_vcf], self.vcf_reference_file, self.clustered_vcf, merge_method='simple', max_distance_between_variants=self.merge_length)
             clusterer.run()
-            MappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file_in, self.filtered_vcf, self.discard_ref_calls)
 
         vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(self.vcf_to_check, sort=True, remove_useless_start_nucleotides=True)
         sample_from_header = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
