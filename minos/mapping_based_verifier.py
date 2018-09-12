@@ -218,6 +218,9 @@ class MappingBasedVerifier:
                             vcf_record.set_format_key_value('GT_CONF',str(float(likelihoods[0]) - float(likelihoods[1])))
                         else:
                             vcf_record.set_format_key_value('GT_CONF', str(float(likelihoods[int(genotypes[0])]) - float(likelihoods[0])))
+                    if 'SupportFraction' in vcf_record.INFO.keys() and 'GT_CONF' not in vcf_record.FORMAT.keys():
+                        vcf_record.set_format_key_value('GT_CONF',
+                                                        str(vcf_record.INFO['SupportFraction']*100))
                     print(vcf_record, file=f)
 
 
