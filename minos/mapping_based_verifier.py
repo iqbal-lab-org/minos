@@ -188,7 +188,7 @@ class MappingBasedVerifier:
                     if vcf_record.FORMAT is None or 'GT' not in vcf_record.FORMAT:
                         logging.warning('No GT in vcf record:' + str(vcf_record))
                         continue
-                    if vcf_record.REF == ".":
+                    if vcf_record.REF in [".", ""]:
                         continue
 
                     genotype = vcf_record.FORMAT['GT']
@@ -207,8 +207,8 @@ class MappingBasedVerifier:
                         else:
                             vcf_record.set_format_key_value('GT', '0/0')
                             vcf_record.ALT = [vcf_record.ALT[0]]
-                        if vcf_record.ALT[0] == ".":
-                            vcf_record.ALT = [""]
+                        if vcf_record.ALT[0] in [".",""]:
+                            continue
 
                     if vcf_record.FORMAT['GT'] == '0':
                         vcf_record.FORMAT['GT'] = '0/0'
