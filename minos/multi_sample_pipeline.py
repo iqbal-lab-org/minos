@@ -213,12 +213,18 @@ params.testing = false
 params.cluster_small_vars_ram = 2
 params.gramtools_build_small_vars_ram = 12
 params.minos_small_vars_ram = 5
+params.pre_cluster_small_vars_merge_ram = 8
+params.pre_cluster_small_vars_merge_threads = 10
 params.merge_small_vars_ram = 4
 params.variants_per_split = 0
 params.alleles_per_split = 0
 params.total_splits = 0
 params.max_alleles_per_cluster = 5000
 
+
+if (params.testing) {
+    params.pre_cluster_small_vars_merge_threads = 2
+}
 
 
 data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
@@ -281,13 +287,39 @@ process process_input_vcf_file {
 }
 
 
+process pre_cluster_small_vars_merge {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.pre_cluster_small_vars_merge_ram * task.attempt}
+    maxRetries 3
+    cpus {params.testing? 2 : params.pre_cluster_small_vars_merge_threads}
+
+    input:
+    val(file_list) from process_input_vcf_file_out_small.collect()
+
+    output:
+    file('pre_cluster_small_vars_merge.vcf') into pre_cluster_small_vars_merge_out
+
+    """
+    #!/usr/bin/env python3
+    from cluster_vcf_records import vcf_merge
+    import pyfastaq
+    ref_seqs = dict()
+    pyfastaq.tasks.file_to_dict("${ref_fasta}", ref_seqs)
+
+    file_list = ["${file_list.join('", "')}"]
+
+    vcf_merge.merge_vcf_files(file_list, ref_seqs, "pre_cluster_small_vars_merge.vcf", threads=${params.pre_cluster_small_vars_merge_threads})
+    """
+
+}
+
 process cluster_small_vars_vcf {
     errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
     memory {params.testing ? '0.5 GB' : 1.GB * params.cluster_small_vars_ram * task.attempt}
     maxRetries 3
 
     input:
-    val(file_list) from process_input_vcf_file_out_small.collect()
+    file('pre_cluster_small_vars_merge.vcf') from pre_cluster_small_vars_merge_out
 
     output:
     file('small_vars_clustered.vcf') into cluster_small_vars_vcf_out
@@ -295,8 +327,7 @@ process cluster_small_vars_vcf {
     """
     #!/usr/bin/env python3
     from cluster_vcf_records import vcf_clusterer
-    file_list = ["${file_list.join('", "')}"]
-    clusterer = vcf_clusterer.VcfClusterer(file_list, "${ref_fasta}", "small_vars_clustered.vcf", max_alleles_per_cluster=${params.max_alleles_per_cluster})
+    clusterer = vcf_clusterer.VcfClusterer(["pre_cluster_small_vars_merge.vcf"], "${ref_fasta}", "small_vars_clustered.vcf", max_alleles_per_cluster=${params.max_alleles_per_cluster})
     clusterer.run()
     """
 }
