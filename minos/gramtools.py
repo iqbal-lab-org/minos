@@ -28,7 +28,7 @@ def _build_json_file_is_good(json_build_report):
         return returned_zero
 
 
-def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=15):
+def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=10):
     '''Runs gramtools build. Makes new directory called 'outdir' for
     the output'''
     gramtools_exe = dependencies.find_binary('gramtools')
@@ -39,6 +39,7 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
         '--vcf', vcf_file,
         '--reference', ref_file,
         '--max-read-length', str(max_read_length),
+        '--all-kmers',
         '--kmer-size', str(kmer_size),
     ])
     logging.info('Running gramtools build: ' + build_command)
@@ -53,7 +54,7 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
     logging.info('Build report file looks good from gramtools build: ' + build_report)
 
 
-def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_length, kmer_size=15):
+def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_length, kmer_size=10):
     '''If build_dir does not exist, runs runs gramtools build and quasimap.
     Otherwise, just runs quasimap. quasimap output is in new
     directory called quasimap_dir.

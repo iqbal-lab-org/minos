@@ -21,7 +21,7 @@ class Adjudicator:
         overwrite_outdir=False,
         max_alleles_per_cluster=5000,
         gramtools_build_dir=None,
-        gramtools_kmer_size=15,
+        gramtools_kmer_size=10,
         sample_name=None,
         variants_per_split=None,
         alleles_per_split=None,
@@ -88,7 +88,7 @@ class Adjudicator:
 
             return kmer_size_from_json
         elif input_kmer_size is None:
-            return 15
+            return 10
         else:
             return input_kmer_size
 

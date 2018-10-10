@@ -14,7 +14,7 @@ class TestAdjudicator(unittest.TestCase):
         self.assertEqual(42, adjudicator.Adjudicator._get_gramtools_kmer_size(build_dir, None))
         self.assertEqual(42, adjudicator.Adjudicator._get_gramtools_kmer_size(build_dir, 20))
         self.assertEqual(20, adjudicator.Adjudicator._get_gramtools_kmer_size(None, 20))
-        self.assertEqual(15, adjudicator.Adjudicator._get_gramtools_kmer_size(None, None))
+        self.assertEqual(10, adjudicator.Adjudicator._get_gramtools_kmer_size(None, None))
 
 
     def test_run(self):
@@ -29,7 +29,7 @@ class TestAdjudicator(unittest.TestCase):
         ref_fasta = os.path.join(data_dir, 'run.ref.fa')
         reads_file = os.path.join(data_dir, 'run.bwa.bam')
         vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.1.vcf', 'run.calls.2.vcf']]
-        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, variants_per_split=3, clean=False)
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, variants_per_split=3, clean=False, gramtools_kmer_size=5)
         adj.run()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(adj.log_file))
@@ -38,7 +38,7 @@ class TestAdjudicator(unittest.TestCase):
 
         # Clean up and then run without splitting
         shutil.rmtree(outdir)
-        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False)
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False, gramtools_kmer_size=5)
         adj.run()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(adj.log_file))
@@ -65,7 +65,7 @@ class TestAdjudicator(unittest.TestCase):
         # This is the clustered VCF made by the Adjudicator, so we
         # use that instead of the list of original VCF files
         vcf_files = [adj.clustered_vcf]
-        adj = adjudicator.Adjudicator(outdir2, ref_fasta, [reads_file], vcf_files, gramtools_build_dir=gramtools_build_dir, clean=False)
+        adj = adjudicator.Adjudicator(outdir2, ref_fasta, [reads_file], vcf_files, gramtools_build_dir=gramtools_build_dir, clean=False, gramtools_kmer_size=5)
         adj.run()
         self.assertTrue(os.path.exists(outdir2))
         self.assertTrue(os.path.exists(adj.log_file))
@@ -91,7 +91,7 @@ class TestAdjudicator(unittest.TestCase):
         ref_fasta = os.path.join(data_dir, 'run.ref.fa')
         reads_file = os.path.join(data_dir, 'run.bwa.bam')
         vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.empty.1.vcf', 'run.calls.empty.2.vcf']]
-        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False)
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False, gramtools_kmer_size=5)
         with self.assertRaises(adjudicator.Error):
             adj.run()
         self.assertTrue(os.path.exists(outdir))

@@ -146,7 +146,7 @@ class TestVcfChunker(unittest.TestCase):
         vcf7 = cluster_vcf_records.vcf_record.VcfRecord('ref2\t42\t.\tC\tG\t.\tPASS\t.\t.\t.')
         header_lines = ['##header1', '##header2', '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample_name']
 
-        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=1)
+        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=1, gramtools_kmer_size=5)
         chunker.make_split_files()
         self.assertTrue(os.path.exists(chunker.metadata_pickle))
 
@@ -170,7 +170,7 @@ class TestVcfChunker(unittest.TestCase):
         shutil.rmtree(tmp_out)
 
 
-        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=4, flank_length=3)
+        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=4, flank_length=3, gramtools_kmer_size=5)
         chunker.make_split_files()
         self.assertTrue(os.path.exists(chunker.metadata_pickle))
 
@@ -188,7 +188,7 @@ class TestVcfChunker(unittest.TestCase):
 
         self.assertFalse(os.path.exists(os.path.join(tmp_out, 'split.3.in.vcf')))
 
-        chunker2 = vcf_chunker.VcfChunker(tmp_out)
+        chunker2 = vcf_chunker.VcfChunker(tmp_out, gramtools_kmer_size=5)
         self.assertEqual(chunker.vcf_infile,chunker2.vcf_infile)
         self.assertEqual(chunker.ref_fasta,chunker2.ref_fasta)
         self.assertEqual(chunker.variants_per_split,chunker2.variants_per_split)
@@ -212,20 +212,20 @@ class TestVcfChunker(unittest.TestCase):
         if os.path.exists(tmp_out):
             shutil.rmtree(tmp_out)
 
-        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=200)
+        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=200, gramtools_kmer_size=5)
         chunker.make_split_files()
         self.assertTrue(os.path.exists(chunker.metadata_pickle))
-        chunker2 = vcf_chunker.VcfChunker(tmp_out)
+        chunker2 = vcf_chunker.VcfChunker(tmp_out, gramtools_kmer_size=5)
         self.assertEqual(1, len(chunker2.vcf_split_files))
         self.assertEqual(3, len(chunker2.vcf_split_files['ref.0']))
         self.assertEqual(4, chunker2.vcf_split_files['ref.0'][-1].use_end_index)
         shutil.rmtree(tmp_out)
 
         # Test with two threads
-        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=200, threads=2)
+        chunker = vcf_chunker.VcfChunker(tmp_out, vcf_infile=infile, ref_fasta=ref_fa, variants_per_split=2, flank_length=200, threads=2, gramtools_kmer_size=5)
         chunker.make_split_files()
         self.assertTrue(os.path.exists(chunker.metadata_pickle))
-        chunker2 = vcf_chunker.VcfChunker(tmp_out)
+        chunker2 = vcf_chunker.VcfChunker(tmp_out, gramtools_kmer_size=5)
         self.assertEqual(1, len(chunker2.vcf_split_files))
         self.assertEqual(3, len(chunker2.vcf_split_files['ref.0']))
         self.assertEqual(4, chunker2.vcf_split_files['ref.0'][-1].use_end_index)
@@ -237,7 +237,7 @@ class TestVcfChunker(unittest.TestCase):
         vcf_to_split = os.path.join(data_dir, 'merge_files.in.vcf')
         ref_fasta = os.path.join(data_dir, 'merge_files.in.ref.fa')
         tmp_outdir = 'tmp.vcf_chunker.merge_files'
-        chunker = vcf_chunker.VcfChunker(tmp_outdir, vcf_infile=vcf_to_split, ref_fasta=ref_fasta, variants_per_split=4, flank_length=3)
+        chunker = vcf_chunker.VcfChunker(tmp_outdir, vcf_infile=vcf_to_split, ref_fasta=ref_fasta, variants_per_split=4, flank_length=3, gramtools_kmer_size=5)
         chunker.make_split_files()
         to_merge = {}
         for ref, split_list in chunker.vcf_split_files.items():
