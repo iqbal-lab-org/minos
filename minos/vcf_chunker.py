@@ -34,7 +34,7 @@ def _run_gramtools_build(split_file, ref_fasta, max_read_length, kmer_size):
 
 
 class VcfChunker:
-    def __init__(self, outdir, vcf_infile=None, ref_fasta=None, variants_per_split=None, max_read_length=200, total_splits=100, flank_length=200, gramtools_kmer_size=15, alleles_per_split=None, threads=1):
+    def __init__(self, outdir, vcf_infile=None, ref_fasta=None, variants_per_split=None, max_read_length=200, total_splits=100, flank_length=200, gramtools_kmer_size=10, alleles_per_split=None, threads=1):
         self.outdir = os.path.abspath(outdir)
         self.metadata_pickle = os.path.join(self.outdir, 'data.pickle')
         self.threads = threads

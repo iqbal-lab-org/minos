@@ -32,7 +32,7 @@ class TestGramtools(unittest.TestCase):
             shutil.rmtree(tmp_out_build)
         vcf_file = os.path.join(data_dir, 'run_gramtools.calls.vcf')
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
-        gramtools.run_gramtools_build(tmp_out_build, vcf_file, ref_file, 150)
+        gramtools.run_gramtools_build(tmp_out_build, vcf_file, ref_file, 150, kmer_size=5)
         self.assertTrue(os.path.exists(tmp_out_build))
         shutil.rmtree(tmp_out_build)
 
@@ -48,7 +48,7 @@ class TestGramtools(unittest.TestCase):
         vcf_file = os.path.join(data_dir, 'run_gramtools.calls.vcf')
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
         reads_file = os.path.join(data_dir, 'run_gramtools.reads.fq')
-        build_report, quasimap_report = gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150)
+        build_report, quasimap_report = gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150, kmer_size=5)
         # We're trusing gramtools output for this test. The point here is to check
         # that gramtools can run. Parsing its output is checked elsewhere.
         self.assertTrue(os.path.exists(tmp_out_build))
@@ -78,7 +78,7 @@ class TestGramtools(unittest.TestCase):
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
         reads_file = os.path.join(data_dir, 'run_gramtools.reads.fq')
         with self.assertRaises(gramtools.Error):
-            gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150)
+            gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150, kmer_size=5)
         shutil.rmtree(tmp_out_build)
 
 
@@ -94,7 +94,7 @@ class TestGramtools(unittest.TestCase):
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
         reads_file1 = os.path.join(data_dir, 'run_gramtools.reads_1.fq')
         reads_file2 = os.path.join(data_dir, 'run_gramtools.reads_2.fq')
-        gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, [reads_file1, reads_file2], 150)
+        gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, [reads_file1, reads_file2], 150, kmer_size=5)
         # We're trusing gramtools output for this test. The point here is to check
         # that gramtools can run. Parsing its output is checked elsewhere.
         self.assertTrue(os.path.exists(tmp_out_build))
