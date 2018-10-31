@@ -30,7 +30,7 @@ class DnadiffMappingBasedVerifier:
     outprefix.stats.tsv = summary stats (see dict output by
                           _parse_sam_file_and_update_vcf_records_and_gather_stats()
                           for a description)'''
-    def __init__(self, dnadiff_snps_file, dnadiff_file1, dnadiff_file2, vcf_file_in1, vcf_file_in2, vcf_reference_file, outprefix, flank_length=31, merge_length=None, expected_variants_vcf=None, run_dnadiff=True, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file=None):
+    def __init__(self, dnadiff_snps_file, dnadiff_file1, dnadiff_file2, vcf_file_in1, vcf_file_in2, vcf_reference_file, outprefix, flank_length=31, merge_length=None, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True):
         self.dnadiff_snps_file = os.path.abspath(dnadiff_snps_file)
         self.dnadiff_file1 = os.path.abspath(dnadiff_file1)
         self.dnadiff_file2 = os.path.abspath(dnadiff_file2)
