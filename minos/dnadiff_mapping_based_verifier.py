@@ -86,7 +86,7 @@ class DnadiffMappingBasedVerifier:
         out_handle1 = open(ref_outfile, "w")
         out_handle2 = open(query_outfile, "w")
 
-        snps = pd.read_table(dnadiff_file, header=None, sep='\t')
+        snps = pd.read_table(dnadiff_file, header=None)
 
         for line in snps.itertuples():
             print(line)
