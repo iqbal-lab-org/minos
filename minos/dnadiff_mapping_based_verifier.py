@@ -380,4 +380,4 @@ class DnadiffMappingBasedVerifier:
         with open(self.gt_conf_hist_out, 'w') as f:
             print('GT_CONF\tCount', file=f)
             for gt_conf, count in sorted(gt_conf_hist.items()):
-            print(gt_conf, count, sep='\t', file=f)
+                print(gt_conf, count, sep='\t', file=f)
