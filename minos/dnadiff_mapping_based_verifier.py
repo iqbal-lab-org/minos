@@ -89,6 +89,8 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(dnadiff_file, header=None)
 
         for line in snps.itertuples():
+            print(line)
+            assert(len(line) > 4)
             seq_name = str(line[0]) + "." + str(line[1])
             flanked_seq = ""
             if line[2] == '.':
