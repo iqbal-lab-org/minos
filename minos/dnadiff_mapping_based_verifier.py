@@ -340,8 +340,8 @@ class DnadiffMappingBasedVerifier:
 
         # Cluster together variants in each vcf
         if self.filter_and_cluster_vcf:
-            DnadiffMappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file1_in, self.filtered_vcf1, self.discard_ref_calls)
-            DnadiffMappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file2_in, self.filtered_vcf2, self.discard_ref_calls)
+            DnadiffMappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file_in1, self.filtered_vcf1, self.discard_ref_calls)
+            DnadiffMappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file_in2, self.filtered_vcf2, self.discard_ref_calls)
             if self.discard_ref_calls:
                 clusterer1 = vcf_clusterer.VcfClusterer([self.filtered_vcf1], self.vcf_reference_file, self.clustered_vcf1, merge_method='simple', max_distance_between_variants=self.merge_length)
                 clusterer2 = vcf_clusterer.VcfClusterer([self.filtered_vcf2], self.vcf_reference_file, self.clustered_vcf2, merge_method='simple', max_distance_between_variants=self.merge_length)
