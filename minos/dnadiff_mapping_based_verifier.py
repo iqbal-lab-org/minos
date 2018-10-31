@@ -366,7 +366,7 @@ class DnadiffMappingBasedVerifier:
         os.unlink(self.seqs_out_vcf1)
         os.unlink(self.seqs_out_vcf2)
 
-        DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2, self.vcf_to_check1, self.vcf_to_check2, self.sam_summary, self.flank_length, allow_mismatches=self.allow_flank_mismatches
+        DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2, self.vcf_to_check1, self.vcf_to_check2, self.sam_summary, self.flank_length, allow_mismatches=self.allow_flank_mismatches)
         stats, gt_conf_hist = DnadiffMappingBasedVerifier._gather_stats(self.sam_summary)
 
         # write stats file
