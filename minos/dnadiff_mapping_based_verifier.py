@@ -281,6 +281,7 @@ class DnadiffMappingBasedVerifier:
         command = ' '.join([
             bgzip_binary,
             '-c',
+            vcffile,
             '>',
             vcffile + ".gz",
         ])
