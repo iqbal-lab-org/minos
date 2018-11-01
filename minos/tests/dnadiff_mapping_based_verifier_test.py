@@ -51,8 +51,8 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         allow_mismatches = False
         found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile, flank, allow_mismatches)
 
-        exp_found = ['1','1','1','0','1','1','1']
-        exp_gt_conf = [42.42, 42.42, 52.52, None, 42.42, 32.32, None]
+        exp_found = ['1','1','1','0','1','0','1']
+        exp_gt_conf = [42.42, 42.42, 52.52, None, 42.42, None, None]
         self.assertEqual(exp_found, found)
         self.assertEqual(exp_gt_conf, gt_conf)
 
