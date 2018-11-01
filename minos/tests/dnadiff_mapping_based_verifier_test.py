@@ -50,7 +50,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         sample2_file_in = os.path.join(data_dir, 'sample2.fa')
         vcf_file1_in = os.path.join(data_dir, 'sample1a.vcf')
         vcf_file2_in = os.path.join(data_dir, 'sample2a.vcf')
-        vcf_reference_file = os.path.join(data_dir, 'run.calls.include_ref_calls.vcf')
+        vcf_reference_file = os.path.join(data_dir, 'vcfref.fa')
 
         tmp_out = 'tmp.dnadiff_mapping_based_verifier.out'
         verifier = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier(dnadiff_file_in, sample1_file_in, sample2_file_in, vcf_file1_in, vcf_file2_in, vcf_reference_file, tmp_out, flank_length=5, discard_ref_calls=False)
