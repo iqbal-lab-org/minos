@@ -289,6 +289,7 @@ class DnadiffMappingBasedVerifier:
             samtools_binary,
             'sort',
             '-',
+            '>',
             bamfile,
         ])
         utils.syscall(command)
