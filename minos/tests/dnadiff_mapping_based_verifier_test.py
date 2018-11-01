@@ -36,8 +36,10 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
 
         flank = 5
         allow_mismatches = False
+        print("index vcf")
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
-        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile, flank, allow_mismatches)
+        print("get stats")
+        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", flank, allow_mismatches)
 
         exp_found = ['1','1','0','0','1','1','1']
         exp_gt_conf = [42, 42, None, None, 42, 32, None]
@@ -51,7 +53,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         flank = 5
         allow_mismatches = False
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
-        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile, flank, allow_mismatches)
+        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", flank, allow_mismatches)
 
         exp_found = ['1','1','1','0','1','0','1']
         exp_gt_conf = [42, 42, 52, None, 42, None, None]
