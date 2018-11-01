@@ -274,12 +274,13 @@ class DnadiffMappingBasedVerifier:
         return True
 
     @classmethod
-    def _parse_sam_file_and_vcf(cls,samfile, vcffile, flank_length, allow_mismatches):
+    def _parse_sam_file_and_vcf(cls, samfile, vcffile, flank_length, allow_mismatches):
         found = []
         gt_conf = []
-        samfile_handle = pysam.AlignmentFile(samfile, "r", check_sq=False)
+        samfile_handle = pysam.AlignmentFile(samfile, "r")
         sam_previous_record_name = None
         for sam_record in samfile_handle.fetch(until_eof=True):
+            print(sam_record)
             if sam_record.query_name == sam_previous_record_name:
                 continue
             sam_previous_record_name = sam_record.query_name
