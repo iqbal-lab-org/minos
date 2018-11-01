@@ -280,7 +280,9 @@ class DnadiffMappingBasedVerifier:
         bgzip_binary = dependencies.find_binary('bgzip')
         command = ' '.join([
             bgzip_binary,
-            vcffile,
+            '-c',
+            '>',
+            vcffile + ".gz",
         ])
         utils.syscall(command)
 
@@ -289,7 +291,7 @@ class DnadiffMappingBasedVerifier:
             tabix_binary,
             '-p',
             'vcf',
-            vcffile + '.gz',
+            vcffile + ".gz",
         ])
         utils.syscall(command)
 
