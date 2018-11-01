@@ -297,9 +297,11 @@ class DnadiffMappingBasedVerifier:
         utils.syscall(command)
 
     @classmethod
-    def _parse_sam_file_and_vcf(cls, samfile, vcffile, flank_length, allow_mismatches):
+    def _parse_sam_file_and_vcf(cls, samfile, vcffile, dnadiff_plus_flanks_file, flank_length, allow_mismatches):
         found = []
         gt_conf = []
+        dnadiff_file_seqs = {}
+        pyfastaq.tasks.file_to_dict(dnadiff_plus_flanks_file, dnadiff_file_seqs)
         samfile_handle = pysam.AlignmentFile(samfile, "r")
         sam_previous_record_name = None
         for sam_record in samfile_handle.fetch(until_eof=True):
@@ -310,12 +312,16 @@ class DnadiffMappingBasedVerifier:
             found_conf = False
             found_allele = False
             good_match = DnadiffMappingBasedVerifier._check_if_sam_match_is_good(sam_record,
-                                                                                 [sam_record.reference_name],
+                                                                                 dnadiff_file_seqs,
                                                                                  flank_length,
                                                                                  query_sequence=sam_record.query_sequence,
                                                                                  allow_mismatches=allow_mismatches)
             if good_match:
+                print("good match")
                 ref_name, expected_start, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=3)
+                print("ref_name",ref_name)
+                print("expected_start", expected_start)
+                print(int(expected_start) + flank_length - 2," ",int(expected_start) + flank_length + 2)
                 vcf_reader = pysam.VariantFile(vcffile)
                 for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length - 2, int(expected_start) + flank_length + 2)):
                     if i == vcf_record_index:
@@ -334,7 +340,7 @@ class DnadiffMappingBasedVerifier:
         return found, gt_conf
 
     @classmethod
-    def _parse_sam_files(cls, dnadiff_file, samfile1, samfile2, vcffile1, vcffile2, outfile, flank_length, allow_mismatches=True):
+    def _parse_sam_files(cls, dnadiff_file, samfile1, samfile2, vcffile1, vcffile2, reffasta1, reffasta2, outfile, flank_length, allow_mismatches=True):
         '''Input is the original dnadiff snps file of sites we are searching for
         and 2 SAM files made by _map_seqs_to_seqs(), which show mappings of snp sites
         from from the dnadiff snps file to the vcf (i.e. searches if VCF contains an record
@@ -344,8 +350,8 @@ class DnadiffMappingBasedVerifier:
         '''
 
         snps = pd.read_table(dnadiff_file, header=None)
-        ref_found, ref_conf = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, flank_length, allow_mismatches)
-        query_found, query_conf = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, flank_length, allow_mismatches)
+        ref_found, ref_conf = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches)
+        query_found, query_conf = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches)
         assert len(snps[0]) == len(ref_found) and len(snps[0]) == len(query_found)
         out_df = pd.DataFrame({'id': snps[0],
                                'ref': snps[2],
@@ -411,7 +417,7 @@ class DnadiffMappingBasedVerifier:
         self.vcf_to_check1 = self.vcf_to_check1 + ".gz"
         DnadiffMappingBasedVerifier._index_vcf(self.vcf_to_check2)
         self.vcf_to_check2 = self.vcf_to_check2 + ".gz"
-        DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2, self.vcf_to_check1, self.vcf_to_check2, self.sam_summary, self.flank_length, allow_mismatches=self.allow_flank_mismatches)
+        DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2, self.vcf_to_check1, self.vcf_to_check2, self.seqs_out_dnadiff1, self.seqs_out_dnadiff2, self.sam_summary, self.flank_length, allow_mismatches=self.allow_flank_mismatches)
         stats, gt_conf_hist = DnadiffMappingBasedVerifier._gather_stats(self.sam_summary)
 
         # write stats file
