@@ -323,6 +323,7 @@ class DnadiffMappingBasedVerifier:
                                'query_conf': query_conf})
         out_df.to_csv(outfile, sep='\t')
 
+    @classmethod
     def _gather_stats(cls, tsv_file):
         stats = {x: 0 for x in ['total', 'found_vars', 'missed_vars']}
         gt_conf_hist = {}
