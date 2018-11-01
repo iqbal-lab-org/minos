@@ -277,6 +277,15 @@ class DnadiffMappingBasedVerifier:
     @classmethod
     def _index_vcf(cls, vcffile):
         '''Index VCF file'''
+        bgzip_binary = dependencies.find_binary('bgzip')
+        command = ' '.join([
+            bgzip_binary,
+            vcffile,
+        ])
+        utils.syscall(command)
+
+        vcffile = vcffile + '.gz'
+        
         tabix_binary = dependencies.find_binary('tabix')
         command = ' '.join([
             tabix_binary,
