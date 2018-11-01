@@ -3,7 +3,7 @@
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
 ref1	112	.	G	C	.	.	.	GT:GT_CONF	1:42.42
 ref1	172	.	T	C	.	.	.	GT:GT_CONF	0:42.42
-ref1	74	.	G	T	.	.	.	GT:GT_CONF	1:52.52
+ref1	174	.	G	T	.	.	.	GT:GT_CONF	1:52.52
 ref2	75	.	T	G	.	.	.	GT:GT_CONF	1:42.42
 ref2	86	.	C	.	.	.	.	GT:GT_CONF	0:32.32
 ref2	97	.	C	T	.	.	.	GT	0
