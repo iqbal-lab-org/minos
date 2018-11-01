@@ -32,13 +32,12 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
 
     def test_parse_sam_file_and_vcf1(self):
         samfile = os.path.join(data_dir, 'sample1.sam')
-        bamfile = os.path.join(data_dir, 'sample1.bam')
         vcffile = os.path.join(data_dir, 'sample1a.vcf')
 
         flank = 5
         allow_mismatches = False
-        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_sam(samfile, bamfile)
-        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(bamfile, vcffile, flank, allow_mismatches)
+        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
+        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile, flank, allow_mismatches)
 
         exp_found = ['1','1','0','0','1','1','1']
         exp_gt_conf = [42, 42, None, None, 42, 32, None]
@@ -47,13 +46,12 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
 
     def test_parse_sam_file_and_vcf2(self):
         samfile = os.path.join(data_dir, 'sample2.sam')
-        bamfile = os.path.join(data_dir, 'sample2.bam')
         vcffile = os.path.join(data_dir, 'sample2a.vcf')
 
         flank = 5
         allow_mismatches = False
-        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_sam(samfile, bamfile)
-        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(bamfile, vcffile, flank, allow_mismatches)
+        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
+        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile, flank, allow_mismatches)
 
         exp_found = ['1','1','1','0','1','0','1']
         exp_gt_conf = [42, 42, 52, None, 42, None, None]
