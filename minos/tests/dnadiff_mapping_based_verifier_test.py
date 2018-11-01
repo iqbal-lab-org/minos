@@ -39,12 +39,12 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         print("index vcf")
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
         print("get stats")
-        #found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", flank, allow_mismatches)
+        found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", flank, allow_mismatches)
 
         exp_found = ['1','1','0','0','1','1','1']
         exp_gt_conf = [42, 42, None, None, 42, 32, None]
-        #self.assertEqual(exp_found, found)
-        #self.assertEqual(exp_gt_conf, gt_conf)
+        self.assertEqual(exp_found, found)
+        self.assertEqual(exp_gt_conf, gt_conf)
 
     def test_parse_sam_file_and_vcf2(self):
         samfile = os.path.join(data_dir, 'sample2.sam')

@@ -287,14 +287,14 @@ class DnadiffMappingBasedVerifier:
         ])
         utils.syscall(command)
 
-        #tabix_binary = dependencies.find_binary('tabix')
+        tabix_binary = dependencies.find_binary('tabix')
         command = ' '.join([
             tabix_binary,
             '-p',
             'vcf',
             vcffile + ".gz",
         ])
-        #utils.syscall(command)
+        utils.syscall(command)
 
     @classmethod
     def _parse_sam_file_and_vcf(cls, samfile, vcffile, flank_length, allow_mismatches):
