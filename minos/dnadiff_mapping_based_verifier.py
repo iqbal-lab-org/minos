@@ -168,13 +168,24 @@ class DnadiffMappingBasedVerifier:
         its start and end. Calls each sequence:
             ref_name.start_position.vcf_list_index.allele_number
         where allele_numbers in same order as VCF, with ref seq = allele 0.'''
+        prev_ref_name = None
+        prev_ref_pos = None
+        j = 0
         with open(outfile, 'w') as f:
             for ref_name in sorted(vcf_records):
                 for i, vcf_record in enumerate(vcf_records[ref_name]):
                     start_position, alleles = vcf_record.inferred_var_seqs_plus_flanks(ref_seqs[ref_name], flank_length)
+
                     for allele_index, allele_seq in enumerate(alleles):
-                        seq_name = '.'.join([ref_name, str(start_position + 1), str(i), str(allele_index)])
+                        seq_name = '.'.join([ref_name, str(start_position + 1), str(j), str(i), str(allele_index)])
                         print('>' + seq_name, allele_seq, sep='\n', file=f)
+                    if prev_ref_name == ref_name and prev_ref_pos == start_position:
+                        j += 1
+                    else:
+                        j = 0
+                    prev_ref_name = ref_name
+                    prev_ref_pos = start_position
+
 
 
     @classmethod
@@ -318,13 +329,13 @@ class DnadiffMappingBasedVerifier:
                                                                                  allow_mismatches=allow_mismatches)
             if good_match:
                 print("good match")
-                ref_name, expected_start, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=3)
+                ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
                 print("ref_name",ref_name)
-                print("expected_start", expected_start)
-                print(int(expected_start) + flank_length - 2," ",int(expected_start) + flank_length + 2)
+                print(int(expected_start) + flank_length," ",int(expected_start) + flank_length)
                 vcf_reader = pysam.VariantFile(vcffile)
-                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length - 2, int(expected_start) + flank_length + 2)):
-                    if i == vcf_record_index:
+                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length, int(expected_start) + flank_length)):
+                    print(vcf_record)
+                    if i == vcf_pos_index:
                         if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
                             if allele_index == vcf_record.FORMAT['GT'].split('/')[0]:
                                 found.append('1')
@@ -408,8 +419,6 @@ class DnadiffMappingBasedVerifier:
         DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out_vcf2, vcf_records2, vcf_ref_seqs, self.flank_length)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf1, self.seqs_out_dnadiff1, self.sam_file_out1)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf2, self.seqs_out_dnadiff2, self.sam_file_out2)
-        os.unlink(self.seqs_out_dnadiff1)
-        os.unlink(self.seqs_out_dnadiff2)
         os.unlink(self.seqs_out_vcf1)
         os.unlink(self.seqs_out_vcf2)
 
@@ -419,6 +428,8 @@ class DnadiffMappingBasedVerifier:
         self.vcf_to_check2 = self.vcf_to_check2 + ".gz"
         DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2, self.vcf_to_check1, self.vcf_to_check2, self.seqs_out_dnadiff1, self.seqs_out_dnadiff2, self.sam_summary, self.flank_length, allow_mismatches=self.allow_flank_mismatches)
         stats, gt_conf_hist = DnadiffMappingBasedVerifier._gather_stats(self.sam_summary)
+        os.unlink(self.seqs_out_dnadiff1)
+        os.unlink(self.seqs_out_dnadiff2)
 
         # write stats file
         with open(self.stats_out, 'w') as f:
