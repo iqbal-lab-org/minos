@@ -187,15 +187,24 @@ class DnadiffMappingBasedVerifier:
             seqs_file_ref,
         ])
         utils.syscall(command)
+
         command = ' '.join([
-            bwa_binary, 'mem',
-            '-a', # report all mappings
-            '-Y', # use soft clipping for supplementary alignments
+            bwa_binary, 'aln',
             seqs_file_ref,
+            seqs_file_query,
+            '>', outfile + ".tmp",
+        ])
+        utils.syscall(command)
+
+        command = ' '.join([
+            bwa_binary, 'samse',
+            seqs_file_ref,
+            outfile + ".tmp",
             seqs_file_query,
             '>', outfile,
         ])
         utils.syscall(command)
+        os.unlink(outfile + ".tmp")
 
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
