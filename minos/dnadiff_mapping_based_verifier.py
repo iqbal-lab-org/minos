@@ -183,6 +183,11 @@ class DnadiffMappingBasedVerifier:
         Output is SAM file written to outfile'''
         bwa_binary = dependencies.find_binary('bwa')
         command = ' '.join([
+            bwa_binary, 'index',
+            seqs_file_ref,
+        ])
+        utils.syscall(command)
+        command = ' '.join([
             bwa_binary, 'mem',
             '-a', # report all mappings
             '-Y', # use soft clipping for supplementary alignments
