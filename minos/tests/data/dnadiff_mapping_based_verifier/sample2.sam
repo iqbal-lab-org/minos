@@ -1,3 +1,12 @@
+@SQ     SN:ref1.107.0.0 LN:11
+@SQ     SN:ref1.107.0.1 LN:11
+@SQ     SN:ref1.167.1.0 LN:13
+@SQ     SN:ref1.167.1.1 LN:13
+@SQ     SN:ref2.70.0.0  LN:11
+@SQ     SN:ref2.70.0.1  LN:11
+@SQ     SN:ref2.92.1.0  LN:9
+@SQ     SN:ref2.92.1.1  LN:9
+@PG     ID:bwa  PN:bwa  VN:0.7.17-r1188 CL:/usr/local/bin/bwa mem -a -Y vcf2.fa dnadiff2.fa
 0.12    4       *       0       0       *       *       0       0       TTCAGGGCTTG     *       AS:i:0  XS:i:0
 1.72    4       *       0       0       *       *       0       0       ATCGCCAGCGG     *       AS:i:0  XS:i:0
 2.74    4       *       0       0       *       *       0       0       CGCCAGCGGCT     *       AS:i:0  XS:i:0
