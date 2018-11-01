@@ -294,14 +294,14 @@ class DnadiffMappingBasedVerifier:
             if good_match:
                 ref_name, expected_start, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=3)
                 vcf_reader = pysam.VariantFile(vcffile)
-                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, expected_start + flank_length - 2, expected_start + flank_length + 2)):
+                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length - 2, int(expected_start) + flank_length + 2)):
                     if i == vcf_record_index:
                         if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
                             if allele_index == vcf_record.FORMAT['GT'].split('/')[0]:
                                 found.append('1')
                                 found_allele = True
                                 if 'GT_CONF' in vcf_record.FORMAT:
-                                    gt_conf.append(vcf_record.FORMAT['GT_CONF'])
+                                    gt_conf.append(int(float(vcf_record.FORMAT['GT_CONF'])))
                                     found_conf = True
             if not found_allele:
                 found.append('0')
