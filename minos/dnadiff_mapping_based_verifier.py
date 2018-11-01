@@ -379,7 +379,7 @@ class DnadiffMappingBasedVerifier:
 
         # write stats file
         with open(self.stats_out, 'w') as f:
-            keys = ['total', 'gt_correct', 'gt_wrong', 'gt_excluded', 'HET', 'tp_edit_dist', 'fp_edit_dist', 'UNKNOWN_NO_GT', 'variant_regions_total', 'called_variant_regions', 'false_negatives']
+            keys = stats.keys()
             print(*keys, sep='\t', file=f)
             print(*[stats[x] for x in keys], sep='\t', file=f)
 
