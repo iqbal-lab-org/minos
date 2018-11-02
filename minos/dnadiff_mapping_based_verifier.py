@@ -344,6 +344,7 @@ class DnadiffMappingBasedVerifier:
                     print (i, " ", vcf_pos_index)
                     if i == vcf_pos_index:
                         if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
+                            print(vcf_record.FORMAT['GT'].split('/')[0], allele_index)
                             if allele_index == vcf_record.FORMAT['GT'].split('/')[0]:
                                 found.append('1')
                                 found_allele = True
