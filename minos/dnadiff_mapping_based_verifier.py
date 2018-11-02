@@ -220,6 +220,7 @@ class DnadiffMappingBasedVerifier:
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
         if sam_record.is_unmapped:
+            print("unmapped")
             return False
 
         if not allow_mismatches:
@@ -233,13 +234,16 @@ class DnadiffMappingBasedVerifier:
 
         # don't allow too many soft clipped bases
         if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
+            print("too many soft clipped bases")
             return False
 
         if query_sequence is None:
             query_sequence = sam_record.query_sequence
         assert query_sequence is not None
 
-        assert sam_record.reference_name in ref_seqs
+        #assert sam_record.reference_name in ref_seqs
+
+        print("check aligned pairs")
 
         # if the query is short, which happens when the variant we
         # are checking is too near the start or end of the ref sequence
