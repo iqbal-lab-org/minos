@@ -259,8 +259,10 @@ class DnadiffMappingBasedVerifier:
             alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
+        print(aligned_pairs)
         wanted_aligned_pairs = []
         current_pos = 0
+        print(alt_seq_start, " ", alt_seq_end)
 
         i = 0
         while i < len(query_sequence):
@@ -277,10 +279,11 @@ class DnadiffMappingBasedVerifier:
             i += 1
 
         assert len(wanted_aligned_pairs) > 0
+        print(wanted_aligned_pairs)
 
-        for pair in wanted_aligned_pairs:
-            if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
-                return False
+        #for pair in wanted_aligned_pairs:
+        #    if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
+        #        return False
 
         return True
 
