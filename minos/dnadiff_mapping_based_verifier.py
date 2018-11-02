@@ -346,10 +346,7 @@ class DnadiffMappingBasedVerifier:
                         print("true")
                         print("gt ", vcf_record.format)
                         print("gt ", [i for i in vcf_record.format.keys()])
-                        print("gt ", vcf_record.format['GT'])
-                        print("info ", vcf_record.info)
-                        print("info ", [i for i in vcf_record.info.keys()])
-                        print("info ", vcf_record.info['GT'])
+                        print("gt ", str(vcf_record.format['GT']))
                         if 'GT' in vcf_record.format and len(set(vcf_record.format['GT'].split('/'))) == 1:
                             print("allele ", vcf_record.format['GT'].split('/')[0], allele_index)
                             if allele_index == vcf_record.format['GT'].split('/')[0]:
