@@ -220,7 +220,6 @@ class DnadiffMappingBasedVerifier:
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
         if sam_record.is_unmapped:
-            print("unmapped")
             return False
 
         if not allow_mismatches:
@@ -230,11 +229,11 @@ class DnadiffMappingBasedVerifier:
                 raise Error('No NM tag found in sam record:' + str(sam_record))
 
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
+            print("NM", nm, " ", "all_mapped", " ", len(sam_record.cigartuples), " ", sam_record.cigartuples[0][0], " ", all_mapped)
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
         if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
-            print("too many soft clipped bases")
             return False
 
         if query_sequence is None:
@@ -338,9 +337,9 @@ class DnadiffMappingBasedVerifier:
                 print("good match")
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
                 print("ref_name",ref_name)
-                print(int(expected_start) + flank_length," ",int(expected_start) + flank_length)
+                print(int(expected_start) + flank_length," ",int(expected_start) + flank_length + 1)
                 vcf_reader = pysam.VariantFile(vcffile)
-                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length, int(expected_start) + flank_length)):
+                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length, int(expected_start) + flank_length + 1)):
                     print(vcf_record)
                     if i == vcf_pos_index:
                         if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
