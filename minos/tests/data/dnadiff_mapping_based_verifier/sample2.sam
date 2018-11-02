@@ -1,16 +1,16 @@
-@SQ	SN:ref1.107.0.0	LN:11
-@SQ	SN:ref1.107.0.1	LN:11
-@SQ	SN:ref1.167.1.0	LN:13
-@SQ	SN:ref1.167.1.1	LN:13
-@SQ	SN:ref2.70.0.0	LN:11
-@SQ	SN:ref2.70.0.1	LN:11
-@SQ	SN:ref2.92.1.0	LN:9
-@SQ	SN:ref2.92.1.1	LN:9
-@PG	ID:bwa	PN:bwa	VN:0.7.17-r1188	CL:/usr/local/bin/bwa mem -a -Y vcf2.fa dnadiff2.fa
-0.12	0	ref1.107.0.0.0	1	23	11M	*	0	0	TTCAGGGCTTG	*	XT:A:U	NM:i:0	X0:i:1	X1:i:1	XM:i:0	XO:i:0	XG:i:0	MD:Z:11	XA:Z:ref1.107.0.1,+1,11M,1;
+@SQ	SN:ref1.107.0.0.0	LN:11
+@SQ	SN:ref1.107.0.0.1	LN:11
+@SQ	SN:ref1.167.0.1.0	LN:13
+@SQ	SN:ref1.167.0.1.1	LN:13
+@SQ	SN:ref2.70.0.0.0	LN:11
+@SQ	SN:ref2.70.0.0.1	LN:11
+@SQ	SN:ref2.92.0.1.0	LN:9
+@SQ	SN:ref2.92.0.1.1	LN:9
+@PG	ID:bwa	PN:bwa	VN:0.7.17-r1188 CL:/usr/local/bin/bwa samse vcf2.fa sam.tmp dnadiff2.fa
+0.12	0	ref1.107.0.0.0	1	23	11M	*	0	0	TTCAGGGCTTG	*	XT:A:U	NM:i:0	X0:i:1	X1:i:1	XM:i:0	XO:i:0	XG:i:0	MD:Z:11 XA:Z:ref1.107.0.0.1,+1,11M,1;
 1.72	0	ref1.167.0.1.0	1	37	11M	*	0	0	ATCGCCAGCGG	*	XT:A:U	NM:i:0	X0:i:1	X1:i:0	XM:i:0	XO:i:0	XG:i:0	MD:Z:11
 2.74	0	ref1.167.0.1.0	3	37	11M	*	0	0	CGCCAGCGGCT	*	XT:A:U	NM:i:0	X0:i:1	X1:i:0	XM:i:0	XO:i:0	XG:i:0	MD:Z:11
 3.125	4	*	0	0	*	*	0	0	GCCTAATCGAT	*
 4.175	4	ref2.70.0.0.0	2	25	11M	*	0	0	ACCCTTAACCT	*	XT:A:U	NM:i:1	X0:i:1	X1:i:0	XM:i:1	XO:i:0	XG:i:0	MD:Z:10G0
 5.186	4	*	0	0	*	*	0	0	GAAGCGTGCG	*
-6.197	0	ref2.92.0.1.0	1	23	9M	*	0	0	ATTACCCGT	*	XT:A:U	NM:i:0	X0:i:1	X1:i:1	XM:i:0	XO:i:0	XG:i:0	MD:Z:9	XA:Z:ref2.92.1.1,+1,9M,1;
+6.197	0	ref2.92.0.1.0	1	23	9M	*	0	0	ATTACCCGT	*	XT:A:U	NM:i:0	X0:i:1	X1:i:1	XM:i:0	XO:i:0	XG:i:0	MD:Z:9	XA:Z:ref2.92.0.1.1,+1,9M,1;
