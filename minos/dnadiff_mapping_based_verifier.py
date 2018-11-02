@@ -343,21 +343,15 @@ class DnadiffMappingBasedVerifier:
                     print(vcf_record)
                     print("vcfposindex", " ", i, " ", vcf_pos_index, type(i), type(vcf_pos_index), i == int(vcf_pos_index))
                     if i == int(vcf_pos_index):
-                        print("true")
-                        print("gt ", vcf_record.format)
-                        print("gt ", [i for i in vcf_record.format.keys()])
-                        print("samples ", vcf_record.samples)
-                        print("samples ", vcf_record.samples.keys())
-                        print("samples ", vcf_record.samples['sample_name'])
-                        print("samples ", vcf_record.samples['sample_name'].keys())
-                        print("samples ", vcf_record.samples['sample_name']['GT'])
-                        if 'GT' in vcf_record.format and len(set(vcf_record.format['GT'].split('/'))) == 1:
+                        sample_name = vcf_record.samples.keys()[0]
+                        if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
                             print("allele ", vcf_record.format['GT'].split('/')[0], allele_index)
-                            if allele_index == vcf_record.format['GT'].split('/')[0]:
+                            if allele_index == vcf_record.samples[sample_name]['GT'][0]:
                                 found.append('1')
                                 found_allele = True
-                                if 'GT_CONF' in vcf_record.format:
-                                    gt_conf.append(int(float(vcf_record.format['GT_CONF'])))
+                                if 'GT_CONF' in vcf_record.format.keys():
+                                    print("gtconf", vcf_record.samples[sample_name]['GT_CONF'])
+                                    gt_conf.append(int(float(vcf_record.samples[sample_name]['GT_CONF'])))
                                     found_conf = True
             if not found_allele:
                 found.append('0')
