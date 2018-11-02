@@ -344,7 +344,7 @@ class DnadiffMappingBasedVerifier:
                     print("vcfposindex", " ", i, " ", vcf_pos_index, type(i), type(vcf_pos_index), i == int(vcf_pos_index))
                     if i == int(vcf_pos_index):
                         print("true")
-                        print("gt ", ('GT' in vcf_record.format), " ", len(set(vcf_record.format['GT'].split('/'))))
+                        print("gt ", vcf_record.format['GT'])
                         if 'GT' in vcf_record.format and len(set(vcf_record.format['GT'].split('/'))) == 1:
                             print("allele ", vcf_record.format['GT'].split('/')[0], allele_index)
                             if allele_index == vcf_record.format['GT'].split('/')[0]:
