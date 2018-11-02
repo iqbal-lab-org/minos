@@ -344,14 +344,14 @@ class DnadiffMappingBasedVerifier:
                     print("vcfposindex", " ", i, " ", vcf_pos_index, type(i), type(vcf_pos_index), i == int(vcf_pos_index))
                     if i == int(vcf_pos_index):
                         print("true")
-                        print("gt ", ('GT' in vcf_record.FORMAT), " ", len(set(vcf_record.FORMAT['GT'].split('/'))))
-                        if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
-                            print("allele ", vcf_record.FORMAT['GT'].split('/')[0], allele_index)
-                            if allele_index == vcf_record.FORMAT['GT'].split('/')[0]:
+                        print("gt ", ('GT' in vcf_record.format), " ", len(set(vcf_record.format['GT'].split('/'))))
+                        if 'GT' in vcf_record.format and len(set(vcf_record.format['GT'].split('/'))) == 1:
+                            print("allele ", vcf_record.format['GT'].split('/')[0], allele_index)
+                            if allele_index == vcf_record.format['GT'].split('/')[0]:
                                 found.append('1')
                                 found_allele = True
-                                if 'GT_CONF' in vcf_record.FORMAT:
-                                    gt_conf.append(int(float(vcf_record.FORMAT['GT_CONF'])))
+                                if 'GT_CONF' in vcf_record.format:
+                                    gt_conf.append(int(float(vcf_record.format['GT_CONF'])))
                                     found_conf = True
             if not found_allele:
                 found.append('0')
