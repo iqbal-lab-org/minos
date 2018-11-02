@@ -337,9 +337,9 @@ class DnadiffMappingBasedVerifier:
                 print("good match")
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
                 print("ref_name",ref_name)
-                print(int(expected_start) + flank_length," ",int(expected_start) + flank_length + 1)
+                print(int(expected_start) + flank_length - 1," ",int(expected_start) + flank_length + 1)
                 vcf_reader = pysam.VariantFile(vcffile)
-                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length, int(expected_start) + flank_length + 1)):
+                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length - 1, int(expected_start) + flank_length + 1)):
                     print(vcf_record)
                     if i == vcf_pos_index:
                         if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
