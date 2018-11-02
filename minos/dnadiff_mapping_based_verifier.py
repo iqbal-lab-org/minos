@@ -341,11 +341,11 @@ class DnadiffMappingBasedVerifier:
                 vcf_reader = pysam.VariantFile(vcffile)
                 for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length - 1, int(expected_start) + flank_length)):
                     print(vcf_record)
-                    print(i, " ", vcf_pos_index)
+                    print("vcfposindex", " ", i, " ", vcf_pos_index)
                     if i == vcf_pos_index:
-                        print('GT' in vcf_record.FORMAT, " ", len(set(vcf_record.FORMAT['GT'].split('/'))))
+                        print("gt ", 'GT' in vcf_record.FORMAT, " ", len(set(vcf_record.FORMAT['GT'].split('/'))))
                         if 'GT' in vcf_record.FORMAT and len(set(vcf_record.FORMAT['GT'].split('/'))) == 1:
-                            print(vcf_record.FORMAT['GT'].split('/')[0], allele_index)
+                            print("allele ", vcf_record.FORMAT['GT'].split('/')[0], allele_index)
                             if allele_index == vcf_record.FORMAT['GT'].split('/')[0]:
                                 found.append('1')
                                 found_allele = True
