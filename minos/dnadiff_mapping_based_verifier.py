@@ -346,7 +346,7 @@ class DnadiffMappingBasedVerifier:
                 found.append('0')
                 allele.append('1')
             if not found_conf:
-                gt_conf.append(None)
+                gt_conf.append(0)
         assert len(found) == len(gt_conf)
         assert len(found) == len(allele)
         return found, gt_conf, allele
@@ -449,5 +449,5 @@ class DnadiffMappingBasedVerifier:
         # write GT_CONF histogram files
         with open(self.gt_conf_hist_out, 'w') as f:
             print('GT_CONF\tCount', file=f)
-            for gt_conf, count in sorted([i for i in gt_conf_hist.items() if not math.isnan(i)]):
+            for gt_conf, count in sorted(gt_conf_hist.items()):
                 print(gt_conf, count, sep='\t', file=f)
