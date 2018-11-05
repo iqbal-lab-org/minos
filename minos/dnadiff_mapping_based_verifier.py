@@ -380,7 +380,7 @@ class DnadiffMappingBasedVerifier:
         stats = {x: 0 for x in ['total', 'found_vars', 'missed_vars']}
         gt_conf_hist = {}
 
-        snps = pd.read_table(tsv_file)
+        snps = pd.read_table(tsv_file, index_col=1)
         for line in snps.itertuples():
             stats['total'] += 1
             print(line)
