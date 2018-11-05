@@ -449,5 +449,5 @@ class DnadiffMappingBasedVerifier:
         # write GT_CONF histogram files
         with open(self.gt_conf_hist_out, 'w') as f:
             print('GT_CONF\tCount', file=f)
-            for gt_conf, count in sorted(gt_conf_hist.items()):
+            for gt_conf, count in sorted([i for i in gt_conf_hist.items() if not math.isnan(i)]):
                 print(gt_conf, count, sep='\t', file=f)
