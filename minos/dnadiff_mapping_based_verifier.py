@@ -319,6 +319,7 @@ class DnadiffMappingBasedVerifier:
     def _parse_sam_file_and_vcf(cls, samfile, vcffile, dnadiff_plus_flanks_file, flank_length, allow_mismatches):
         found = []
         gt_conf = []
+        allele = []
         dnadiff_file_seqs = {}
         pyfastaq.tasks.file_to_dict(dnadiff_plus_flanks_file, dnadiff_file_seqs)
         samfile_handle = pysam.AlignmentFile(samfile, "r")
@@ -350,6 +351,7 @@ class DnadiffMappingBasedVerifier:
                             print("allele ", vcf_record.samples[sample_name]['GT'][0], allele_index, type(vcf_record.samples[sample_name]['GT'][0]), type(allele_index))
                             if int(allele_index) == vcf_record.samples[sample_name]['GT'][0]:
                                 found.append('1')
+                                allele.append(vcf_record.samples[sample_name]['GT'][0])
                                 found_allele = True
                                 if 'GT_CONF' in vcf_record.format.keys():
                                     print("gtconf", vcf_record.samples[sample_name]['GT_CONF'])
@@ -357,10 +359,12 @@ class DnadiffMappingBasedVerifier:
                                     found_conf = True
             if not found_allele:
                 found.append('0')
+                allele.append(None)
             if not found_conf:
                 gt_conf.append(None)
         assert len(found) == len(gt_conf)
-        return found, gt_conf
+        assert len(found) == len(allele)
+        return found, gt_conf, allele
 
     @classmethod
     def _parse_sam_files(cls, dnadiff_file, samfile1, samfile2, vcffile1, vcffile2, reffasta1, reffasta2, outfile, flank_length, allow_mismatches=True):
@@ -373,16 +377,18 @@ class DnadiffMappingBasedVerifier:
         '''
 
         snps = pd.read_table(dnadiff_file, header=None)
-        ref_found, ref_conf = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches)
-        query_found, query_conf = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches)
+        ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches)
+        query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches)
         assert len(snps[0]) == len(ref_found) and len(snps[0]) == len(query_found)
         out_df = pd.DataFrame({'id': snps[0],
                                'ref': snps[2],
                                'alt': snps[3],
                                'ref_found': ref_found,
                                'ref_conf' : ref_conf,
+                               'ref_allele' : ref_allele,
                                'query_found': query_found,
-                               'query_conf': query_conf})
+                               'query_conf': query_conf,
+                               'query_allele': query_allele})
         out_df.to_csv(outfile, sep='\t')
 
     @classmethod
@@ -393,9 +399,9 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(tsv_file)
         for line in snps.itertuples():
             stats['total'] += 1
-            if line[4] == "1" or line[6] == "1":
+            if (line[6] == '0' or line[4] == "1") and (line[9] == '0' or line[7] == "1"):
                 stats['found_vars'] += 1
-                gt_confs = set(line[5],line[7]).remove(None)
+                gt_confs = set(line[5],line[8]).remove(None)
                 gt_conf = max([int(float(i)) for i in gt_confs])
                 gt_conf_hist[gt_conf] = gt_conf_hist.get(gt_conf, 0) + 1
             else:
