@@ -45,6 +45,21 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         self.assertTrue(filecmp.cmp(expected_out, tmp_out, shallow=False))
         #os.unlink(tmp_out)
 
+    def test_write_vars_plus_flanks_to_fasta2(self):
+        vcfref_file_in = os.path.join(data_dir, 'vcfref.fa')
+        sample_file_in = os.path.join(data_dir, 'sample2a.vcf')
+        tmp_out = 'tmp.write_vars_plus_flanks_to_fasta.out.2.fa'
+        expected_out = os.path.join(data_dir, 'sample2a.plusflanks.fa')
+
+        vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(sample_file_in, sort=True, remove_useless_start_nucleotides=True)
+        vcf_ref_seqs = {}
+        pyfastaq.tasks.file_to_dict(vcfref_file_in, vcf_ref_seqs)
+        flank = 5
+        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(tmp_out,vcf_records, vcf_ref_seqs, flank)
+
+        self.assertTrue(filecmp.cmp(expected_out, tmp_out, shallow=False))
+        #os.unlink(tmp_out)
+
     def test_parse_sam_file_and_vcf1(self):
         samfile = os.path.join(data_dir, 'sample1.sam')
         vcffile = os.path.join(data_dir, 'sample1a.vcf')

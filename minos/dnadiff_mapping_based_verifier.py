@@ -221,6 +221,7 @@ class DnadiffMappingBasedVerifier:
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
         if sam_record.is_unmapped:
+            print("unmapped")
             return False
 
         if not allow_mismatches:
