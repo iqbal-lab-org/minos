@@ -220,7 +220,6 @@ class DnadiffMappingBasedVerifier:
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
         if sam_record.is_unmapped:
-            print("unmapped")
             return False
 
         if not allow_mismatches:
@@ -230,7 +229,6 @@ class DnadiffMappingBasedVerifier:
                 raise Error('No NM tag found in sam record:' + str(sam_record))
 
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
-            print("NM", nm, " ", "all_mapped", " ", len(sam_record.cigartuples), " ", sam_record.cigartuples[0][0], " ", all_mapped)
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
@@ -242,8 +240,6 @@ class DnadiffMappingBasedVerifier:
         assert query_sequence is not None
 
         #assert sam_record.reference_name in ref_seqs
-
-        print("check aligned pairs")
 
         # if the query is short, which happens when the variant we
         # are checking is too near the start or end of the ref sequence
@@ -263,10 +259,8 @@ class DnadiffMappingBasedVerifier:
             alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
-        print(aligned_pairs)
         wanted_aligned_pairs = []
         current_pos = 0
-        print(alt_seq_start, " ", alt_seq_end)
 
         i = 0
         while i < len(query_sequence):
@@ -283,7 +277,6 @@ class DnadiffMappingBasedVerifier:
             i += 1
 
         assert len(wanted_aligned_pairs) > 0
-        print(wanted_aligned_pairs)
 
         #for pair in wanted_aligned_pairs:
         #    if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
@@ -324,7 +317,6 @@ class DnadiffMappingBasedVerifier:
         samfile_handle = pysam.AlignmentFile(samfile, "r")
         sam_previous_record_name = None
         for sam_record in samfile_handle.fetch(until_eof=True):
-            print(sam_record)
             if sam_record.query_name == sam_previous_record_name:
                 continue
             sam_previous_record_name = sam_record.query_name
@@ -336,24 +328,17 @@ class DnadiffMappingBasedVerifier:
                                                                                  query_sequence=sam_record.query_sequence,
                                                                                  allow_mismatches=allow_mismatches)
             if good_match:
-                print("good match")
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
-                print("ref_name",ref_name)
-                print(int(expected_start) + flank_length - 1," ",int(expected_start) + flank_length)
                 vcf_reader = pysam.VariantFile(vcffile)
                 for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length - 1, int(expected_start) + flank_length)):
-                    print(vcf_record)
-                    print("vcfposindex", " ", i, " ", vcf_pos_index, type(i), type(vcf_pos_index), i == int(vcf_pos_index))
                     if i == int(vcf_pos_index):
                         sample_name = vcf_record.samples.keys()[0]
                         if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
-                            print("allele ", vcf_record.samples[sample_name]['GT'][0], allele_index, type(vcf_record.samples[sample_name]['GT'][0]), type(allele_index))
                             if int(allele_index) == vcf_record.samples[sample_name]['GT'][0]:
                                 found.append('1')
                                 allele.append(str(vcf_record.samples[sample_name]['GT'][0]))
                                 found_allele = True
                                 if 'GT_CONF' in vcf_record.format.keys():
-                                    print("gtconf", vcf_record.samples[sample_name]['GT_CONF'])
                                     gt_conf.append(int(float(vcf_record.samples[sample_name]['GT_CONF'])))
                                     found_conf = True
             if not found_allele:
@@ -363,9 +348,6 @@ class DnadiffMappingBasedVerifier:
                 gt_conf.append(None)
         assert len(found) == len(gt_conf)
         assert len(found) == len(allele)
-        print(found)
-        print(gt_conf)
-        print(allele)
         return found, gt_conf, allele
 
     @classmethod
@@ -382,12 +364,6 @@ class DnadiffMappingBasedVerifier:
         ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches)
         query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches)
         assert len(snps[0]) == len(ref_found) and len(snps[0]) == len(query_found)
-        print(ref_found)
-        print(ref_conf)
-        print(ref_allele)
-        print(query_found)
-        print(query_conf)
-        print(query_allele)
         out_df = pd.DataFrame({'id': snps[0],
                                'ref': snps[1],
                                'alt': snps[2],
@@ -397,8 +373,6 @@ class DnadiffMappingBasedVerifier:
                                'query_found': query_found,
                                'query_conf': query_conf,
                                'query_allele': query_allele})
-        print()
-        print(out_df)
         out_df.to_csv(outfile, sep='\t')
 
     @classmethod
@@ -409,6 +383,9 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(tsv_file)
         for line in snps.itertuples():
             stats['total'] += 1
+            print(line)
+            print(line[6] == '0' or line[4] == "1")
+            print(line[9] == '0' or line[7] == "1")
             if (line[6] == '0' or line[4] == "1") and (line[9] == '0' or line[7] == "1"):
                 stats['found_vars'] += 1
                 gt_confs = set(line[5],line[8]).remove(None)
