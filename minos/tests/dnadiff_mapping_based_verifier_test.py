@@ -2,9 +2,9 @@ import filecmp
 import os
 import unittest
 
-from cluster_vcf_records import vcf_record
-import pysam
 import pyfastaq
+
+from cluster_vcf_records import vcf_file_read
 
 from minos import dnadiff_mapping_based_verifier
 
@@ -30,6 +30,21 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         #os.unlink(tmp_out1)
         #os.unlink(tmp_out2)
 
+    def test_write_vars_plus_flanks_to_fasta1(self):
+        vcfref_file_in = os.path.join(data_dir, 'vcfref.fa')
+        sample_file_in = os.path.join(data_dir, 'sample1a.vcf')
+        tmp_out = 'tmp.write_vars_plus_flanks_to_fasta.out.1.fa'
+        expected_out = os.path.join(data_dir, 'sample1a.plusflanks.fa')
+
+        vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(sample_file_in, sort=True, remove_useless_start_nucleotides=True)
+        vcf_ref_seqs = {}
+        pyfastaq.tasks.file_to_dict(vcfref_file_in, vcf_ref_seqs)
+        flank = 5
+        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(tmp_out,vcf_records, vcf_ref_seqs, flank)
+
+        self.assertTrue(filecmp.cmp(expected_out, tmp_out, shallow=False))
+        #os.unlink(tmp_out)
+
     def test_parse_sam_file_and_vcf1(self):
         samfile = os.path.join(data_dir, 'sample1.sam')
         vcffile = os.path.join(data_dir, 'sample1a.vcf')
@@ -53,6 +68,9 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         flank = 5
         allow_mismatches = False
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
+        print(samfile)
+        print(vcffile + ".gz")
+        print(reffile)
         found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", reffile, flank, allow_mismatches)
 
         exp_found = ['1','1','1','0','1','0','1']
