@@ -420,7 +420,7 @@ class DnadiffMappingBasedVerifier:
 
     def run(self):
         # Write files of sequences to search for in each vcf
-        DnadiffMappingBasedVerifier._write_dnadiff_plus_flanks_to_fastas(self.dnadiff_snps_file, self.dnadiff_file1, self.dnadiff_file1, self.seqs_out_dnadiff1, self.seqs_out_dnadiff2, self.flank_length)
+        DnadiffMappingBasedVerifier._write_dnadiff_plus_flanks_to_fastas(self.dnadiff_snps_file, self.dnadiff_file1, self.dnadiff_file2, self.seqs_out_dnadiff1, self.seqs_out_dnadiff2, self.flank_length)
 
         # Cluster together variants in each vcf
         if self.filter_and_cluster_vcf:
