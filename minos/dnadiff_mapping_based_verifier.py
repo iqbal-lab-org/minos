@@ -89,7 +89,6 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(dnadiff_file, header=None)
 
         for line in snps.itertuples():
-            print(line)
             assert(len(line) > 4)
             seq_name = str(line[0]) + "." + str(line[1])
             flanked_seq = ""
@@ -364,6 +363,9 @@ class DnadiffMappingBasedVerifier:
                 gt_conf.append(None)
         assert len(found) == len(gt_conf)
         assert len(found) == len(allele)
+        print(found)
+        print(gt_conf)
+        print(allele)
         return found, gt_conf, allele
 
     @classmethod
