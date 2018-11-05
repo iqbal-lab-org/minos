@@ -1,5 +1,6 @@
 import logging
 import os
+import math
 
 import pyfastaq
 import pysam
@@ -389,7 +390,7 @@ class DnadiffMappingBasedVerifier:
             if (line[6] == 0 or line[4] == 1) and (line[9] == 0 or line[7] == 1):
                 stats['found_vars'] += 1
                 gt_confs = {line[5],line[8]}
-                gt_conf = max([int(float(i)) for i in gt_confs])
+                gt_conf = max([int(float(i)) for i in gt_confs if not math.isnan(i)])
                 gt_conf_hist[gt_conf] = gt_conf_hist.get(gt_conf, 0) + 1
             else:
                 stats['missed_vars'] += 1
