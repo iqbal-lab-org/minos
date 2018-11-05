@@ -336,7 +336,7 @@ class DnadiffMappingBasedVerifier:
                         if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
                             if int(allele_index) == vcf_record.samples[sample_name]['GT'][0]:
                                 found.append('1')
-                                allele.append(allele_index)
+                                allele.append(str(allele_index))
                                 found_allele = True
                                 if 'GT_CONF' in vcf_record.format.keys():
                                     gt_conf.append(int(float(vcf_record.samples[sample_name]['GT_CONF'])))
