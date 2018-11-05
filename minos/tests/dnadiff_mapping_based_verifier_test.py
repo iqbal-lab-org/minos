@@ -41,7 +41,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         found, gt_conf = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", reffile, flank, allow_mismatches)
 
         exp_found = ['1','1','0','0','1','0','1'] #nb doesn't currently handle '.' alleles
-        exp_gt_conf = [42, 42, None, None, 42, 32, None]
+        exp_gt_conf = [42, 42, None, None, 42, None, None]
         self.assertEqual(exp_found, found)
         self.assertEqual(exp_gt_conf, gt_conf)
 
