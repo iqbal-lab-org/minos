@@ -343,7 +343,7 @@ class DnadiffMappingBasedVerifier:
                                     found_conf = True
             if not found_allele:
                 found.append('0')
-                allele.append(None)
+                allele.append('1')
             if not found_conf:
                 gt_conf.append(None)
         assert len(found) == len(gt_conf)
