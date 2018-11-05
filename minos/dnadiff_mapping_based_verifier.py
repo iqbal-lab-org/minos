@@ -178,6 +178,7 @@ class DnadiffMappingBasedVerifier:
 
                     for allele_index, allele_seq in enumerate(alleles):
                         seq_name = '.'.join([ref_name, str(start_position + 1), str(j), str(i), str(allele_index)])
+                        allele_seq.replace(".","")
                         print('>' + seq_name, allele_seq, sep='\n', file=f)
                     if prev_ref_name == ref_name and prev_ref_pos == start_position:
                         j += 1
