@@ -380,6 +380,8 @@ class DnadiffMappingBasedVerifier:
         ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches)
         query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches)
         assert len(snps[0]) == len(ref_found) and len(snps[0]) == len(query_found)
+        print(snps)
+        print(snps[2])
         out_df = pd.DataFrame({'id': snps[0],
                                'ref': snps[2],
                                'alt': snps[3],
