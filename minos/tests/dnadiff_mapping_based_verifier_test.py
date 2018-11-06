@@ -1,6 +1,7 @@
 import filecmp
 import os
 import unittest
+import glob
 
 import pyfastaq
 
@@ -114,6 +115,8 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
 
         self.assertTrue(filecmp.cmp(exp_out, tmp_out + '.stats.tsv', shallow=False))
         self.assertTrue(filecmp.cmp(exp_gt_conf, tmp_out + '.gt_conf_hist.tsv', shallow=False))
+        for f in glob.glob(tmp_out + '*'):
+            os.unlink(f)
 
 
 
