@@ -433,6 +433,8 @@ class DnadiffMappingBasedVerifier:
         DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out_vcf2, vcf_records2, vcf_ref_seqs, self.flank_length)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf1, self.seqs_out_dnadiff1, self.sam_file_out1)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf2, self.seqs_out_dnadiff2, self.sam_file_out2)
+        print(self.seqs_out_vcf1)
+        print(glob.glob(self.seqs_out_vcf1 + '*'))
         map(os.unlink, glob.glob(self.seqs_out_vcf1 + '*'))
         map(os.unlink, glob.glob(self.seqs_out_vcf2 + '*'))
 
