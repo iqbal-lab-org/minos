@@ -27,8 +27,8 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
 
         self.assertTrue(filecmp.cmp(expected_out1, tmp_out1, shallow=False))
         self.assertTrue(filecmp.cmp(expected_out2, tmp_out2, shallow=False))
-        #os.unlink(tmp_out1)
-        #os.unlink(tmp_out2)
+        os.unlink(tmp_out1)
+        os.unlink(tmp_out2)
 
     def test_write_vars_plus_flanks_to_fasta1(self):
         vcfref_file_in = os.path.join(data_dir, 'vcfref.fa')
@@ -43,7 +43,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(tmp_out,vcf_records, vcf_ref_seqs, flank)
 
         self.assertTrue(filecmp.cmp(expected_out, tmp_out, shallow=False))
-        #os.unlink(tmp_out)
+        os.unlink(tmp_out)
 
     def test_write_vars_plus_flanks_to_fasta2(self):
         vcfref_file_in = os.path.join(data_dir, 'vcfref.fa')
@@ -58,7 +58,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(tmp_out,vcf_records, vcf_ref_seqs, flank)
 
         self.assertTrue(filecmp.cmp(expected_out, tmp_out, shallow=False))
-        #os.unlink(tmp_out)
+        os.unlink(tmp_out)
 
     def test_parse_sam_file_and_vcf1(self):
         samfile = os.path.join(data_dir, 'sample1.sam')

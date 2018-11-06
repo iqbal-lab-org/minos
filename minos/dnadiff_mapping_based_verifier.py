@@ -432,8 +432,8 @@ class DnadiffMappingBasedVerifier:
         DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out_vcf2, vcf_records2, vcf_ref_seqs, self.flank_length)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf1, self.seqs_out_dnadiff1, self.sam_file_out1)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf2, self.seqs_out_dnadiff2, self.sam_file_out2)
-        #os.unlink(self.seqs_out_vcf1)
-        #os.unlink(self.seqs_out_vcf2)
+        os.unlink(self.seqs_out_vcf1)
+        os.unlink(self.seqs_out_vcf2)
 
         DnadiffMappingBasedVerifier._index_vcf(self.vcf_to_check1)
         self.vcf_to_check1 = self.vcf_to_check1 + ".gz"
@@ -441,8 +441,8 @@ class DnadiffMappingBasedVerifier:
         self.vcf_to_check2 = self.vcf_to_check2 + ".gz"
         DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2, self.vcf_to_check1, self.vcf_to_check2, self.seqs_out_dnadiff1, self.seqs_out_dnadiff2, self.sam_summary, self.flank_length, allow_mismatches=self.allow_flank_mismatches)
         stats, gt_conf_hist = DnadiffMappingBasedVerifier._gather_stats(self.sam_summary)
-        #os.unlink(self.seqs_out_dnadiff1)
-        #os.unlink(self.seqs_out_dnadiff2)
+        os.unlink(self.seqs_out_dnadiff1)
+        os.unlink(self.seqs_out_dnadiff2)
 
         # write stats file
         with open(self.stats_out, 'w') as f:
