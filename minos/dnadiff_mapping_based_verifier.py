@@ -336,6 +336,7 @@ class DnadiffMappingBasedVerifier:
 
                 vcf_reader = pysam.VariantFile(vcffile)
                 for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + int(alignment_start) + flank_length - 1, int(expected_start) + int(alignment_start) + flank_length)):
+                    print(vcf_record)
                     if i == int(vcf_pos_index):
                         sample_name = vcf_record.samples.keys()[0]
                         if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
