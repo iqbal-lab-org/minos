@@ -328,6 +328,7 @@ class DnadiffMappingBasedVerifier:
                                                                                  flank_length,
                                                                                  query_sequence=sam_record.query_sequence,
                                                                                  allow_mismatches=allow_mismatches)
+            print(str(sam_record))
             alignment_start = sam_record.query_alignment_start
             print(alignment_start)
             alignment_start = str(sam_record).split("\t")[2]
