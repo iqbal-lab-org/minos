@@ -72,7 +72,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
 
         exp_found = ['1','1','0','0','1','0','1'] #nb doesn't currently handle '.' alleles
         exp_gt_conf = [42, 42, 0, 0, 42, 0, 0]
-        exp_allele = ['0', '1', '1', '1', '0', '1', '0']
+        exp_allele = ['0', '1', '0', '0', '0', '0', '0']
         self.assertEqual(exp_found, found)
         self.assertEqual(exp_gt_conf, gt_conf)
         self.assertEqual(exp_allele, allele)
@@ -92,7 +92,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
 
         exp_found = ['1','1','1','0','1','0','1']
         exp_gt_conf = [42, 42, 52, 0, 42, 0, 0]
-        exp_allele = ['1', '0', '1', '1', '1', '1', '1']
+        exp_allele = ['1', '0', '1', '0', '1', '0', '1']
         self.assertEqual(exp_found, found)
         self.assertEqual(exp_gt_conf, gt_conf)
         self.assertEqual(exp_allele, allele)

@@ -328,8 +328,13 @@ class DnadiffMappingBasedVerifier:
                                                                                  flank_length,
                                                                                  query_sequence=sam_record.query_sequence,
                                                                                  allow_mismatches=allow_mismatches)
+            alignment_start = sam_record.query_alignment_start
+            print(alignment_start)
+            alignment_start = str(sam_record).split("\t")[2]
+            print(alignment_start)
             if good_match:
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
+
                 vcf_reader = pysam.VariantFile(vcffile)
                 for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length - 1, int(expected_start) + flank_length)):
                     if i == int(vcf_pos_index):
@@ -344,7 +349,7 @@ class DnadiffMappingBasedVerifier:
                                     found_conf = True
             if not found_allele:
                 found.append('0')
-                allele.append('1')
+                allele.append('0')
             if not found_conf:
                 gt_conf.append(0)
         assert len(found) == len(gt_conf)
