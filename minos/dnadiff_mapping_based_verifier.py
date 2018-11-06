@@ -330,10 +330,7 @@ class DnadiffMappingBasedVerifier:
                                                                                  query_sequence=sam_record.query_sequence,
                                                                                  allow_mismatches=allow_mismatches)
             print(str(sam_record))
-            alignment_start = sam_record.query_alignment_start
-            print(alignment_start)
             alignment_start = str(sam_record).split("\t")[3]
-            print(alignment_start)
             if good_match:
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
 
@@ -346,6 +343,7 @@ class DnadiffMappingBasedVerifier:
                                 found.append('1')
                                 allele.append(str(allele_index))
                                 found_allele = True
+                                print(vcf_record.format)
                                 if 'GT_CONF' in vcf_record.format.keys():
                                     gt_conf.append(int(float(vcf_record.samples[sample_name]['GT_CONF'])))
                                     found_conf = True
