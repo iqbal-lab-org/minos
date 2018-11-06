@@ -1,6 +1,7 @@
 import logging
 import os
 import math
+import glob
 
 import pyfastaq
 import pysam
@@ -331,13 +332,13 @@ class DnadiffMappingBasedVerifier:
             print(str(sam_record))
             alignment_start = sam_record.query_alignment_start
             print(alignment_start)
-            alignment_start = str(sam_record).split("\t")[2]
+            alignment_start = str(sam_record).split("\t")[3]
             print(alignment_start)
             if good_match:
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
 
                 vcf_reader = pysam.VariantFile(vcffile)
-                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + flank_length - 1, int(expected_start) + flank_length)):
+                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + int(alignment_start) + flank_length - 1, int(expected_start) + int(alignment_start) + flank_length)):
                     if i == int(vcf_pos_index):
                         sample_name = vcf_record.samples.keys()[0]
                         if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
@@ -433,8 +434,8 @@ class DnadiffMappingBasedVerifier:
         DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out_vcf2, vcf_records2, vcf_ref_seqs, self.flank_length)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf1, self.seqs_out_dnadiff1, self.sam_file_out1)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf2, self.seqs_out_dnadiff2, self.sam_file_out2)
-        os.unlink(self.seqs_out_vcf1)
-        os.unlink(self.seqs_out_vcf2)
+        map(os.unlink, glob.glob(self.seqs_out_vcf1 + '*'))
+        map(os.unlink, glob.glob(self.seqs_out_vcf2 + '*'))
 
         DnadiffMappingBasedVerifier._index_vcf(self.vcf_to_check1)
         self.vcf_to_check1 = self.vcf_to_check1 + ".gz"
@@ -444,6 +445,8 @@ class DnadiffMappingBasedVerifier:
         stats, gt_conf_hist = DnadiffMappingBasedVerifier._gather_stats(self.sam_summary)
         os.unlink(self.seqs_out_dnadiff1)
         os.unlink(self.seqs_out_dnadiff2)
+        map(os.unlink, glob.glob(self.vcf_to_check1 + '*'))
+        map(os.unlink, glob.glob(self.vcf_to_check2 + '*'))
 
         # write stats file
         with open(self.stats_out, 'w') as f:

@@ -113,7 +113,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         verifier.run()
 
         self.assertTrue(filecmp.cmp(exp_out, tmp_out + '.stats.tsv', shallow=False))
-        self.assertTrue(filecmp.cmp(exp_gt_conf, tmp_out + '.gt_conf.tsv', shallow=False))
+        self.assertTrue(filecmp.cmp(exp_gt_conf, tmp_out + '.gt_conf_hist.tsv', shallow=False))
 
 
 
