@@ -385,7 +385,8 @@ class DnadiffMappingBasedVerifier:
         for line in snps.itertuples():
             stats['total'] += 1
             print(line)
-            if (line[4] == 1 and line[7] == 1) or (line[4] == 1 and line[6] == 1) or (line[7] == 0 and line[9] == 1):
+            if (line[4] == 1 and line[7] == 1) or (line[4] == 1 and line[6] == 1) or (line[7] == 1 and line[9] == 1):
+                print("found")
                 stats['found_vars'] += 1
                 gt_confs = [i for i in {line[5],line[8]} if not math.isnan(i)]
                 gt_conf = None
@@ -393,6 +394,7 @@ class DnadiffMappingBasedVerifier:
                     gt_conf = max(gt_confs)
                 gt_conf_hist[gt_conf] = gt_conf_hist.get(gt_conf, 0) + 1
             else:
+                print((line[4] == 1 and line[7] == 1),(line[4] == 1 and line[6] == 1),(line[7] == 1 and line[9] == 1))
                 stats['missed_vars'] += 1
         return stats, gt_conf_hist
 
