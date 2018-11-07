@@ -74,19 +74,19 @@ subparser_check_snps = subparsers.add_parser(
     description='Checks each SNP in dnadiff file and looks for a VCF record from each sample which covers it. Maps each SNP allele plus flanking sequence to the the corresponding set of VCF alleles plus flanking sequences for that sample. Outputs totals for how many of these sites are captured/missed by VCFs, and a histogram of number captured at each GT_CONF threshold.',
 )
 
-subparser_check_with_ref.add_argument('--flank_length', type=int, help='Number of nucleotides to use before and after each allele for mapping [%(default)s]', default=31, metavar='INT')
-subparser_check_with_ref.add_argument('--variant_merge_length', type=int, help='Variants up to this distance apart are merged, unless they conflict with each other [%(default)s]', default=31, metavar='INT')
-subparser_check_with_ref.add_argument('--allow_flank_mismatches', action='store_true', help='Allow mismatches in flanking regions when mapping to the truth reference. By default, only exact matches allowed')
-subparser_check_with_ref.add_argument('--no_filter_cluster', action='store_true', help='Do not filter and cluster the input VCF before checking accuracy')
-subparser_check_with_ref.add_argument('--include_ref_calls', action='store_true', help='Do not filter ref calls from input VCF before checking accuracy')
-subparser_check_with_ref.add_argument('dnadiff_snps_file', help='Name of SNPs file to be checked')
-subparser_check_with_ref.add_argument('dnadiff_ref', help='FASTA of truth reference for first sample in dnadiff SNPs file')
-subparser_check_with_ref.add_argument('dnadiff_query', help='FASTA of truth reference for second sample in dnadiff SNPs file')
-subparser_check_with_ref.add_argument('vcf_file1', help='VCF file for first sample')
-subparser_check_with_ref.add_argument('vcf_file2', help='VCF file for second sample')
-subparser_check_with_ref.add_argument('vcf_ref', help='Reference FASTA file used to make VCF (must match VCF file)')
-subparser_check_with_ref.add_argument('outprefix', help='Prefix of output files')
-subparser_check_with_ref.set_defaults(func=minos.tasks.check_snps.run)
+subparser_check_snps.add_argument('--flank_length', type=int, help='Number of nucleotides to use before and after each allele for mapping [%(default)s]', default=31, metavar='INT')
+subparser_check_snps.add_argument('--variant_merge_length', type=int, help='Variants up to this distance apart are merged, unless they conflict with each other [%(default)s]', default=31, metavar='INT')
+subparser_check_snps.add_argument('--allow_flank_mismatches', action='store_true', help='Allow mismatches in flanking regions when mapping to the truth reference. By default, only exact matches allowed')
+subparser_check_snps.add_argument('--no_filter_cluster', action='store_true', help='Do not filter and cluster the input VCF before checking accuracy')
+subparser_check_snps.add_argument('--include_ref_calls', action='store_true', help='Do not filter ref calls from input VCF before checking accuracy')
+subparser_check_snps.add_argument('dnadiff_snps_file', help='Name of SNPs file to be checked')
+subparser_check_snps.add_argument('dnadiff_ref', help='FASTA of truth reference for first sample in dnadiff SNPs file')
+subparser_check_snps.add_argument('dnadiff_query', help='FASTA of truth reference for second sample in dnadiff SNPs file')
+subparser_check_snps.add_argument('vcf_file1', help='VCF file for first sample')
+subparser_check_snps.add_argument('vcf_file2', help='VCF file for second sample')
+subparser_check_snps.add_argument('vcf_ref', help='Reference FASTA file used to make VCF (must match VCF file)')
+subparser_check_snps.add_argument('outprefix', help='Prefix of output files')
+subparser_check_snps.set_defaults(func=minos.tasks.check_snps.run)
 
 
 #------------------------ cluster_vcfs ---------------------------------------
