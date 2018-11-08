@@ -10,8 +10,8 @@ def run(options):
         options.vcf_ref,
         options.outprefix,
         flank_length=options.flank_length,
-        merge_length = options.variant_merge_length,
-        filter_and_cluster_vcf = not options.no_filter_cluster,
+        merge_length=options.variant_merge_length,
+        filter_and_cluster_vcf=not options.no_filter_cluster,
         discard_ref_calls=not options.include_ref_calls,
         allow_flank_mismatches=options.allow_flank_mismatches,
     )

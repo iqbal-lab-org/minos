@@ -58,6 +58,7 @@ class DnadiffMappingBasedVerifier:
         self.filter_and_cluster_vcf = filter_and_cluster_vcf
         self.discard_ref_calls = discard_ref_calls
         self.allow_flank_mismatches = allow_flank_mismatches
+        print("flank_length = " + str(self.flank_length) + " and merge_length = " + str(self.merge_length))
 
         if self.filter_and_cluster_vcf:
             self.vcf_to_check1 = self.clustered_vcf1
@@ -95,14 +96,22 @@ class DnadiffMappingBasedVerifier:
             seq_name = str(line[0]) + "." + str(line[1])
             flanked_seq = ""
             if line[2] == '.':
-                flanked_seq = seq1[line[1] - flank_length:line[1] + flank_length]
+                start = max(0,line[1] - flank_length)
+                end = min(line[1] + flank_length, len(seq1))
+                flanked_seq = seq1[start:end]
             else:
-                flanked_seq = seq1[line[1] - flank_length - 1:line[1] + flank_length]
+                start = max(0, line[1] - flank_length)
+                end = min(line[1] + flank_length - 1, len(seq1))
+                flanked_seq = seq1[start:end]
             print('>' + seq_name, flanked_seq, sep='\n', file=out_handle1)
             if line[3] == '.':
-                flanked_seq = seq2[line[4] - flank_length:line[4] + flank_length]
+                start = max(0, line[4] - flank_length)
+                end = min(line[4] + flank_length, len(seq2))
+                flanked_seq = seq2[start:end]
             else:
-                flanked_seq = seq2[line[4] - flank_length - 1:line[4] + flank_length]
+                start = max(0, line[4] - flank_length)
+                end = min(line[4] + flank_length - 1, len(seq2))
+                flanked_seq = seq2[start:end]
             print('>' + seq_name, flanked_seq, sep='\n', file=out_handle2)
 
         out_handle1.close()
@@ -217,7 +226,7 @@ class DnadiffMappingBasedVerifier:
             '>', outfile,
         ])
         utils.syscall(command)
-        os.unlink(outfile + ".tmp")
+        #os.unlink(outfile + ".tmp")
 
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
@@ -311,6 +320,7 @@ class DnadiffMappingBasedVerifier:
 
     @classmethod
     def _parse_sam_file_and_vcf(cls, samfile, vcffile, dnadiff_plus_flanks_file, flank_length, allow_mismatches):
+        print("start _parse_sam_file_and_vcf")
         found = []
         gt_conf = []
         allele = []
@@ -319,6 +329,7 @@ class DnadiffMappingBasedVerifier:
         samfile_handle = pysam.AlignmentFile(samfile, "r")
         sam_previous_record_name = None
         for sam_record in samfile_handle.fetch(until_eof=True):
+            print(str(sam_record))
             if sam_record.query_name == sam_previous_record_name:
                 continue
             sam_previous_record_name = sam_record.query_name
@@ -335,7 +346,7 @@ class DnadiffMappingBasedVerifier:
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
 
                 vcf_reader = pysam.VariantFile(vcffile)
-                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + int(alignment_start) + flank_length - 1, int(expected_start) + int(alignment_start) + flank_length)):
+                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + int(alignment_start) + flank_length - 2, int(expected_start) + int(alignment_start) + flank_length)):
                     print(vcf_record)
                     if i == int(vcf_pos_index):
                         sample_name = vcf_record.samples.keys()[0]
@@ -355,6 +366,9 @@ class DnadiffMappingBasedVerifier:
                 gt_conf.append(0)
         assert len(found) == len(gt_conf)
         assert len(found) == len(allele)
+        print(found)
+        print(gt_conf)
+        print(allele)
         return found, gt_conf, allele
 
     @classmethod
@@ -370,6 +384,11 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(dnadiff_file, header=None)
         ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches)
         query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches)
+        print(len(snps[0]))
+        print(snps)
+        print(snps[0])
+        print(ref_found)
+        print(query_found)
         assert len(snps[0]) == len(ref_found) and len(snps[0]) == len(query_found)
         out_df = pd.DataFrame({'id': snps[0],
                                'ref': snps[1],
@@ -433,10 +452,10 @@ class DnadiffMappingBasedVerifier:
         DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out_vcf2, vcf_records2, vcf_ref_seqs, self.flank_length)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf1, self.seqs_out_dnadiff1, self.sam_file_out1)
         DnadiffMappingBasedVerifier._map_seqs_to_seqs(self.seqs_out_vcf2, self.seqs_out_dnadiff2, self.sam_file_out2)
-        for f in glob.glob(self.seqs_out_vcf1 + '*'):
-            os.unlink(f)
-        for f in glob.glob(self.seqs_out_vcf2 + '*'):
-            os.unlink(f)
+        #for f in glob.glob(self.seqs_out_vcf1 + '*'):
+            #os.unlink(f)
+        #for f in glob.glob(self.seqs_out_vcf2 + '*'):
+            #os.unlink(f)
 
         DnadiffMappingBasedVerifier._index_vcf(self.vcf_to_check1)
         self.vcf_to_check1 = self.vcf_to_check1 + ".gz"
@@ -444,12 +463,12 @@ class DnadiffMappingBasedVerifier:
         self.vcf_to_check2 = self.vcf_to_check2 + ".gz"
         DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2, self.vcf_to_check1, self.vcf_to_check2, self.seqs_out_dnadiff1, self.seqs_out_dnadiff2, self.sam_summary, self.flank_length, allow_mismatches=self.allow_flank_mismatches)
         stats, gt_conf_hist = DnadiffMappingBasedVerifier._gather_stats(self.sam_summary)
-        os.unlink(self.seqs_out_dnadiff1)
-        os.unlink(self.seqs_out_dnadiff2)
-        for f in glob.glob(self.vcf_to_check1 + '*'):
-            os.unlink(f)
-        for f in glob.glob(self.vcf_to_check2 + '*'):
-            os.unlink(f)
+        #os.unlink(self.seqs_out_dnadiff1)
+        #os.unlink(self.seqs_out_dnadiff2)
+        #for f in glob.glob(self.vcf_to_check1 + '*'):
+        #    os.unlink(f)
+        #for f in glob.glob(self.vcf_to_check2 + '*'):
+        #    os.unlink(f)
 
         # write stats file
         with open(self.stats_out, 'w') as f:
