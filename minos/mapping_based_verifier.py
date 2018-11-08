@@ -277,7 +277,7 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=self.max_soft_clipped):
+    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=3):
         if sam_record.is_unmapped:
             return False
 
@@ -345,7 +345,7 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length, ref_seqs, allow_mismatches=True, exclude_regions=None):
+    def _parse_sam_file_and_update_vcf_records_and_gather_stats(cls, infile, vcf_records, flank_length, ref_seqs, allow_mismatches=True, exclude_regions=None, max_soft_clipped=3):
         '''Input is SAM file made by _map_seqs_to_ref(), and corresponding dict
         of VCF records made by vcf_file_read.file_to_dict.
         Adds validation info to each VCF record. Returns a dict of stats that
@@ -403,7 +403,7 @@ class MappingBasedVerifier:
                         if exclude:
                             match_result_types.add('E')
                         else:
-                            good_match = MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches, max_soft_clipped=self.max_soft_clipped)
+                            good_match = MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches, max_soft_clipped=max_soft_clipped)
                             if good_match:
                                 match_result_types.add('1')
                             else:
