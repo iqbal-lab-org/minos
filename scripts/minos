@@ -59,7 +59,7 @@ subparser_check_with_ref.add_argument('--allow_flank_mismatches', action='store_
 subparser_check_with_ref.add_argument('--no_filter_cluster', action='store_true', help='Do not filter and cluster the input VCF before checking accuracy')
 subparser_check_with_ref.add_argument('--include_ref_calls', action='store_true', help='Do not filter ref calls from input VCF before checking accuracy')
 subparser_check_with_ref.add_argument('--exclude_bed', help='BED file of regions of the truth reference to ignore (col1=seq name, col2=start, col3=end)', metavar='FILENAME')
-subparser_check_with_ref.add_argument('--max_soft_clipped', help='Maximum number of bases allowed to be softclipped when parsing SAM file.')
+subparser_check_with_ref.add_argument('--max_soft_clipped', type=int, help='Maximum number of bases allowed to be softclipped when parsing SAM file.')
 subparser_check_with_ref.add_argument('vcf_file', help='Name of VCF file to be checked')
 subparser_check_with_ref.add_argument('vcf_ref', help='Reference FASTA file used to make VCF (must match VCF file)')
 subparser_check_with_ref.add_argument('truth_ref', help='Reference FASTA file that we assume to tbe the truth')
