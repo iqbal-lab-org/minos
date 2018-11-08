@@ -100,8 +100,8 @@ class DnadiffMappingBasedVerifier:
                 end = min(line[1] + flank_length, len(seq1))
                 flanked_seq = seq1[start:end]
             else:
-                start = max(0, line[1] - flank_length)
-                end = min(line[1] + flank_length - 1, len(seq1))
+                start = max(0, line[1] - flank_length - 1)
+                end = min(line[1] + flank_length, len(seq1))
                 flanked_seq = seq1[start:end]
             print('>' + seq_name, flanked_seq, sep='\n', file=out_handle1)
             if line[3] == '.':
@@ -109,8 +109,8 @@ class DnadiffMappingBasedVerifier:
                 end = min(line[4] + flank_length, len(seq2))
                 flanked_seq = seq2[start:end]
             else:
-                start = max(0, line[4] - flank_length)
-                end = min(line[4] + flank_length - 1, len(seq2))
+                start = max(0, line[4] - flank_length - 1)
+                end = min(line[4] + flank_length, len(seq2))
                 flanked_seq = seq2[start:end]
             print('>' + seq_name, flanked_seq, sep='\n', file=out_handle2)
 
