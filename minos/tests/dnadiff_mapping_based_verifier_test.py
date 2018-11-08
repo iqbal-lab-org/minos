@@ -23,7 +23,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         expected_out1 = os.path.join(data_dir, 'sample1.plusflanks.fa')
         expected_out2 = os.path.join(data_dir, 'sample2.plusflanks.fa')
 
-        flank = 5
+        flank = 6
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_dnadiff_plus_flanks_to_fastas(dnadiff_file_in,sample1_file_in, sample2_file_in, tmp_out1, tmp_out2, flank)
 
         self.assertTrue(filecmp.cmp(expected_out1, tmp_out1, shallow=False))
