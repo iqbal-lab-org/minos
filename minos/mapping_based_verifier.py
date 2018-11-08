@@ -49,7 +49,7 @@ class MappingBasedVerifier:
     outprefix.stats.tsv = summary stats (see dict output by
                           _parse_sam_file_and_update_vcf_records_and_gather_stats()
                           for a description)'''
-    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31, merge_length=None, expected_variants_vcf=None, run_dnadiff=True, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file=None):
+    def __init__(self, vcf_file_in, vcf_reference_file, verify_reference_file, outprefix, flank_length=31, merge_length=None, expected_variants_vcf=None, run_dnadiff=True, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file=None, max_soft_clipped=3):
         self.vcf_file_in = os.path.abspath(vcf_file_in)
         self.vcf_reference_file = os.path.abspath(vcf_reference_file)
         self.verify_reference_file = os.path.abspath(verify_reference_file)
@@ -82,6 +82,7 @@ class MappingBasedVerifier:
             self.vcf_to_check = self.vcf_file_in
 
         self.exclude_regions = MappingBasedVerifier._load_exclude_regions_bed_file(exclude_regions_bed_file)
+        self.max_soft_clipped = max_soft_clipped
 
 
     @classmethod
@@ -276,7 +277,7 @@ class MappingBasedVerifier:
 
 
     @classmethod
-    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
+    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=self.max_soft_clipped):
         if sam_record.is_unmapped:
             return False
 
@@ -290,7 +291,7 @@ class MappingBasedVerifier:
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
-        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
+        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
             return False
 
         if query_sequence is None:
@@ -402,7 +403,7 @@ class MappingBasedVerifier:
                         if exclude:
                             match_result_types.add('E')
                         else:
-                            good_match = MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches)
+                            good_match = MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches, max_soft_clipped=self.max_soft_clipped)
                             if good_match:
                                 match_result_types.add('1')
                             else:
@@ -522,7 +523,7 @@ class MappingBasedVerifier:
         MappingBasedVerifier._write_vars_plus_flanks_to_fasta(self.seqs_out, vcf_records, vcf_ref_seqs, self.flank_length)
         MappingBasedVerifier._map_seqs_to_ref(self.seqs_out, self.verify_reference_file, self.sam_file_out)
         os.unlink(self.seqs_out)
-        stats, gt_conf_hists = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs, allow_mismatches=self.allow_flank_mismatches, exclude_regions=self.exclude_regions)
+        stats, gt_conf_hists = MappingBasedVerifier._parse_sam_file_and_update_vcf_records_and_gather_stats(self.sam_file_out, vcf_records, self.flank_length, verify_ref_seqs, allow_mismatches=self.allow_flank_mismatches, exclude_regions=self.exclude_regions, max_soft_clipped=self.max_soft_clipped)
 
         with open(self.vcf_file_out, 'w') as f:
             print(*vcf_header, sep='\n', file=f)

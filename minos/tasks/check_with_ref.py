@@ -14,6 +14,7 @@ def run(options):
         allow_flank_mismatches=options.allow_flank_mismatches,
         merge_length=options.variant_merge_length,
         exclude_regions_bed_file=options.exclude_bed,
+        max_soft_clipped=options.max_soft_clipped
     )
     verifier.run()
 
