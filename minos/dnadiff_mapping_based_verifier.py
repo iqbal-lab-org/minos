@@ -32,7 +32,7 @@ class DnadiffMappingBasedVerifier:
     outprefix.stats.tsv = summary stats (see dict output by
                           _parse_sam_file_and_update_vcf_records_and_gather_stats()
                           for a description)'''
-    def __init__(self, dnadiff_snps_file, dnadiff_file1, dnadiff_file2, vcf_file_in1, vcf_file_in2, vcf_reference_file, outprefix, flank_length=31, merge_length=None, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True):
+    def __init__(self, dnadiff_snps_file, dnadiff_file1, dnadiff_file2, vcf_file_in1, vcf_file_in2, vcf_reference_file, outprefix, flank_length=31, merge_length=None, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file1=None, exclude_regions_bed_file2=None):
         self.dnadiff_snps_file = os.path.abspath(dnadiff_snps_file)
         self.dnadiff_file1 = os.path.abspath(dnadiff_file1)
         self.dnadiff_file2 = os.path.abspath(dnadiff_file2)
@@ -66,6 +66,9 @@ class DnadiffMappingBasedVerifier:
         else:
             self.vcf_to_check1 = self.vcf_file_in1
             self.vcf_to_check2 = self.vcf_file_in2
+
+        self.exclude_regions1 = DnadiffMappingBasedVerifier._load_exclude_regions_bed_file(exclude_regions_bed_file1)
+        self.exclude_regions2 = DnadiffMappingBasedVerifier._load_exclude_regions_bed_file(exclude_regions_bed_file2)
 
     @classmethod
     def _write_dnadiff_plus_flanks_to_fastas(cls, dnadiff_file, ref_infile, query_infile, ref_outfile, query_outfile, flank_length):
@@ -116,6 +119,36 @@ class DnadiffMappingBasedVerifier:
 
         out_handle1.close()
         out_handle2.close()
+
+    @classmethod
+    def _load_exclude_regions_bed_file(cls, infile):
+        regions = {}
+        if infile is not None:
+            with open(infile) as f:
+                for line in f:
+                    fields = line.rstrip().split('\t')
+                    if fields[0] not in regions:
+                        regions[fields[0]] = []
+                    start = int(fields[1]) - 1
+                    end = int(fields[2]) - 1
+                    regions[fields[0]].append(pyfastaq.intervals.Interval(start, end))
+
+            for ref_name in regions:
+                pyfastaq.intervals.merge_overlapping_in_list(regions[ref_name])
+
+        return regions
+
+    @classmethod
+    def _interval_intersects_an_interval_in_list(cls, interval, interval_list):
+        # This could be faster by doing something like a binary search.
+        # But we're looking for points in intervals, so fiddly to implement.
+        # Not expecting a log interval list, so just do a simple check
+        # from start to end for now
+        i = 0
+        while i < len(interval_list) and interval.start > interval_list[i].end:
+            i += 1
+
+        return i < len(interval_list) and interval.intersects(interval_list[i])
 
     @classmethod
     def _filter_vcf_for_clustering(cls, infile, outfile, discard_ref_calls=True):
@@ -319,7 +352,10 @@ class DnadiffMappingBasedVerifier:
         utils.syscall(command)
 
     @classmethod
-    def _parse_sam_file_and_vcf(cls, samfile, vcffile, dnadiff_plus_flanks_file, flank_length, allow_mismatches):
+    def _parse_sam_file_and_vcf(cls, samfile, vcffile, dnadiff_plus_flanks_file, flank_length, allow_mismatches, exclude_regions=None):
+        if  exclude_regions is None:
+            exclude_regions = {}
+
         print("start _parse_sam_file_and_vcf")
         found = []
         gt_conf = []
@@ -335,6 +371,20 @@ class DnadiffMappingBasedVerifier:
             sam_previous_record_name = sam_record.query_name
             found_conf = False
             found_allele = False
+
+            # see if excluded region in bed file
+            var_num, start = sam_record.query_name.rsplit('.', maxsplit=2)
+            exclude = False
+            for ref_name in exclude_regions.keys():
+                interval = pyfastaq.intervals.Interval(start, start+1)
+                exclude = MappingBasedVerifier._interval_intersects_an_interval_in_list(interval,
+                                                                                        exclude_regions[ref_name])
+            if exclude:
+                found.append('E')
+                gt_conf.append(0)
+                allele.append('0')
+                continue
+
             good_match = DnadiffMappingBasedVerifier._check_if_sam_match_is_good(sam_record,
                                                                                  dnadiff_file_seqs,
                                                                                  flank_length,
@@ -372,7 +422,7 @@ class DnadiffMappingBasedVerifier:
         return found, gt_conf, allele
 
     @classmethod
-    def _parse_sam_files(cls, dnadiff_file, samfile1, samfile2, vcffile1, vcffile2, reffasta1, reffasta2, outfile, flank_length, allow_mismatches=True):
+    def _parse_sam_files(cls, dnadiff_file, samfile1, samfile2, vcffile1, vcffile2, reffasta1, reffasta2, outfile, flank_length, allow_mismatches=True, exclude_regions1=None, exclude_regions2=None):
         '''Input is the original dnadiff snps file of sites we are searching for
         and 2 SAM files made by _map_seqs_to_seqs(), which show mappings of snp sites
         from from the dnadiff snps file to the vcf (i.e. searches if VCF contains an record
@@ -382,8 +432,8 @@ class DnadiffMappingBasedVerifier:
         '''
 
         snps = pd.read_table(dnadiff_file, header=None)
-        ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches)
-        query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches)
+        ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches, exclude_regions1)
+        query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches, exclude_regions2)
         print(len(snps[0]))
         print(snps)
         print(snps[0])
@@ -403,14 +453,16 @@ class DnadiffMappingBasedVerifier:
 
     @classmethod
     def _gather_stats(cls, tsv_file):
-        stats = {x: 0 for x in ['total', 'found_vars', 'missed_vars']}
+        stats = {x: 0 for x in ['total', 'found_vars', 'missed_vars', 'excluded_vars']}
         gt_conf_hist = {}
 
         snps = pd.read_table(tsv_file, index_col=0)
         for line in snps.itertuples():
             stats['total'] += 1
             print(line)
-            if (line[4] == 1 and line[7] == 1) or (line[4] == 1 and line[6] == 1) or (line[7] == 1 and line[9] == 1):
+            if (line[4] == 'E' or line[7] == 'E'):
+                stats['excluded_vars'] += 1
+            elif (line[4] == 1 and line[7] == 1) or (line[4] == 1 and line[6] == 1) or (line[7] == 1 and line[9] == 1):
                 print("found")
                 stats['found_vars'] += 1
                 gt_confs = [i for i in {line[5],line[8]} if not math.isnan(i)]
@@ -461,7 +513,12 @@ class DnadiffMappingBasedVerifier:
         self.vcf_to_check1 = self.vcf_to_check1 + ".gz"
         DnadiffMappingBasedVerifier._index_vcf(self.vcf_to_check2)
         self.vcf_to_check2 = self.vcf_to_check2 + ".gz"
-        DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2, self.vcf_to_check1, self.vcf_to_check2, self.seqs_out_dnadiff1, self.seqs_out_dnadiff2, self.sam_summary, self.flank_length, allow_mismatches=self.allow_flank_mismatches)
+        DnadiffMappingBasedVerifier._parse_sam_files(self.dnadiff_snps_file, self.sam_file_out1, self.sam_file_out2,
+                                                     self.vcf_to_check1, self.vcf_to_check2, self.seqs_out_dnadiff1,
+                                                     self.seqs_out_dnadiff2, self.sam_summary, self.flank_length,
+                                                     allow_mismatches=self.allow_flank_mismatches,
+                                                     exclude_regions1=self.exclude_regions1,
+                                                     exclude_regions2=self.exclude_regions2)
         stats, gt_conf_hist = DnadiffMappingBasedVerifier._gather_stats(self.sam_summary)
         #os.unlink(self.seqs_out_dnadiff1)
         #os.unlink(self.seqs_out_dnadiff2)
