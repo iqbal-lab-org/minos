@@ -376,7 +376,8 @@ class DnadiffMappingBasedVerifier:
             var_num, start = sam_record.query_name.rsplit('.', maxsplit=2)
             exclude = False
             for ref_name in exclude_regions.keys():
-                interval = pyfastaq.intervals.Interval(start, start+1)
+                end = start+1
+                interval = pyfastaq.intervals.Interval(start, end)
                 exclude = MappingBasedVerifier._interval_intersects_an_interval_in_list(interval,
                                                                                         exclude_regions[ref_name])
             if exclude:
