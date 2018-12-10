@@ -14,6 +14,8 @@ def run(options):
         filter_and_cluster_vcf=not options.no_filter_cluster,
         discard_ref_calls=not options.include_ref_calls,
         allow_flank_mismatches=options.allow_flank_mismatches,
+        exclude_regions_bed_file1=options.exclude_bed1,
+        exclude_regions_bed_file2=options.exclude_bed2,
     )
     verifier.run()
 
