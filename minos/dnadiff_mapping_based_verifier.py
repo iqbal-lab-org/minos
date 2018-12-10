@@ -264,7 +264,13 @@ class DnadiffMappingBasedVerifier:
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
         if sam_record.is_unmapped:
-            return False
+            try:
+                #NB some mapped things at the edge of reference sequence will get unmapped flag, so check if this is one
+                nm = sam_record.get_tag('NM')
+                all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
+            except:
+                #real unmapped, no cigar or tag
+                return False
 
         if not allow_mismatches:
             try:
@@ -463,7 +469,7 @@ class DnadiffMappingBasedVerifier:
             print(line)
             if (line[4] == 'E' or line[7] == 'E'):
                 stats['excluded_vars'] += 1
-            elif (line[4] == 1 and line[7] == 1) or (line[4] == 1 and line[6] == 1) or (line[7] == 1 and line[9] == 1):
+            elif (line[4] == 1 or line[7] == 1):
                 print("found")
                 stats['found_vars'] += 1
                 gt_confs = [i for i in {line[5],line[8]} if not math.isnan(i)]

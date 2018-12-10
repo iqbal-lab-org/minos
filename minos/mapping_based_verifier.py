@@ -279,7 +279,13 @@ class MappingBasedVerifier:
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=3):
         if sam_record.is_unmapped:
-            return False
+            try:
+                #some on boundaries get unmapped flag, when is actually mapped
+                nm = sam_record.get_tag('NM')
+                all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
+            except:
+                #if really unmapped, should not have tag or cigar
+                return False
 
         if not allow_mismatches:
             try:
