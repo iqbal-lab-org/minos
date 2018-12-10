@@ -476,7 +476,7 @@ class DnadiffMappingBasedVerifier:
             print(line)
             if (line[4] == 'E' or line[7] == 'E'):
                 stats['excluded_vars'] += 1
-            elif (line[4] == 1 or line[7] == 1):
+            elif (line[4] == 1 or line[7] == 1 or line[4] == '1' or line[7] == '1'):
                 print("found")
                 stats['found_vars'] += 1
                 gt_confs = [i for i in {line[5],line[8]} if not math.isnan(i)]
