@@ -270,20 +270,27 @@ class DnadiffMappingBasedVerifier:
                 all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
             except:
                 #real unmapped, no cigar or tag
+                print("unmapped and no nm or cigar tags")
                 return False
 
-        if not allow_mismatches:
-            try:
-                nm = sam_record.get_tag('NM')
-            except:
-                raise Error('No NM tag found in sam record:' + str(sam_record))
+        try:
+            nm = sam_record.get_tag('NM')
+        except:
+            raise Error('No NM tag found in sam record:' + str(sam_record))
 
+        if not allow_mismatches:
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
+            print("no mismatches allowed: ", all_mapped, nm==0)
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
         if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
+            print("too many soft clipped bases")
             return False
+
+        if nm==0:
+            print("no mismatches")
+            return True
 
         if query_sequence is None:
             query_sequence = sam_record.query_sequence
@@ -309,6 +316,7 @@ class DnadiffMappingBasedVerifier:
             alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
+        print(aligned_pairs)
         wanted_aligned_pairs = []
         current_pos = 0
 
@@ -397,7 +405,6 @@ class DnadiffMappingBasedVerifier:
                                                                                  flank_length,
                                                                                  query_sequence=sam_record.query_sequence,
                                                                                  allow_mismatches=allow_mismatches)
-            print(str(sam_record))
             alignment_start = str(sam_record).split("\t")[3]
             if good_match:
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
