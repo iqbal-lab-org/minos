@@ -14,10 +14,10 @@ data_dir = os.path.join(modules_dir, 'tests', 'data', 'evaluate_recall')
 
 
 class TestEvaluateRecall(unittest.TestCase):
-    def test_write_vars_plus_flanks_to_fasta_alt(self):
+    def test_write_vars_plus_flanks_to_fasta_ref(self):
         vcfref_file_in = os.path.join(data_dir, 'vcfref.fa')
         sample_file_in = os.path.join(data_dir, 'sample1a.vcf')
-        tmp_out = 'tmp.write_vars_plus_flanks_to_fasta.alt.fa'
+        tmp_out = 'tmp.write_vars_plus_flanks_to_fasta.ref.fa'
         expected_out = os.path.join(data_dir, 'sample1a.plusflanks.fa')
 
         vcf_header, vcf_records = vcf_file_read.vcf_file_to_dict(sample_file_in, sort=True,
@@ -25,7 +25,7 @@ class TestEvaluateRecall(unittest.TestCase):
         vcf_ref_seqs = {}
         pyfastaq.tasks.file_to_dict(vcfref_file_in, vcf_ref_seqs)
         flank = 5
-        evaluate_recall.EvaluateRecall._write_vars_plus_flanks_to_fasta(tmp_out, vcf_records, vcf_ref_seqs, flank, alt_only=True)
+        evaluate_recall.EvaluateRecall._write_vars_plus_flanks_to_fasta(tmp_out, vcf_records, vcf_ref_seqs, flank, ref_only=True)
 
         self.assertTrue(filecmp.cmp(expected_out, tmp_out, shallow=False))
         os.unlink(tmp_out)
@@ -42,7 +42,7 @@ class TestEvaluateRecall(unittest.TestCase):
 
         exp_found = ['1', '1', '0', '0', '1']  # nb doesn't currently handle '.' alleles
         exp_gt_conf = [42, 42, 0, 0, 0]
-        exp_allele = ['0', '1', '0', '0', '0']
+        exp_allele = ['1', '0', '0', '0', '1']
         self.assertEqual(exp_found, found)
         self.assertEqual(exp_gt_conf, gt_conf)
         self.assertEqual(exp_allele, allele)

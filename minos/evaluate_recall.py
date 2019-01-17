@@ -133,7 +133,7 @@ class EvaluateRecall:
 
 
     @classmethod
-    def _write_vars_plus_flanks_to_fasta(cls, outfile, vcf_records, ref_seqs, flank_length, alt_only=False):
+    def _write_vars_plus_flanks_to_fasta(cls, outfile, vcf_records, ref_seqs, flank_length, ref_only=False):
         '''Given a dict of vcf records made by vcf_file_read.vcf_file_to_dict(),
         and its correcsponding file of reference sequences, writes a new fasta file
         of each ref seq and inferred variant sequence plus flank_length nucleotides added to
@@ -149,7 +149,7 @@ class EvaluateRecall:
                     start_position, alleles = vcf_record.inferred_var_seqs_plus_flanks(ref_seqs[ref_name], flank_length)
 
                     for allele_index, allele_seq in enumerate(alleles):
-                        if not alt_only or allele_index > 0:
+                        if not ref_only or allele_index == 0:
                             seq_name = '.'.join([ref_name, str(start_position + 1), str(j), str(i), str(allele_index)])
                             allele_seq = allele_seq.replace('.','')
                             print('>' + seq_name, allele_seq, sep='\n', file=f)
@@ -443,7 +443,7 @@ class EvaluateRecall:
         query_vcf_ref_seqs = {}
         pyfastaq.tasks.file_to_dict(self.query_vcf_ref, query_vcf_ref_seqs)
 
-        EvaluateRecall._write_vars_plus_flanks_to_fasta(self.seqs_out_truth, vcf_records_truth, truth_vcf_ref_seqs, self.flank_length, alt_only=True)
+        EvaluateRecall._write_vars_plus_flanks_to_fasta(self.seqs_out_truth, vcf_records_truth, truth_vcf_ref_seqs, self.flank_length, ref_only=True)
         EvaluateRecall._write_vars_plus_flanks_to_fasta(self.seqs_out_query, vcf_records_query, query_vcf_ref_seqs, self.flank_length)
         EvaluateRecall._map_seqs_to_seqs(self.seqs_out_query, self.seqs_out_truth, self.sam_file_out)
         #for f in glob.glob(self.seqs_out_truth + '*'):
