@@ -325,8 +325,6 @@ class MappingBasedVerifier:
             alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
-        print(sam_record)
-        print(aligned_pairs)
         wanted_aligned_pairs = []
         current_pos = 0
 
@@ -344,8 +342,7 @@ class MappingBasedVerifier:
 
             i += 1
 
-        print(wanted_aligned_pairs)
-        assert len(wanted_aligned_pairs) > 0
+        #assert len(wanted_aligned_pairs) > 0
 
         for pair in wanted_aligned_pairs:
             if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
