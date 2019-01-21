@@ -297,6 +297,7 @@ class MappingBasedVerifier:
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
+        print(max_soft_clipped, sam_record)
         if (sam_record.cigartuples != None and sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) \
                 or (sam_record.cigartuples != None and sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
             return False
