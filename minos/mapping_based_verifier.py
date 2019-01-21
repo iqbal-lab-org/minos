@@ -297,9 +297,8 @@ class MappingBasedVerifier:
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
-        print(max_soft_clipped, sam_record)
-        if (sam_record.cigartuples != None and sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) \
-                or (sam_record.cigartuples != None and sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
+        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) \
+                or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
             return False
 
         if query_sequence is None:
@@ -326,6 +325,8 @@ class MappingBasedVerifier:
             alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
+        print(sam_record)
+        print(aligned_pairs)
         wanted_aligned_pairs = []
         current_pos = 0
 
@@ -343,6 +344,7 @@ class MappingBasedVerifier:
 
             i += 1
 
+        print(wanted_aligned_pairs)
         assert len(wanted_aligned_pairs) > 0
 
         for pair in wanted_aligned_pairs:
