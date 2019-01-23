@@ -1,0 +1,8 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All	filters	passed">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
+truth1	112	.	C	G	.	.	.	GT	1
+truth1	172	.	T	C	.	.	.	GT	1
+truth1	222	.	A	T	.	.	.	GT	1
+truth2	80	.	T	C	.	.	.	GT	1
+truth2	97	.	T	C	.	.	.	GT	1

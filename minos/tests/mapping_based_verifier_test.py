@@ -118,6 +118,25 @@ class TestMappingBasedVerifier(unittest.TestCase):
         self.assertTrue(filecmp.cmp(expected_vcf, tmp_out, shallow=False))
         os.unlink(tmp_out)
 
+    def test_filter_vcf_for_clustering_keep_ref_calls(self):
+        '''test _filter_vcf_for_clustering'''
+        vcf_in = os.path.join(data_dir, 'filter_vcf_for_clustering.in.vcf')
+        expected_vcf = os.path.join(data_dir, 'filter_vcf_for_clustering.with_ref_calls.expect.vcf')
+        tmp_out = 'tmp.filter_vcf_for_clustering.out.vcf'
+        discard_ref_calls = False
+        mapping_based_verifier.MappingBasedVerifier._filter_vcf_for_clustering(vcf_in, tmp_out, discard_ref_calls)
+        self.assertTrue(filecmp.cmp(expected_vcf, tmp_out, shallow=False))
+        os.unlink(tmp_out)
+
+    def test_filter_vcf_for_clustering_gl_not_gt_conf(self):
+        '''test _filter_vcf_for_clustering'''
+        vcf_in = os.path.join(data_dir, 'filter_vcf_for_clustering.gl.in.vcf')
+        expected_vcf = os.path.join(data_dir, 'filter_vcf_for_clustering.gl.expect.vcf')
+        tmp_out = 'tmp.filter_vcf_for_clustering.out.vcf'
+        discard_ref_calls = False
+        mapping_based_verifier.MappingBasedVerifier._filter_vcf_for_clustering(vcf_in, tmp_out, discard_ref_calls)
+        self.assertTrue(filecmp.cmp(expected_vcf, tmp_out, shallow=False))
+        os.unlink(tmp_out)
 
     def test_write_vars_plus_flanks_to_fasta(self):
         '''test _write_vars_plus_flanks_to_fasta'''
@@ -325,6 +344,26 @@ class TestMappingBasedVerifier(unittest.TestCase):
         verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=True)
         verifier.run()
         expected_out = os.path.join(data_dir, 'run.out.with_filter_cluster')
+        for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf', '.gt_conf_hist.TP.tsv', '.gt_conf_hist.FP.tsv']:
+            expected_file = expected_out + suffix
+            got_file = tmp_out + suffix
+            self.assertTrue(filecmp.cmp(expected_file, got_file, shallow=False))
+            os.unlink(got_file)
+        samfile = tmp_out + '.sam'
+        self.assertTrue(os.path.exists(samfile))
+        os.unlink(samfile)
+        for suffix in ['.dnadiff.merged.vcf', '.dnadiff.qdiff', '.dnadiff.raw.vcf', '.dnadiff.snps', '.filter.vcf', '.filter.cluster.vcf']:
+            os.unlink(tmp_out + suffix)
+
+    def test_run_with_filter_cluster_include_ref_alleles(self):
+        '''test run with filtering and clustering'''
+        vcf_file_in = os.path.join(data_dir, 'run.calls.include_ref_calls.vcf')
+        vcf_reference_file = os.path.join(data_dir, 'run.ref.fa')
+        verify_reference_file = os.path.join(data_dir, 'run.ref.mutated.fa')
+        tmp_out = 'tmp.mapping_based_verifier.out.include_ref_calls'
+        verifier = mapping_based_verifier.MappingBasedVerifier(vcf_file_in, vcf_reference_file, verify_reference_file, tmp_out, flank_length=31, filter_and_cluster_vcf=True, discard_ref_calls=False)
+        verifier.run()
+        expected_out = os.path.join(data_dir, 'run.out.include_ref_calls')
         for suffix in ['.false_negatives.vcf', '.stats.tsv', '.vcf', '.gt_conf_hist.TP.tsv', '.gt_conf_hist.FP.tsv']:
             expected_file = expected_out + suffix
             got_file = tmp_out + suffix
