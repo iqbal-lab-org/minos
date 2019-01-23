@@ -279,13 +279,7 @@ class MappingBasedVerifier:
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=3):
         if sam_record.is_unmapped:
-            try:
-                #some on boundaries get unmapped flag, when is actually mapped
-                nm = sam_record.get_tag('NM')
-                all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
-            except:
-                #if really unmapped, should not have tag or cigar
-                return False
+            return False
 
         if not allow_mismatches:
             try:
@@ -342,7 +336,7 @@ class MappingBasedVerifier:
 
             i += 1
 
-        #assert len(wanted_aligned_pairs) > 0
+        assert len(wanted_aligned_pairs) > 0
 
         for pair in wanted_aligned_pairs:
             if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
@@ -511,7 +505,7 @@ class MappingBasedVerifier:
 
     def run(self):
         if self.filter_and_cluster_vcf:
-            MappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file_in, self.filtered_vcf, self.discard_ref_calls)
+            MappingBasedVerifier._filter_vcf_for_clustering(self.vcf_file_in, self.filtered_vcf, discard_ref_calls=self.discard_ref_calls)
             if self.discard_ref_calls:
                 clusterer = vcf_clusterer.VcfClusterer([self.filtered_vcf], self.vcf_reference_file, self.clustered_vcf, merge_method='simple', max_distance_between_variants=self.merge_length)
             else:
