@@ -395,11 +395,12 @@ class MappingBasedVerifier:
                         match_result_types.add('0')
                     else:
                         exclude = False
-                        if allele_sam_list[i] in exclude_regions:
+                        truth_name = allele_sam_list[i].reference_name
+                        if truth_name in exclude_regions:
                             start = allele_sam_list[i].reference_start
                             end = allele_sam_list[i].reference_end - 1
                             interval = pyfastaq.intervals.Interval(start, end)
-                            exclude = MappingBasedVerifier._interval_intersects_an_interval_in_list(interval, exclude_regions[vcfref_name])
+                            exclude = MappingBasedVerifier._interval_intersects_an_interval_in_list(interval, exclude_regions[truth_name])
 
                         if exclude:
                             match_result_types.add('E')
