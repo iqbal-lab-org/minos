@@ -370,18 +370,18 @@ class MappingBasedVerifier:
             # VCf line) into a list per allele.
             sam_records_by_allele = []
             current_allele_index = None
-            ref_info_tuples = set()
+            vcf_probe_info_tuples = set()
             for sam_record in sam_list:
-                ref_name, expected_start, vcf_record_index, allele_index = sam_record.query_name.rsplit('.', maxsplit=3)
-                ref_info_tuples.add((ref_name, expected_start, vcf_record_index))
+                vcfref_name, expected_start, vcf_record_index, allele_index = sam_record.query_name.rsplit('.', maxsplit=3)
+                vcf_probe_info_tuples.add((vcfref_name, expected_start, vcf_record_index))
                 if current_allele_index is None or current_allele_index != allele_index:
                     sam_records_by_allele.append([sam_record])
                 else:
                     sam_records_by_allele[-1].append(sam_record)
                 current_allele_index = allele_index
 
-            assert len(ref_info_tuples) == 1
-            ref_name, expected_start, vcf_record_index = ref_info_tuples.pop()
+            assert len(vcf_probe_info_tuples) == 1
+            vcfref_name, expected_start, vcf_record_index = vcf_probe_info_tuples.pop()
             expected_start = int(expected_start) - 1
             vcf_record_index = int(vcf_record_index)
             results = {x: [] for x in ['MINOS_CHECK_PASS']}
@@ -395,11 +395,11 @@ class MappingBasedVerifier:
                         match_result_types.add('0')
                     else:
                         exclude = False
-                        if ref_name in exclude_regions:
-                            start = allele_sam_list[0].reference_start
-                            end = allele_sam_list[0].reference_end - 1
+                        if allele_sam_list[i] in exclude_regions:
+                            start = allele_sam_list[i].reference_start
+                            end = allele_sam_list[i].reference_end - 1
                             interval = pyfastaq.intervals.Interval(start, end)
-                            exclude = MappingBasedVerifier._interval_intersects_an_interval_in_list(interval, exclude_regions[ref_name])
+                            exclude = MappingBasedVerifier._interval_intersects_an_interval_in_list(interval, exclude_regions[vcfref_name])
 
                         if exclude:
                             match_result_types.add('E')
@@ -425,7 +425,7 @@ class MappingBasedVerifier:
                 else:
                     results['MINOS_CHECK_PASS'].append('0')
 
-            vcf_record = vcf_records[ref_name][vcf_record_index]
+            vcf_record = vcf_records[vcfref_name][vcf_record_index]
 
             for key in sorted(results):
                 vcf_record.set_format_key_value(key, ','.join(results[key]))
