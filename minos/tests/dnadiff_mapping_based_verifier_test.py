@@ -77,6 +77,8 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         self.assertEqual(exp_found, found)
         self.assertEqual(exp_gt_conf, gt_conf)
         self.assertEqual(exp_allele, allele)
+        os.unlink(vcffile + ".gz")
+        os.unlink(vcffile + ".gz.tbi")
 
     def test_parse_sam_file_and_vcf2(self):
         samfile = os.path.join(data_dir, 'sample2.sam')
@@ -86,9 +88,6 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         flank = 5
         allow_mismatches = False
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
-        print(samfile)
-        print(vcffile + ".gz")
-        print(reffile)
         found, gt_conf, allele = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", reffile, flank, allow_mismatches)
 
         exp_found = ['1','1','1','0','1','0','1']
@@ -97,6 +96,8 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         self.assertEqual(exp_found, found)
         self.assertEqual(exp_gt_conf, gt_conf)
         self.assertEqual(exp_allele, allele)
+        os.unlink(vcffile + ".gz")
+        os.unlink(vcffile + ".gz.tbi")
 
     def test_run_with_filter_cluster_include_ref_alleles(self):
         '''test run with filtering and clustering'''
