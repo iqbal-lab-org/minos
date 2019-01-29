@@ -46,6 +46,8 @@ class TestEvaluateRecall(unittest.TestCase):
         self.assertEqual(exp_found, found)
         self.assertEqual(exp_gt_conf, gt_conf)
         self.assertEqual(exp_allele, allele)
+        os.unlink(vcffile + ".gz")
+        os.unlink(vcffile + ".gz.tbi")
 
     def test_run_with_filter_cluster_include_ref_alleles(self):
         '''test run with filtering and clustering'''
