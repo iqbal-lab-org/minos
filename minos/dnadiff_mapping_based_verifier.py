@@ -58,7 +58,6 @@ class DnadiffMappingBasedVerifier:
         self.filter_and_cluster_vcf = filter_and_cluster_vcf
         self.discard_ref_calls = discard_ref_calls
         self.allow_flank_mismatches = allow_flank_mismatches
-        print("flank_length = " + str(self.flank_length) + " and merge_length = " + str(self.merge_length))
 
         if self.filter_and_cluster_vcf:
             self.vcf_to_check1 = self.clustered_vcf1
@@ -270,7 +269,6 @@ class DnadiffMappingBasedVerifier:
                 all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
             except:
                 #real unmapped, no cigar or tag
-                print("unmapped and no nm or cigar tags")
                 return False
 
         try:
@@ -280,16 +278,13 @@ class DnadiffMappingBasedVerifier:
 
         if not allow_mismatches:
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
-            print("no mismatches allowed: ", all_mapped, nm==0)
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
         if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
-            print("too many soft clipped bases")
             return False
 
         if nm==0:
-            print("no mismatches")
             return True
 
         if query_sequence is None:
@@ -316,7 +311,6 @@ class DnadiffMappingBasedVerifier:
             alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
-        print(aligned_pairs)
         wanted_aligned_pairs = []
         current_pos = 0
 
@@ -370,7 +364,6 @@ class DnadiffMappingBasedVerifier:
         if  exclude_regions is None:
             exclude_regions = {}
 
-        print("start _parse_sam_file_and_vcf")
         found = []
         gt_conf = []
         allele = []
@@ -379,7 +372,6 @@ class DnadiffMappingBasedVerifier:
         samfile_handle = pysam.AlignmentFile(samfile, "r")
         sam_previous_record_name = None
         for sam_record in samfile_handle.fetch(until_eof=True):
-            print(str(sam_record))
             if sam_record.query_name == sam_previous_record_name:
                 continue
             sam_previous_record_name = sam_record.query_name
@@ -411,7 +403,6 @@ class DnadiffMappingBasedVerifier:
 
                 vcf_reader = pysam.VariantFile(vcffile)
                 for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + int(alignment_start) + flank_length - 2, int(expected_start) + int(alignment_start) + flank_length)):
-                    print(vcf_record)
                     if i == int(vcf_pos_index):
                         sample_name = vcf_record.samples.keys()[0]
                         if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
@@ -419,7 +410,6 @@ class DnadiffMappingBasedVerifier:
                                 found.append('1')
                                 allele.append(str(allele_index))
                                 found_allele = True
-                                print(vcf_record.format.keys())
                                 if 'GT_CONF' in vcf_record.format.keys():
                                     gt_conf.append(int(float(vcf_record.samples[sample_name]['GT_CONF'])))
                                     found_conf = True
@@ -430,9 +420,6 @@ class DnadiffMappingBasedVerifier:
                 gt_conf.append(0)
         assert len(found) == len(gt_conf)
         assert len(found) == len(allele)
-        print(found)
-        print(gt_conf)
-        print(allele)
         return found, gt_conf, allele
 
     @classmethod
@@ -448,11 +435,6 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(dnadiff_file, header=None)
         ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches, exclude_regions1)
         query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches, exclude_regions2)
-        print(len(snps[0]))
-        print(snps)
-        print(snps[0])
-        print(ref_found)
-        print(query_found)
         assert len(snps[0]) == len(ref_found) and len(snps[0]) == len(query_found)
         out_df = pd.DataFrame({'id': snps[0],
                                'ref': snps[1],
@@ -473,11 +455,9 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(tsv_file, index_col=0)
         for line in snps.itertuples():
             stats['total'] += 1
-            print(line)
             if (line[4] == 'E' or line[7] == 'E'):
                 stats['excluded_vars'] += 1
             elif (line[4] == 1 or line[7] == 1 or line[4] == '1' or line[7] == '1'):
-                print("found")
                 stats['found_vars'] += 1
                 gt_confs = [i for i in {line[5],line[8]} if not math.isnan(i)]
                 gt_conf = None
@@ -485,7 +465,6 @@ class DnadiffMappingBasedVerifier:
                     gt_conf = max(gt_confs)
                 gt_conf_hist[gt_conf] = gt_conf_hist.get(gt_conf, 0) + 1
             else:
-                print((line[4] == 1 and line[7] == 1),(line[4] == 1 and line[6] == 1),(line[7] == 1 and line[9] == 1))
                 stats['missed_vars'] += 1
         return stats, gt_conf_hist
 
