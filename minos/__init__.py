@@ -11,6 +11,7 @@ __all__ = [
     'bam_read_extract',
     'dependencies',
     'genotyper',
+    'genotype_confidence_simulator',
     'gramtools',
     'mapping_based_verifier',
     'multi_sample_pipeline',
