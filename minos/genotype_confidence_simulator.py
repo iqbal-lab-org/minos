@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import stats
 import random
 
 from minos import genotyper
@@ -35,4 +36,13 @@ class GenotypeConfidenceSimulator:
         confidences.sort()
         return confidences
 
+
+    @classmethod
+    def _make_conf_to_percentile_dict(cls, confidence_scores):
+        assert len(confidence_scores) > 0
+        confidence_scores_percentiles = 100 * stats.rankdata(confidence_scores) / len(confidence_scores)
+        conf_to_percentile = {}
+        for conf, percentile in zip(confidence_scores, confidence_scores_percentiles):
+            conf_to_percentile[conf] = round(percentile)
+        return conf_to_percentile
 

@@ -15,4 +15,10 @@ class TestGenotypeConfidenceSimulator(unittest.TestCase):
         self.assertEqual(expected, got)
 
 
+    def test_make_conf_to_percentile_dict(self):
+        '''test _make_conf_to_percentile_dict'''
+        confidence_scores = [1, 1, 2, 3, 4, 4, 4, 5, 6, 8]
+        got = genotype_confidence_simulator.GenotypeConfidenceSimulator._make_conf_to_percentile_dict(confidence_scores)
+        expected = {1: 15, 2: 30, 3: 40, 4: 50, 5: 80, 6: 90, 8: 100}
+        self.assertTrue(expected, got)
 
