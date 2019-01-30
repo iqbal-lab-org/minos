@@ -22,3 +22,10 @@ class TestGenotypeConfidenceSimulator(unittest.TestCase):
         expected = {1: 15, 2: 30, 3: 40, 4: 50, 5: 80, 6: 90, 8: 100}
         self.assertTrue(expected, got)
 
+
+    def test_run_simulations(self):
+        '''test run_simulations'''
+        simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(50, 0.1, 5)
+        simulator.run_simulations()
+        expected_confidence_scores_percentiles = {6: 20.0, 9: 40.0, 15: 60.0, 21: 80.0, 31: 100.0}
+        self.assertEqual(expected_confidence_scores_percentiles, simulator.confidence_scores_percentiles)

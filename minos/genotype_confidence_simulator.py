@@ -10,6 +10,7 @@ class GenotypeConfidenceSimulator:
         self.mean_depth = mean_depth
         self.error_rate = error_rate
         self.iterations = iterations
+        self.confidence_scores_percentiles = {}
 
 
     @classmethod
@@ -45,4 +46,9 @@ class GenotypeConfidenceSimulator:
         for conf, percentile in zip(confidence_scores, confidence_scores_percentiles):
             conf_to_percentile[conf] = round(percentile)
         return conf_to_percentile
+
+
+    def run_simulations(self):
+        confidence_scores = GenotypeConfidenceSimulator._simulate_confidence_scores(self.mean_depth, self.error_rate, self.iterations)
+        self.confidence_scores_percentiles = GenotypeConfidenceSimulator._make_conf_to_percentile_dict(confidence_scores)
 
