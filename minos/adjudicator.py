@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+import statistics
 import sys
 
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
@@ -69,6 +70,7 @@ class Adjudicator:
             raise Error('Error! If using splitting, must input one reads file (which is assumed to be a sorted indexed BAM file)')
 
         self.clean = clean
+        self.genotype_simulation_iterations = 10000
 
 
     @classmethod
@@ -212,6 +214,9 @@ class Adjudicator:
             filtered_outfile=self.final_vcf
         )
 
+        logging.info(f'Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf}, using mean depth {mean_depth}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
+        Adjudicator._add_gt_conf_percentile_to_vcf_file(self.final_vcf, mean_depth, self.read_error_rate, self.genotype_simulation_iterations)
+
         if self.clean:
             os.rename(os.path.join(self.gramtools_quasimap_dir, 'report.json'), os.path.join(self.outdir, 'gramtools.quasimap.report.json'))
             shutil.rmtree(self.gramtools_quasimap_dir)
@@ -247,6 +252,7 @@ class Adjudicator:
         bam_read_extract.get_unmapped_reads(self.reads_files[0], unmapped_reads_file)
         split_vcf_outfiles = {}
         split_vcf_outfiles_unfiltered = {}
+        mean_depths = []
 
         for ref_name, split_file_list in chunker.vcf_split_files.items():
             split_vcf_outfiles[ref_name] = []
@@ -277,6 +283,7 @@ class Adjudicator:
                 logging.info('Loading split gramtools quasimap output files ' + gramtools_quasimap_dir)
                 perl_generated_vcf = os.path.join(split_file.gramtools_build_dir, 'perl_generated_vcf')
                 mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(perl_generated_vcf, gramtools_quasimap_dir)
+                mean_depths.append(mean_depth)
                 logging.info('Finished loading gramtools files')
                 if self.sample_name is None:
                     sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
@@ -317,6 +324,10 @@ class Adjudicator:
         logging.info('Merging VCF files into one output file ' + self.final_vcf)
         chunker.merge_files(split_vcf_outfiles, self.final_vcf)
         chunker.merge_files(split_vcf_outfiles_unfiltered, self.unfiltered_vcf_file)
+
+        mean_depth = statistics.mean(mean_depths)
+        logging.info(f'Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf}, using mean depth {mean_depth}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
+        Adjudicator._add_gt_conf_percentile_to_vcf_file(self.final_vcf, mean_depth, self.read_error_rate, self.genotype_simulation_iterations)
 
         if self.clean:
             logging.info('Deleting temp split VCF files')
