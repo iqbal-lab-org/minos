@@ -6,7 +6,7 @@ import sys
 
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
-from minos import bam_read_extract, dependencies, gramtools, plots, utils, vcf_chunker
+from minos import bam_read_extract, dependencies, genotype_confidence_simulator, gramtools, plots, utils, vcf_chunker
 
 class Error (Exception): pass
 
@@ -152,6 +152,30 @@ class Adjudicator:
         plots.plots_from_minos_vcf(self.final_vcf, self.plots_prefix)
 
         logging.info('All done! Thank you for using minos :)')
+
+
+    @classmethod
+    def _add_gt_conf_percentile_to_vcf_file(cls, vcf_file, mean_depth, error_rate, iterations):
+        '''Overwrites vcf_file, with new version that has GT_CONF_PERCENTILE added'''
+        simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(mean_depth, error_rate, iterations=iterations)
+        simulator.run_simulations()
+        vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
+        for i, line in enumerate(vcf_header):
+            if line.startswith('##FORMAT=<ID=GT_CONF'):
+                break
+        else:
+            raise Exception(f'No GT_CONF description found in header of VCF file {vcf_file}. Cannot continue')
+
+        vcf_header.insert(i+1, r'''##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF"''')
+
+        with open(vcf_file, 'w') as f:
+            print(*vcf_header, sep='\n', file=f)
+
+            for vcf_record in vcf_lines:
+                if 'GT_CONF' in vcf_record.FORMAT:
+                    conf = int(round(float(vcf_record.FORMAT['GT_CONF'])))
+                    vcf_record.set_format_key_value('GT_CONF_PERCENTILE', str(simulator.get_percentile(conf)))
+                    print(vcf_record, file=f)
 
 
     def _run_gramtools_not_split_vcf(self):

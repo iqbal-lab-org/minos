@@ -1,3 +1,4 @@
+import filecmp
 import shutil
 import os
 import unittest
@@ -105,3 +106,16 @@ class TestAdjudicator(unittest.TestCase):
         self.assertFalse(os.path.exists(adj.plots_prefix + '.gt_conf_hist.pdf'))
         self.assertTrue(os.path.exists(adj.clustered_vcf))
         shutil.rmtree(outdir)
+
+
+    def test_add_gt_conf_percentile_to_vcf_file(self):
+        '''test _add_gt_conf_percentile_to_vcf_file'''
+        original_file = os.path.join(data_dir, 'add_gt_conf_percentile_to_vcf_file.in.vcf')
+        tmp_file = 'tmp.adjudicator.add_gt_conf_percentile_to_vcf_file.vcf'
+        expect_file = os.path.join(data_dir, 'add_gt_conf_percentile_to_vcf_file.expect.vcf')
+        shutil.copyfile(original_file, tmp_file)
+        error_rate = 0.00026045894282438386
+        adjudicator.Adjudicator._add_gt_conf_percentile_to_vcf_file(tmp_file, 60, error_rate, iterations=1000)
+        self.assertTrue(filecmp.cmp(tmp_file, expect_file, shallow=False))
+        os.unlink(tmp_file)
+
