@@ -28,8 +28,12 @@ class GenotypeConfidenceSimulator:
             if correct_coverage + incorrect_coverage == 0:
                 continue
 
-            allele_combination_cov = {'1': correct_coverage, '2': incorrect_coverage}
-            allele_per_base_cov = [[correct_coverage], [incorrect_coverage]]
+            allele_combination_cov = {}
+            if incorrect_coverage > 0:
+                allele_combination_cov['1'] = incorrect_coverage
+            if correct_coverage > 0:
+                allele_combination_cov['2'] = correct_coverage
+            allele_per_base_cov = [[incorrect_coverage], [correct_coverage]]
             gtyper = genotyper.Genotyper(mean_depth, error_rate, allele_combination_cov, allele_per_base_cov, allele_groups_dict)
             gtyper.run()
             confidences.append(round(gtyper.genotype_confidence))
