@@ -438,7 +438,7 @@ class EvaluateRecall:
 
         EvaluateRecall._index_vcf(self.vcf_to_check_query)
         self.vcf_to_check_query = self.vcf_to_check_query + ".gz"
-        EvaluateRecall._parse_sam_files(self.truth_vcf_file, self.sam_file_out, self.vcf_to_check_query,
+        EvaluateRecall._parse_sam_files(self.vcf_to_check_truth, self.sam_file_out, self.vcf_to_check_query,
                                         self.sam_summary, self.flank_length,
                                         allow_mismatches=self.allow_flank_mismatches,
                                         exclude_regions=self.exclude_regions)
