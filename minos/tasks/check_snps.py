@@ -16,6 +16,7 @@ def run(options):
         allow_flank_mismatches=options.allow_flank_mismatches,
         exclude_regions_bed_file1=options.exclude_bed1,
         exclude_regions_bed_file2=options.exclude_bed2,
+        max_soft_clipped=options.max_soft_clipped,
     )
     verifier.run()
 
