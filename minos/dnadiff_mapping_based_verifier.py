@@ -397,7 +397,7 @@ class DnadiffMappingBasedVerifier:
                                                                                  dnadiff_file_seqs,
                                                                                  flank_length,
                                                                                  query_sequence=sam_record.query_sequence,
-                                                                                 allow_mismatches=allow_mismatches
+                                                                                 allow_mismatches=allow_mismatches,
                                                                                  max_soft_clipped=max_soft_clipped)
             alignment_start = str(sam_record).split("\t")[3]
             if good_match:

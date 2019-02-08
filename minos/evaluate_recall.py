@@ -325,7 +325,7 @@ class EvaluateRecall:
             good_match = EvaluateRecall._check_if_sam_match_is_good(sam_record,
                                                                     flank_length,
                                                                     query_sequence=sam_record.query_sequence,
-                                                                    allow_mismatches=allow_mismatches
+                                                                    allow_mismatches=allow_mismatches,
                                                                     max_soft_clipped=max_soft_clipped)
             alignment_start = str(sam_record).split("\t")[3]
             if good_match:
@@ -443,7 +443,7 @@ class EvaluateRecall:
         EvaluateRecall._parse_sam_files(self.vcf_to_check_truth, self.sam_file_out, self.vcf_to_check_query,
                                         self.sam_summary, self.flank_length,
                                         allow_mismatches=self.allow_flank_mismatches,
-                                        exclude_regions=self.exclude_regions
+                                        exclude_regions=self.exclude_regions,
                                         max_soft_clipped=self.max_soft_clipped)
         stats, gt_conf_hist = EvaluateRecall._gather_stats(self.sam_summary)
         #os.unlink(self.seqs_out_truth)
