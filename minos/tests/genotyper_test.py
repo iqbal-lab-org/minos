@@ -69,8 +69,8 @@ class TestGenotyper(unittest.TestCase):
         gtyper._calculate_log_likelihoods()
         expected = [
             ({1}, -11.68),
-            ({0, 1}, -26.98),
-            ({0}, -124.91),
+            ({0, 1}, -32.92),
+            ({0}, -144.91),
         ]
         self.assertEqual(3, len(gtyper.likelihoods))
         gtyper.likelihoods = [(x[0], round(x[1], 2)) for x in gtyper.likelihoods]
@@ -87,8 +87,8 @@ class TestGenotyper(unittest.TestCase):
         gtyper = genotyper.Genotyper(mean_depth, error_rate, allele_combination_cov, allele_per_base_cov, allele_groups_dict)
         expected = [
             ({1}, -11.68),
-            ({0, 1}, -26.98),
-            ({0}, -124.91),
+            ({0, 1}, -32.92),
+            ({0}, -144.91),
         ]
         gtyper.run()
         self.assertEqual(len(expected), len(gtyper.likelihoods))
