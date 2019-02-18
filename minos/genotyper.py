@@ -47,9 +47,10 @@ class Genotyper:
 
     @classmethod
     def _coverage_of_diploid_alleles(cls, allele1, allele2, allele_combination_cov, allele_groups_dict, singleton_alleles_cov):
-        assert allele1 in singleton_alleles_cov and allele2 in singleton_alleles_cov
-        allele1_cov = singleton_alleles_cov[allele1]
-        allele2_cov = singleton_alleles_cov[allele2]
+        allele1_cov = singleton_alleles_cov.get(allele1, 0)
+        allele2_cov = singleton_alleles_cov.get(allele2, 0)
+        if allele1_cov + allele2_cov == 0:
+            allele1_cov = allele2_cov = 1
         allele1_total_cov = 0
         allele2_total_cov = 0
 
@@ -93,16 +94,29 @@ class Genotyper:
         ])
 
 
+    @classmethod
+    def _non_zeros_from_allele_per_base_cov(cls, allele_per_base_cov, mean_depth, error_rate):
+        non_zeros = []
+        for per_base_cov in allele_per_base_cov:
+            non_zero_count = 0
+            for cov in per_base_cov:
+                if  poisson.pmf(cov, mean_depth) > pow(error_rate, cov):
+                    non_zero_count += 1
+            non_zeros.append(non_zero_count)
+        return non_zeros
+
+
     def _calculate_log_likelihoods(self):
         '''Makes a list of tuples: ( (allele(s) tuple), log likelihood).
         List is sorted from most to least likely'''
         self.likelihoods = []
         total_depth = sum(self.allele_combination_cov.values())
+        non_zeros_per_allele = Genotyper._non_zeros_from_allele_per_base_cov(self.allele_per_base_cov, self.mean_depth, self.error_rate)
 
         for allele_number, per_base_cov in enumerate(self.allele_per_base_cov):
             allele_depth = Genotyper._coverage_of_one_haploid_allele(allele_number, self.allele_combination_cov, self.allele_groups_dict)
             allele_length = len(per_base_cov)
-            non_zeros = len(per_base_cov) - per_base_cov.count(0)
+            non_zeros = non_zeros_per_allele[allele_number]
 
             log_likelihood = Genotyper._log_likelihood_homozygous(
                     self.mean_depth,
@@ -114,15 +128,17 @@ class Genotyper:
             )
             self.likelihoods.append(({allele_number, allele_number}, log_likelihood))
 
+        total_cov = Genotyper._total_coverage(self.allele_combination_cov)
+        prob_missing_allele = poisson.pmf(total_cov, self.mean_depth)
         self.singleton_alleles_cov = Genotyper._singleton_alleles_and_coverage(self.allele_combination_cov, self.allele_groups_dict)
 
-        for (allele_number1, allele_number2) in itertools.combinations(self.singleton_alleles_cov.keys(), 2):
-            allele1_depth = self.singleton_alleles_cov[allele_number1]
-            allele2_depth = self.singleton_alleles_cov[allele_number2]
+
+        for (allele_number1, allele_number2) in itertools.combinations(range(len(self.allele_per_base_cov)), 2):
+            allele1_depth, allele2_depth = Genotyper._coverage_of_diploid_alleles(allele_number1, allele_number2, self.allele_combination_cov, self.allele_groups_dict, self.singleton_alleles_cov)
             allele1_length = len(self.allele_per_base_cov[allele_number1])
             allele2_length = len(self.allele_per_base_cov[allele_number2])
-            non_zeros1 = allele1_length - self.allele_per_base_cov[allele_number1].count(0)
-            non_zeros2 = allele2_length - self.allele_per_base_cov[allele_number2].count(0)
+            non_zeros1 = non_zeros_per_allele[allele_number1]
+            non_zeros2 = non_zeros_per_allele[allele_number2]
 
             log_likelihood = Genotyper._log_likelihood_heterozygous(
                     self.mean_depth,
