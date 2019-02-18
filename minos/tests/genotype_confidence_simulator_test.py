@@ -11,7 +11,7 @@ class TestGenotypeConfidenceSimulator(unittest.TestCase):
     def test_simulate_confidence_scores(self):
         '''test _simulate_confidence_scores'''
         got = genotype_confidence_simulator.GenotypeConfidenceSimulator._simulate_confidence_scores(50, 0.1, 5)
-        expected = [6, 9, 15, 21, 31]
+        expected = [31, 34, 40, 46, 56]
         self.assertEqual(expected, got)
 
 
@@ -27,17 +27,17 @@ class TestGenotypeConfidenceSimulator(unittest.TestCase):
         '''test run_simulations and get_percentile'''
         simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(50, 0.1, 5)
         simulator.run_simulations()
-        expected_confidence_scores_percentiles = {6: 20.00, 9: 40.00, 15: 60.00, 21: 80.00, 31: 100.00}
+        expected_confidence_scores_percentiles = {31: 20.0, 34: 40.0, 40: 60.0, 46: 80.0, 56: 100.0}
         self.assertEqual(expected_confidence_scores_percentiles, simulator.confidence_scores_percentiles)
-        self.assertEqual(20.00, simulator.get_percentile(6))
-        self.assertEqual(40.00, simulator.get_percentile(9))
+        self.assertEqual(20.00, simulator.get_percentile(31))
+        self.assertEqual(40.00, simulator.get_percentile(34))
         # Try getting numbers that are not in the dict and will have to be inferred
-        self.assertEqual(26.67, simulator.get_percentile(7))
-        self.assertEqual(90.00, simulator.get_percentile(26))
-        self.assertEqual(92.00, simulator.get_percentile(27))
+        self.assertEqual(26.67, simulator.get_percentile(32))
+        self.assertEqual(90.00, simulator.get_percentile(51))
+        self.assertEqual(92.00, simulator.get_percentile(52))
         # Try values outside the range of what we already have
-        self.assertEqual(0.00, simulator.get_percentile(4))
-        self.assertEqual(0.00, simulator.get_percentile(5))
-        self.assertEqual(100.00, simulator.get_percentile(32))
-        self.assertEqual(100.00, simulator.get_percentile(33))
+        self.assertEqual(0.00, simulator.get_percentile(30))
+        self.assertEqual(0.00, simulator.get_percentile(29))
+        self.assertEqual(100.00, simulator.get_percentile(57))
+        self.assertEqual(100.00, simulator.get_percentile(58))
 
