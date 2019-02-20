@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 from scipy import stats
 import random
@@ -6,17 +7,18 @@ from minos import genotyper
 
 
 class GenotypeConfidenceSimulator:
-    def __init__(self, mean_depth, error_rate, iterations=10000):
+    def __init__(self, mean_depth, error_rate, allele_length=1, iterations=1000):
         self.mean_depth = mean_depth
         self.error_rate = error_rate
         self.iterations = iterations
+        self.allele_length = allele_length
         self.confidence_scores_percentiles = {}
         self.min_conf_score = None
         self.max_conf_score = None
 
 
     @classmethod
-    def _simulate_confidence_scores(cls, mean_depth, error_rate, iterations, seed=42):
+    def _simulate_confidence_scores(cls, mean_depth, error_rate, iterations, allele_length=1, seed=42):
         np.random.seed(seed)
         allele_groups_dict = {'1': {0}, '2': {1}}
         i = 0
@@ -33,7 +35,7 @@ class GenotypeConfidenceSimulator:
                 allele_combination_cov['1'] = incorrect_coverage
             if correct_coverage > 0:
                 allele_combination_cov['2'] = correct_coverage
-            allele_per_base_cov = [[incorrect_coverage], [correct_coverage]]
+            allele_per_base_cov = [[incorrect_coverage] * allele_length, [correct_coverage] * allele_length]
             gtyper = genotyper.Genotyper(mean_depth, error_rate, allele_combination_cov, allele_per_base_cov, allele_groups_dict)
             gtyper.run()
             confidences.append(round(gtyper.genotype_confidence))
@@ -98,6 +100,45 @@ class GenotypeConfidenceSimulator:
 
 
     def run_simulations(self):
-        confidence_scores = GenotypeConfidenceSimulator._simulate_confidence_scores(self.mean_depth, self.error_rate, self.iterations)
+        confidence_scores = GenotypeConfidenceSimulator._simulate_confidence_scores(self.mean_depth, self.error_rate, self.iterations, allele_length=self.allele_length)
         self.confidence_scores_percentiles = GenotypeConfidenceSimulator._make_conf_to_percentile_dict(confidence_scores)
+
+
+class Simulations:
+    def __init__(self, mean_depth, error_rate, allele_lengths=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,20,30,40,50], iterations=1000):
+        self.sims = {l: GenotypeConfidenceSimulator(mean_depth, error_rate, allele_length=l, iterations=iterations) for l in allele_lengths}
+
+        for allele_length in sorted(self.sims):
+            logging.info(f'Run simulation, mean_depth={mean_depth}, error_rate={error_rate}, allele_length={allele_length}, iterations={iterations}')
+            self.sims[allele_length].run_simulations()
+        logging.info('Finished running simulations')
+        self.max_allele_length = max(self.sims.keys())
+        self.nearest_allele_length = {}
+
+
+    def get_percentile(self, allele_length, confidence):
+        if allele_length in self.sims:
+            return self.sims[allele_length].get_percentile(confidence)
+        elif allele_length > self.max_allele_length:
+            return self.sims[self.max_allele_length].get_percentile(confidence)
+        elif allele_length in self.nearest_allele_length:
+            return self.sims[self.nearest_allele_length[allele_length]].get_percentile(confidence)
+        else:
+            # Find the nearest allele length to the one we want, because
+            # we haven't had this allele length before
+            nearest_length = None
+
+            for i in range(1, self.max_allele_length, 1):
+                if (allele_length - i) in self.sims:
+                    nearest_length = allele_length - i
+                    break
+                elif (allele_length + i) in self.sims:
+                    nearest_length = allele_length + i
+                    break
+
+            assert nearest_length is not None
+
+            self.nearest_allele_length[allele_length] = nearest_length
+            return self.sims[nearest_length].get_percentile(confidence)
+
 
