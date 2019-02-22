@@ -125,7 +125,16 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
 
         coverages.append(sum(allele_combi_coverage.values()))
 
-    return round(statistics.mean(coverages), 3), round(statistics.variance(coverages), 3), vcf_header, vcf_lines, all_allele_coverage, allele_groups
+    assert len(coverages) > 0
+    # Unlikely to happen edge case on real data is when coverages has length 1.
+    # It happens when running test_run in adjudicator_test, with a split VCf.
+    # One of the splits only has 1 record.
+    if len(coverages) == 1:
+        variance = 1.000
+    else:
+        variance = round(statistics.variance(coverages), 3)
+
+    return round(statistics.mean(coverages), 3), variance, vcf_header, vcf_lines, all_allele_coverage, allele_groups
 
 
 def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, read_error_rate, kmer_size):
