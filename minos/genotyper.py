@@ -164,5 +164,12 @@ class Genotyper:
             self._calculate_log_likelihoods()
             assert self.likelihoods is not None and len(self.likelihoods) > 1
             self.genotype, best_log_likelihood = self.likelihoods[0]
-            self.genotype_confidence = round(best_log_likelihood - self.likelihoods[1][1], 2)
+
+            for allele in self.genotype:
+                if self.singleton_alleles_cov.get(allele, 0) == 0:
+                    self.genotype = {'.'}
+                    self.genotype_confidence = 0.0
+                    break
+            else:
+                self.genotype_confidence = round(best_log_likelihood - self.likelihoods[1][1], 2)
 
