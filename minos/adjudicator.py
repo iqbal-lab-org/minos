@@ -28,6 +28,7 @@ class Adjudicator:
         alleles_per_split=None,
         total_splits=None,
         clean=True,
+        genotype_simulation_iterations=10000,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -70,7 +71,7 @@ class Adjudicator:
             raise Error('Error! If using splitting, must input one reads file (which is assumed to be a sorted indexed BAM file)')
 
         self.clean = clean
-        self.genotype_simulation_iterations = 10000
+        self.genotype_simulation_iterations = genotype_simulation_iterations
 
 
     @classmethod
@@ -157,10 +158,10 @@ class Adjudicator:
 
 
     @classmethod
-    def _add_gt_conf_percentile_to_vcf_file(cls, vcf_file, mean_depth, error_rate, iterations):
+    def _add_gt_conf_percentile_to_vcf_file(cls, vcf_file, mean_depth, depth_variance, error_rate, iterations):
         '''Overwrites vcf_file, with new version that has GT_CONF_PERCENTILE added'''
-        simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(mean_depth, error_rate, iterations=iterations)
-        simulator.run_simulations()
+        simulations = genotype_confidence_simulator.GenotypeConfidenceSimulator(mean_depth, depth_variance, error_rate, allele_length=1, iterations=iterations)
+        simulations.run_simulations()
         vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
         for i, line in enumerate(vcf_header):
             if line.startswith('##FORMAT=<ID=GT_CONF'):
@@ -176,8 +177,11 @@ class Adjudicator:
             for vcf_record in vcf_lines:
                 if 'GT_CONF' in vcf_record.FORMAT:
                     conf = int(round(float(vcf_record.FORMAT['GT_CONF'])))
-                    vcf_record.set_format_key_value('GT_CONF_PERCENTILE', str(simulator.get_percentile(conf)))
-                    print(vcf_record, file=f)
+                    if 'GT' in vcf_record.FORMAT and '.' not in vcf_record.FORMAT['GT']:
+                        allele_length = int(statistics.mean([len(x) for x in vcf_record.called_alts_from_genotype()]))
+                        vcf_record.set_format_key_value('GT_CONF_PERCENTILE', str(simulations.get_percentile(conf)))
+
+                print(vcf_record, file=f)
 
 
     def _run_gramtools_not_split_vcf(self):
@@ -193,7 +197,7 @@ class Adjudicator:
         )
 
         logging.info('Loading gramtools quasimap output files ' + self.gramtools_quasimap_dir)
-        mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(self.perl_generated_vcf, self.gramtools_quasimap_dir)
+        mean_depth, depth_variance, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(self.perl_generated_vcf, self.gramtools_quasimap_dir)
         logging.info('Finished loading gramtools files')
         if self.sample_name is None:
             sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
@@ -214,8 +218,8 @@ class Adjudicator:
             filtered_outfile=self.final_vcf
         )
 
-        logging.info(f'Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf}, using mean depth {mean_depth}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
-        Adjudicator._add_gt_conf_percentile_to_vcf_file(self.final_vcf, mean_depth, self.read_error_rate, self.genotype_simulation_iterations)
+        logging.info(f'Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf}, using mean depth {mean_depth}, depth variance {depth_variance}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
+        Adjudicator._add_gt_conf_percentile_to_vcf_file(self.final_vcf, mean_depth, depth_variance, self.read_error_rate, self.genotype_simulation_iterations)
 
         if self.clean:
             os.rename(os.path.join(self.gramtools_quasimap_dir, 'report.json'), os.path.join(self.outdir, 'gramtools.quasimap.report.json'))
@@ -253,6 +257,7 @@ class Adjudicator:
         split_vcf_outfiles = {}
         split_vcf_outfiles_unfiltered = {}
         mean_depths = []
+        depth_variances = []
 
         for ref_name, split_file_list in chunker.vcf_split_files.items():
             split_vcf_outfiles[ref_name] = []
@@ -282,8 +287,9 @@ class Adjudicator:
 
                 logging.info('Loading split gramtools quasimap output files ' + gramtools_quasimap_dir)
                 perl_generated_vcf = os.path.join(split_file.gramtools_build_dir, 'perl_generated_vcf')
-                mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(perl_generated_vcf, gramtools_quasimap_dir)
+                mean_depth, depth_variance, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(perl_generated_vcf, gramtools_quasimap_dir)
                 mean_depths.append(mean_depth)
+                depth_variances.append(depth_variance)
                 logging.info('Finished loading gramtools files')
                 if self.sample_name is None:
                     sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(vcf_header)
@@ -326,8 +332,9 @@ class Adjudicator:
         chunker.merge_files(split_vcf_outfiles_unfiltered, self.unfiltered_vcf_file)
 
         mean_depth = statistics.mean(mean_depths)
-        logging.info(f'Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf}, using mean depth {mean_depth}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
-        Adjudicator._add_gt_conf_percentile_to_vcf_file(self.final_vcf, mean_depth, self.read_error_rate, self.genotype_simulation_iterations)
+        depth_variance = statistics.mean(depth_variances)
+        logging.info(f'Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf}, using mean depth {mean_depth}, depth variance {depth_variance}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
+        Adjudicator._add_gt_conf_percentile_to_vcf_file(self.final_vcf, mean_depth, depth_variance, self.read_error_rate, self.genotype_simulation_iterations)
 
         if self.clean:
             logging.info('Deleting temp split VCF files')
