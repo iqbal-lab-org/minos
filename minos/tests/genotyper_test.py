@@ -55,7 +55,7 @@ class TestGenotyper(unittest.TestCase):
         #_log_likelihood_heterozygous(cls, mean_depth, allele_depth1, allele_depth2, total_depth,
         #    error_rate, allele_length1, allele_length2, non_zeros1, non_zeros2):
         self.assertEqual(-52.97, round(genotyper.Genotyper._log_likelihood_heterozygous(100, 45, 40, 95, 0.01, 3, 3, 3, 3), 2))
-        self.assertEqual(-152.97, round(genotyper.Genotyper._log_likelihood_heterozygous(100, 45, 40, 95, 0.01, 3, 3, 2, 2), 2))
+        self.assertEqual(-86.31, round(genotyper.Genotyper._log_likelihood_heterozygous(100, 45, 40, 95, 0.01, 3, 3, 2, 2), 2))
 
 
     def test_calculate_log_likelihoods(self):
@@ -69,7 +69,7 @@ class TestGenotyper(unittest.TestCase):
         gtyper._calculate_log_likelihoods()
         expected = [
             ({1}, -11.68),
-            ({0, 1}, -26.98),
+            ({0, 1}, -22.92),
             ({0}, -124.91),
         ]
         self.assertEqual(3, len(gtyper.likelihoods))
@@ -87,7 +87,7 @@ class TestGenotyper(unittest.TestCase):
         gtyper = genotyper.Genotyper(mean_depth, error_rate, allele_combination_cov, allele_per_base_cov, allele_groups_dict)
         expected = [
             ({1}, -11.68),
-            ({0, 1}, -26.98),
+            ({0, 1}, -22.92),
             ({0}, -124.91),
         ]
         gtyper.run()

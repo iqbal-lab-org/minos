@@ -1,3 +1,4 @@
+import filecmp
 import shutil
 import os
 import unittest
@@ -29,7 +30,7 @@ class TestAdjudicator(unittest.TestCase):
         ref_fasta = os.path.join(data_dir, 'run.ref.fa')
         reads_file = os.path.join(data_dir, 'run.bwa.bam')
         vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.1.vcf', 'run.calls.2.vcf']]
-        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, variants_per_split=3, clean=False, gramtools_kmer_size=5)
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, variants_per_split=3, clean=False, gramtools_kmer_size=5, genotype_simulation_iterations=1000)
         adj.run()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(adj.log_file))
@@ -38,7 +39,7 @@ class TestAdjudicator(unittest.TestCase):
 
         # Clean up and then run without splitting
         shutil.rmtree(outdir)
-        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False, gramtools_kmer_size=5)
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False, gramtools_kmer_size=5, genotype_simulation_iterations=1000)
         adj.run()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(adj.log_file))
@@ -65,7 +66,7 @@ class TestAdjudicator(unittest.TestCase):
         # This is the clustered VCF made by the Adjudicator, so we
         # use that instead of the list of original VCF files
         vcf_files = [adj.clustered_vcf]
-        adj = adjudicator.Adjudicator(outdir2, ref_fasta, [reads_file], vcf_files, gramtools_build_dir=gramtools_build_dir, clean=False, gramtools_kmer_size=5)
+        adj = adjudicator.Adjudicator(outdir2, ref_fasta, [reads_file], vcf_files, gramtools_build_dir=gramtools_build_dir, clean=False, gramtools_kmer_size=5, genotype_simulation_iterations=1000)
         adj.run()
         self.assertTrue(os.path.exists(outdir2))
         self.assertTrue(os.path.exists(adj.log_file))
@@ -91,7 +92,7 @@ class TestAdjudicator(unittest.TestCase):
         ref_fasta = os.path.join(data_dir, 'run.ref.fa')
         reads_file = os.path.join(data_dir, 'run.bwa.bam')
         vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.empty.1.vcf', 'run.calls.empty.2.vcf']]
-        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False, gramtools_kmer_size=5)
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False, gramtools_kmer_size=5, genotype_simulation_iterations=1000)
         with self.assertRaises(adjudicator.Error):
             adj.run()
         self.assertTrue(os.path.exists(outdir))
@@ -105,3 +106,16 @@ class TestAdjudicator(unittest.TestCase):
         self.assertFalse(os.path.exists(adj.plots_prefix + '.gt_conf_hist.pdf'))
         self.assertTrue(os.path.exists(adj.clustered_vcf))
         shutil.rmtree(outdir)
+
+
+    def test_add_gt_conf_percentile_to_vcf_file(self):
+        '''test _add_gt_conf_percentile_to_vcf_file'''
+        original_file = os.path.join(data_dir, 'add_gt_conf_percentile_to_vcf_file.in.vcf')
+        tmp_file = 'tmp.adjudicator.add_gt_conf_percentile_to_vcf_file.vcf'
+        expect_file = os.path.join(data_dir, 'add_gt_conf_percentile_to_vcf_file.expect.vcf')
+        shutil.copyfile(original_file, tmp_file)
+        error_rate = 0.00026045894282438386
+        adjudicator.Adjudicator._add_gt_conf_percentile_to_vcf_file(tmp_file, 60, 100, error_rate, iterations=1000)
+        self.assertTrue(filecmp.cmp(tmp_file, expect_file, shallow=False))
+        os.unlink(tmp_file)
+
