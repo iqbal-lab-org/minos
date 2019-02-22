@@ -7,8 +7,9 @@ from minos import genotyper
 
 
 class GenotypeConfidenceSimulator:
-    def __init__(self, mean_depth, error_rate, allele_length=1, iterations=1000):
+    def __init__(self, mean_depth, depth_variance, error_rate, allele_length=1, iterations=10000):
         self.mean_depth = mean_depth
+        self.depth_variance = depth_variance
         self.error_rate = error_rate
         self.iterations = iterations
         self.allele_length = allele_length
@@ -18,14 +19,16 @@ class GenotypeConfidenceSimulator:
 
 
     @classmethod
-    def _simulate_confidence_scores(cls, mean_depth, error_rate, iterations, allele_length=1, seed=42):
+    def _simulate_confidence_scores(cls, mean_depth, depth_variance, error_rate, iterations, allele_length=1, seed=42):
         np.random.seed(seed)
         allele_groups_dict = {'1': {0}, '2': {1}}
         i = 0
         confidences = []
+        no_of_successes = (mean_depth ** 2) / (depth_variance - mean_depth)
+        prob_of_success = 1 - (depth_variance - mean_depth) / depth_variance
 
         while i < iterations:
-            correct_coverage = np.random.poisson(mean_depth)
+            correct_coverage = np.random.negative_binomial(no_of_successes, prob_of_success)
             incorrect_coverage = np.random.binomial(mean_depth, error_rate)
             if correct_coverage + incorrect_coverage == 0:
                 continue
@@ -100,16 +103,22 @@ class GenotypeConfidenceSimulator:
 
 
     def run_simulations(self):
-        confidence_scores = GenotypeConfidenceSimulator._simulate_confidence_scores(self.mean_depth, self.error_rate, self.iterations, allele_length=self.allele_length)
+        confidence_scores = GenotypeConfidenceSimulator._simulate_confidence_scores(self.mean_depth, self.depth_variance, self.error_rate, self.iterations, allele_length=self.allele_length)
         self.confidence_scores_percentiles = GenotypeConfidenceSimulator._make_conf_to_percentile_dict(confidence_scores)
 
 
+
+# This class is here for when we were simulating different allele lengths.
+# It was used before the genotyper was changed to normalise non-zero coverage positions
+# by allele length. It's no longer used, but leave it here just in case.
+# Note that using it is currently pointless because the genotyper normalises by length,
+# so would only make sense to use it if the genotyper was changed.
 class Simulations:
-    def __init__(self, mean_depth, error_rate, allele_lengths=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,20,30,40,50], iterations=1000):
-        self.sims = {l: GenotypeConfidenceSimulator(mean_depth, error_rate, allele_length=l, iterations=iterations) for l in allele_lengths}
+    def __init__(self, mean_depth, depth_variance, error_rate, allele_lengths=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,20,30,40,50], iterations=1000):
+        self.sims = {l: GenotypeConfidenceSimulator(mean_depth, depth_variance, error_rate, allele_length=l, iterations=iterations) for l in allele_lengths}
 
         for allele_length in sorted(self.sims):
-            logging.info(f'Run simulation, mean_depth={mean_depth}, error_rate={error_rate}, allele_length={allele_length}, iterations={iterations}')
+            logging.info(f'Run simulation, mean_depth={mean_depth}, depth_variance={depth_variance}, error_rate={error_rate}, allele_length={allele_length}, iterations={iterations}')
             self.sims[allele_length].run_simulations()
         logging.info('Finished running simulations')
         self.max_allele_length = max(self.sims.keys())
