@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import statistics
 
 from cluster_vcf_records import vcf_file_read
 
@@ -113,7 +114,7 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     grouped_allele_counts_file = os.path.join(quasimap_dir, 'grouped_allele_counts_coverage.json')
     all_allele_coverage, allele_groups = load_allele_files(allele_base_counts_file, grouped_allele_counts_file)
     vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
-    total_coverage = 0
+    coverages = []
 
     if len(all_allele_coverage) != len(vcf_lines):
         raise Error('Number of records in VCF (' + str(len(vcf_lines)) + ') does not match number output from gramtools.(' + str(len(all_allele_coverage)) + '). Cannot continue')
@@ -122,9 +123,9 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
         if len(allele_per_base_coverage) != 1 + len(vcf_lines[i].ALT):
             raise Error('Mismatch in number of alleles for this VCF record:\n' + str(vcf_lines[i]) + '\nLine number is ' + str(i+1))
 
-        total_coverage += sum(allele_combi_coverage.values())
+        coverages.append(sum(allele_combi_coverage.values()))
 
-    return round(total_coverage/len(vcf_lines), 3), vcf_header, vcf_lines, all_allele_coverage, allele_groups
+    return round(statistics.mean(coverages), 3), round(statistics.variance(coverages), 3), vcf_header, vcf_lines, all_allele_coverage, allele_groups
 
 
 def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, read_error_rate, kmer_size):

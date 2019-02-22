@@ -109,12 +109,13 @@ class TestGramtools(unittest.TestCase):
         '''test load_gramtools_vcf_and_allele_coverage_files'''
         vcf_file = os.path.join(data_dir, 'load_gramtools_vcf_and_allele_coverage.vcf')
         quasimap_dir = os.path.join(data_dir, 'load_gramtools_vcf_and_allele_coverage_files.quasimap')
-        got_mean_depth, got_vcf_header, got_vcf_records, got_allele_coverage, got_allele_groups  = gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
+        got_mean_depth, got_depth_variance, got_vcf_header, got_vcf_records, got_allele_coverage, got_allele_groups  = gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
 
         expected_header, expected_vcf_records = vcf_file_read.vcf_file_to_list(vcf_file)
         self.assertEqual(expected_header, got_vcf_header)
         self.assertEqual(expected_vcf_records, got_vcf_records)
         self.assertEqual(10.500, got_mean_depth)
+        self.assertEqual(0.5, got_depth_variance)
 
         # now test bad files cause error to be raised
         vcf_file = os.path.join(data_dir, 'load_gramtools_vcf_and_allele_coverage.short.vcf')
@@ -136,13 +137,13 @@ class TestGramtools(unittest.TestCase):
         allele_combination_cov = {'1': 9, '2': 7, '3': 1}
         allele_groups_dict = {'1': {0}, '2': {2}, '3': {2,3}}
         allele_per_base_cov = [[0], [9],[7],[1,0]]
-        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tA,G,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/2:9,0,7,0:47.61')
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tA,G,TC\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/2:9,0,7,0:54.46')
         mean_depth = 15
         error_rate = 0.001
         kmer_size = 42
         got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
         self.assertEqual(expected, record)
-        expected_filtered = vcf_record.VcfRecord('ref\t4\t.\tT\tG\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/1:9,7:47.61')
+        expected_filtered = vcf_record.VcfRecord('ref\t4\t.\tT\tG\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t17:0/1:9,7:54.46')
         self.assertEqual(expected_filtered, got_filtered)
 
 
@@ -153,13 +154,13 @@ class TestGramtools(unittest.TestCase):
         allele_combination_cov = {'1': 1, '2': 80}
         allele_groups_dict = {'1': {0}, '2': {2}, '3': {1,2}}
         allele_per_base_cov = [[1],[0,0],[80]]
-        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tTC,G\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:2/2:1,0,80:44.79')
+        expected = vcf_record.VcfRecord('ref\t4\t.\tT\tTC,G\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:2/2:1,0,80:87.29')
         mean_depth = 85
         error_rate = 0.001
         kmer_size = 42
         got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(record, allele_combination_cov, allele_per_base_cov, allele_groups_dict, mean_depth, error_rate, kmer_size)
         self.assertEqual(expected, record)
-        expected_filtered = vcf_record.VcfRecord('ref\t4\t.\tT\tG\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:1/1:1,80:44.79')
+        expected_filtered = vcf_record.VcfRecord('ref\t4\t.\tT\tG\t.\t.\tKMER=42\tDP:GT:COV:GT_CONF\t81:1/1:1,80:87.29')
         self.assertEqual(expected_filtered, got_filtered)
 
 
@@ -184,7 +185,7 @@ class TestGramtools(unittest.TestCase):
         '''test write_vcf_annotated_using_coverage_from_gramtools'''
         vcf_file_in = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.in.vcf')
         quasimap_dir = os.path.join(data_dir, 'write_vcf_annotated_using_coverage_from_gramtools.quasimap')
-        mean_depth, vcf_header, vcf_records, allele_coverage, allele_groups  = gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file_in, quasimap_dir)
+        mean_depth, depth_variance, vcf_header, vcf_records, allele_coverage, allele_groups  = gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file_in, quasimap_dir)
         tmp_outfile = 'tmp.gramtools.write_vcf_annotated_using_coverage_from_gramtools.vcf'
         tmp_outfile_filtered = tmp_outfile + '.filter.vcf'
         error_rate = 0.001
