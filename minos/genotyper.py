@@ -133,7 +133,7 @@ class Genotyper:
         self.singleton_alleles_cov = Genotyper._singleton_alleles_and_coverage(self.allele_combination_cov, self.allele_groups_dict)
 
 
-        for (allele_number1, allele_number2) in itertools.combinations(range(len(self.allele_per_base_cov)), 2):
+        for (allele_number1, allele_number2) in itertools.combinations(self.singleton_alleles_cov.keys(), 2):
             allele1_depth, allele2_depth = Genotyper._coverage_of_diploid_alleles(allele_number1, allele_number2, self.allele_combination_cov, self.allele_groups_dict, self.singleton_alleles_cov)
             allele1_length = len(self.allele_per_base_cov[allele_number1])
             allele2_length = len(self.allele_per_base_cov[allele_number2])
