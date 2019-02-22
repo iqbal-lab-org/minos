@@ -72,11 +72,11 @@ class Genotyper:
     @classmethod
     def _log_likelihood_homozygous(cls, mean_depth, allele_depth, total_depth, error_rate, allele_length, non_zeros):
         return sum([
-            -mean_depth * (1 + allele_length - non_zeros),
+            -mean_depth * (1 + (allele_length - non_zeros) / allele_length),
             allele_depth * math.log(mean_depth),
             -math.lgamma(allele_depth + 1),
             (total_depth - allele_depth) * math.log(error_rate),
-            non_zeros * math.log(1 - poisson.pmf(0, mean_depth)),
+            non_zeros * math.log(1 - poisson.pmf(0, mean_depth)) / allele_length,
         ])
 
 
@@ -85,12 +85,12 @@ class Genotyper:
     def _log_likelihood_heterozygous(cls, mean_depth, allele_depth1, allele_depth2, total_depth,
             error_rate, allele_length1, allele_length2, non_zeros1, non_zeros2):
         return sum([
-            -mean_depth * (1 + 0.5 * (allele_length1 + allele_length2 - non_zeros1 - non_zeros2)),
+            -mean_depth * (1 + 0.5 * ( (1 - (non_zeros1 / allele_length1) ) + (1 - (non_zeros2 / allele_length2) ))),
             (allele_depth1 + allele_depth2) * math.log(0.5 * mean_depth),
             -math.lgamma(allele_depth1 + 1),
             -math.lgamma(allele_depth2 + 1),
             (total_depth - allele_depth1 - allele_depth2) * math.log(error_rate),
-            (non_zeros1 + non_zeros2) * math.log(1 - poisson.pmf(0, 0.5 * mean_depth)),
+            ( (non_zeros1 / allele_length1) + (non_zeros2 / allele_length2) ) * math.log(1 - poisson.pmf(0, 0.5 * mean_depth)),
         ])
 
 
