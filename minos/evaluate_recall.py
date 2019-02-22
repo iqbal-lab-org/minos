@@ -17,7 +17,7 @@ class Error (Exception): pass
 
 class EvaluateRecall:
     '''tto write'''
-    def __init__(self, truth_vcf_file, truth_vcf_ref, query_vcf_file, query_vcf_ref, outprefix, flank_length=31, merge_length=None, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file=None):
+    def __init__(self, truth_vcf_file, truth_vcf_ref, query_vcf_file, query_vcf_ref, outprefix, flank_length=31, merge_length=None, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file=None, max_soft_clipped=3):
         self.truth_vcf_file = os.path.abspath(truth_vcf_file)
         self.truth_vcf_ref = os.path.abspath(truth_vcf_ref)
         self.query_vcf_file = os.path.abspath(query_vcf_file)
@@ -47,6 +47,7 @@ class EvaluateRecall:
             self.vcf_to_check_query = self.query_vcf_file
 
         self.exclude_regions = EvaluateRecall._load_exclude_regions_bed_file(exclude_regions_bed_file)
+        self.max_soft_clipped = max_soft_clipped
 
     @classmethod
     def _load_exclude_regions_bed_file(cls, infile):
@@ -191,7 +192,7 @@ class EvaluateRecall:
         #os.unlink(outfile + ".tmp")
 
     @classmethod
-    def _check_if_sam_match_is_good(cls, sam_record, flank_length, query_sequence=None, allow_mismatches=True):
+    def _check_if_sam_match_is_good(cls, sam_record, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=3):
         if sam_record.is_unmapped:
             try:
                 #NB some mapped things at the edge of reference sequence will get unmapped flag, so check if this is one
@@ -211,7 +212,7 @@ class EvaluateRecall:
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
-        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
+        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
             return False
 
         if nm==0:
@@ -290,7 +291,7 @@ class EvaluateRecall:
         utils.syscall(command)
 
     @classmethod
-    def _parse_sam_file_and_vcf(cls, samfile, query_vcf_file, flank_length, allow_mismatches, exclude_regions=None):
+    def _parse_sam_file_and_vcf(cls, samfile, query_vcf_file, flank_length, allow_mismatches, exclude_regions=None, max_soft_clipped=3):
         if  exclude_regions is None:
             exclude_regions = {}
 
@@ -324,7 +325,8 @@ class EvaluateRecall:
             good_match = EvaluateRecall._check_if_sam_match_is_good(sam_record,
                                                                     flank_length,
                                                                     query_sequence=sam_record.query_sequence,
-                                                                    allow_mismatches=allow_mismatches)
+                                                                    allow_mismatches=allow_mismatches,
+                                                                    max_soft_clipped=max_soft_clipped)
             alignment_start = str(sam_record).split("\t")[3]
             if good_match:
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
@@ -351,7 +353,7 @@ class EvaluateRecall:
         return found, gt_conf, allele
 
     @classmethod
-    def _parse_sam_files(cls, truth_vcf_file, samfile, query_vcf_file, outfile, flank_length, allow_mismatches=True, exclude_regions=None):
+    def _parse_sam_files(cls, truth_vcf_file, samfile, query_vcf_file, outfile, flank_length, allow_mismatches=True, exclude_regions=None, max_soft_clipped=3):
         '''Input is the original dnadiff snps file of sites we are searching for
         and 2 SAM files made by _map_seqs_to_seqs(), which show mappings of snp sites
         from from the dnadiff snps file to the vcf (i.e. searches if VCF contains an record
@@ -373,7 +375,7 @@ class EvaluateRecall:
                 alt.append(record.ALT[0])
         query_found, query_conf, query_allele = EvaluateRecall._parse_sam_file_and_vcf(samfile, query_vcf_file,
                                                                                        flank_length, allow_mismatches,
-                                                                                       exclude_regions)
+                                                                                       exclude_regions, max_soft_clipped)
         assert len(id) == len(query_found)
         out_df = pd.DataFrame({'id': id,
                                'ref': ref,
@@ -438,10 +440,11 @@ class EvaluateRecall:
 
         EvaluateRecall._index_vcf(self.vcf_to_check_query)
         self.vcf_to_check_query = self.vcf_to_check_query + ".gz"
-        EvaluateRecall._parse_sam_files(self.truth_vcf_file, self.sam_file_out, self.vcf_to_check_query,
+        EvaluateRecall._parse_sam_files(self.vcf_to_check_truth, self.sam_file_out, self.vcf_to_check_query,
                                         self.sam_summary, self.flank_length,
                                         allow_mismatches=self.allow_flank_mismatches,
-                                        exclude_regions=self.exclude_regions)
+                                        exclude_regions=self.exclude_regions,
+                                        max_soft_clipped=self.max_soft_clipped)
         stats, gt_conf_hist = EvaluateRecall._gather_stats(self.sam_summary)
         #os.unlink(self.seqs_out_truth)
         #os.unlink(self.seqs_out_truth)

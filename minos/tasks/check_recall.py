@@ -13,6 +13,7 @@ def run(options):
         discard_ref_calls=not options.include_ref_calls,
         allow_flank_mismatches=options.allow_flank_mismatches,
         exclude_regions_bed_file=options.exclude_bed,
+        max_soft_clipped=options.max_soft_clipped,
     )
     verifier.run()
 

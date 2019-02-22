@@ -32,7 +32,7 @@ class DnadiffMappingBasedVerifier:
     outprefix.stats.tsv = summary stats (see dict output by
                           _parse_sam_file_and_update_vcf_records_and_gather_stats()
                           for a description)'''
-    def __init__(self, dnadiff_snps_file, dnadiff_file1, dnadiff_file2, vcf_file_in1, vcf_file_in2, vcf_reference_file, outprefix, flank_length=31, merge_length=None, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file1=None, exclude_regions_bed_file2=None):
+    def __init__(self, dnadiff_snps_file, dnadiff_file1, dnadiff_file2, vcf_file_in1, vcf_file_in2, vcf_reference_file, outprefix, flank_length=31, merge_length=None, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file1=None, exclude_regions_bed_file2=None, max_soft_clipped=3):
         self.dnadiff_snps_file = os.path.abspath(dnadiff_snps_file)
         self.dnadiff_file1 = os.path.abspath(dnadiff_file1)
         self.dnadiff_file2 = os.path.abspath(dnadiff_file2)
@@ -68,6 +68,7 @@ class DnadiffMappingBasedVerifier:
 
         self.exclude_regions1 = DnadiffMappingBasedVerifier._load_exclude_regions_bed_file(exclude_regions_bed_file1)
         self.exclude_regions2 = DnadiffMappingBasedVerifier._load_exclude_regions_bed_file(exclude_regions_bed_file2)
+        self.max_soft_clipped = max_soft_clipped
 
     @classmethod
     def _write_dnadiff_plus_flanks_to_fastas(cls, dnadiff_file, ref_infile, query_infile, ref_outfile, query_outfile, flank_length):
@@ -261,7 +262,7 @@ class DnadiffMappingBasedVerifier:
         #os.unlink(outfile + ".tmp")
 
     @classmethod
-    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True):
+    def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=3):
         if sam_record.is_unmapped:
             try:
                 #NB some mapped things at the edge of reference sequence will get unmapped flag, so check if this is one
@@ -281,7 +282,7 @@ class DnadiffMappingBasedVerifier:
             return all_mapped and nm == 0
 
         # don't allow too many soft clipped bases
-        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > 3) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > 3):
+        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
             return False
 
         if nm==0:
@@ -360,7 +361,7 @@ class DnadiffMappingBasedVerifier:
         utils.syscall(command)
 
     @classmethod
-    def _parse_sam_file_and_vcf(cls, samfile, vcffile, dnadiff_plus_flanks_file, flank_length, allow_mismatches, exclude_regions=None):
+    def _parse_sam_file_and_vcf(cls, samfile, vcffile, dnadiff_plus_flanks_file, flank_length, allow_mismatches, exclude_regions=None, max_soft_clipped=3):
         if  exclude_regions is None:
             exclude_regions = {}
 
@@ -396,7 +397,8 @@ class DnadiffMappingBasedVerifier:
                                                                                  dnadiff_file_seqs,
                                                                                  flank_length,
                                                                                  query_sequence=sam_record.query_sequence,
-                                                                                 allow_mismatches=allow_mismatches)
+                                                                                 allow_mismatches=allow_mismatches,
+                                                                                 max_soft_clipped=max_soft_clipped)
             alignment_start = str(sam_record).split("\t")[3]
             if good_match:
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
@@ -423,7 +425,7 @@ class DnadiffMappingBasedVerifier:
         return found, gt_conf, allele
 
     @classmethod
-    def _parse_sam_files(cls, dnadiff_file, samfile1, samfile2, vcffile1, vcffile2, reffasta1, reffasta2, outfile, flank_length, allow_mismatches=True, exclude_regions1=None, exclude_regions2=None):
+    def _parse_sam_files(cls, dnadiff_file, samfile1, samfile2, vcffile1, vcffile2, reffasta1, reffasta2, outfile, flank_length, allow_mismatches=True, exclude_regions1=None, exclude_regions2=None, max_soft_clipped=3):
         '''Input is the original dnadiff snps file of sites we are searching for
         and 2 SAM files made by _map_seqs_to_seqs(), which show mappings of snp sites
         from from the dnadiff snps file to the vcf (i.e. searches if VCF contains an record
@@ -433,8 +435,8 @@ class DnadiffMappingBasedVerifier:
         '''
 
         snps = pd.read_table(dnadiff_file, header=None)
-        ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches, exclude_regions1)
-        query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches, exclude_regions2)
+        ref_found, ref_conf, ref_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches, exclude_regions1, max_soft_clipped)
+        query_found, query_conf, query_allele = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches, exclude_regions2, max_soft_clipped)
         assert len(snps[0]) == len(ref_found) and len(snps[0]) == len(query_found)
         out_df = pd.DataFrame({'id': snps[0],
                                'ref': snps[1],
@@ -511,7 +513,8 @@ class DnadiffMappingBasedVerifier:
                                                      self.seqs_out_dnadiff2, self.sam_summary, self.flank_length,
                                                      allow_mismatches=self.allow_flank_mismatches,
                                                      exclude_regions1=self.exclude_regions1,
-                                                     exclude_regions2=self.exclude_regions2)
+                                                     exclude_regions2=self.exclude_regions2,
+                                                     max_soft_clipped=self.max_soft_clipped)
         stats, gt_conf_hist = DnadiffMappingBasedVerifier._gather_stats(self.sam_summary)
         #os.unlink(self.seqs_out_dnadiff1)
         #os.unlink(self.seqs_out_dnadiff2)
