@@ -129,7 +129,6 @@ class Genotyper:
             self.likelihoods.append(({allele_number, allele_number}, log_likelihood))
 
         total_cov = Genotyper._total_coverage(self.allele_combination_cov)
-        prob_missing_allele = poisson.pmf(total_cov, self.mean_depth)
         self.singleton_alleles_cov = Genotyper._singleton_alleles_and_coverage(self.allele_combination_cov, self.allele_groups_dict)
 
 
