@@ -96,6 +96,17 @@ class Dnadiff:
         variants = pymummer.snp_file.get_all_variants(snps_file)
 
         for variant in variants:
+            # If the variant is reversed, it means that either the ref or query had to be
+            # reverse complemented when aligned by mummer. Need to do the appropriate
+            # reverse (complement) fixes so the VCF has the correct REF and ALT sequences
+            if variant.reverse:
+                qry_seq = pyfastaq.sequences.Fasta('x', variant.qry_base)
+                qry_seq.revcomp()
+                variant.qry_base = ''.join(reversed(qry_seq.seq))
+                ref_seq = pyfastaq.sequences.Fasta('x', variant.ref_base)
+                ref_seq.revcomp()
+                variant.ref_base = ref_seq.seq
+
             if variant.var_type == pymummer.variant.SNP:
                 new_record = vcf_record.VcfRecord('\t'.join([
                     variant.qry_name,

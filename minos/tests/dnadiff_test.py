@@ -65,12 +65,61 @@ def write_fasta_files(ref_fa, qry_fa):
     ref_seqs['ref.snp_indel.2'] = pyfastaq.sequences.Fasta('ref.snp_indel.2', ''.join(ref_seq))
     qry_seqs['qry.snp_indel.2'] = pyfastaq.sequences.Fasta('qry.snp_indel.2', ''.join(qry_seq))
 
-    name_suffixes = ['gap', 'dup', 'indel', 'snp_indel', 'snp_indel.2']
+    # Test when query is reverse complemented.
+    # When this happens, the snps file from mummer has -1 in column 10, and it
+    # reports the reverse complement of the qry sequence. eg here we're adding a SNP at
+    # (1-based) position 100 in the ref, changing the G to a A. But then reverse complementing
+    # means there is a T at that position in the query sequence. The SNP file reports ref -> qry change as
+    # G -> A, but we're making VCF in terms of the query. We want T -> C.
+    random.seed(6)
+    ref_seq = [random.choice(nucleotides) for _ in range(500)]
+    ref_seq[99] = 'A'
+    ref_seq[195] = 'A'
+    ref_seq[196] = 'A'
+    ref_seq[197] = 'G'
+    ref_seq[198] = 'A'
+    ref_seq[199] = 'G'
+    ref_seq[200] = 'C'
+    qry_seq = ref_seq[:195] + ref_seq[200:400] + list('AGTC') + ref_seq[400:]
+    ref_seq[99] = 'G'
+    ref_seqs['ref.snp_indel_qry_rev'] = pyfastaq.sequences.Fasta('ref.snp_indel_qry_rev', ''.join(ref_seq))
+    qry_seqs['qry.snp_indel_qry_rev'] = pyfastaq.sequences.Fasta('qry.snp_indel_qry_rev', ''.join(qry_seq))
+    qry_seqs['qry.snp_indel_qry_rev'].revcomp()
+
+    # Test when ref is reverse complemented. This is like the query being revcomped, tested
+    # previously..Turns out that mummer always has the ref on the forward strand.
+    # This SNP is effectively C in the ref, changed to a T in the query. We see
+    # C -> T in the dnadiff file
+    random.seed(7)
+    ref_seq = [random.choice(nucleotides) for _ in range(500)]
+    ref_seq[99] = 'A'
+    qry_seq = ref_seq[:195] + ref_seq[200:400] + list('AGTC') + ref_seq[400:]
+    ref_seq[99] = 'G'
+    ref_seqs['ref.snp_indel_ref_rev'] = pyfastaq.sequences.Fasta('ref.snp_indel_ref_rev', ''.join(ref_seq))
+    ref_seqs['ref.snp_indel_ref_rev'].revcomp()
+    qry_seqs['qry.snp_indel_ref_rev'] = pyfastaq.sequences.Fasta('qry.snp_indel_ref_rev', ''.join(qry_seq))
+
+
+    name_suffixes = ['gap', 'dup', 'indel', 'snp_indel', 'snp_indel.2', 'snp_indel_qry_rev', 'snp_indel_ref_rev']
     with open(ref_fa, 'w') as f_ref, open(qry_fa, 'w') as f_qry:
         for suffix in name_suffixes:
             print(ref_seqs['ref.' + suffix], file=f_ref)
             print(qry_seqs['qry.' + suffix], file=f_qry)
 
+
+    # This is confusing with all the reverse complementing. Made perfect reads from the ref, and used them
+    # to call variants with bwa+samtools against the query. Results of that used to make the
+    # following expected records. Results were:
+    # qry.snp_indel	100	.	A	G,<*>	0	.	DP=28;I16=0,0,10,15,0,0,1000,40000,0,0,1500,90000,0,0,379,6411;QS=0,1,0;VDB=0.0364506;SGB=-0.692914;MQSB=1;MQ0F=0	PL	255,75,0,255,75,255
+    #qry.snp_indel	195	.	A	AGATTC	0	.	INDEL;IDV=13;IMF=0.65;DP=20;I16=0,0,8,6,0,0,1800,241472,0,0,786,44244,0,0,199,3323;QS=0,1;VDB=0.193256;SGB=-0.686358;MQSB=0.991701;MQ0F=0	PL	255,42,0
+    #qry.snp_indel	395	.	AACGT	A	0	.	INDEL;IDV=29;IMF=0.90625;DP=32;I16=0,0,13,16,0,0,2500,216028,0,0,1718,101804,0,0,456,7930;QS=0,1;VDB=0.0162957;SGB=-0.693079;MQSB=0.839255;MQ0F=0	PL	255,87,0
+    #qry.snp_indel.2	250	.	A	G,<*>	0	.	DP=40;I16=0,0,16,20,0,0,1388,54342,0,0,2160,129600,0,0,471,7875;QS=0,1,0;VDB=0.328997;SGB=-0.693139;MQSB=1;MQ0F=0	PL	255,108,0,255,108,255
+    #qry.snp_indel_qry_rev	100	.	GGACT	G	0	.	INDEL;IDV=17;IMF=0.772727;DP=22;I16=0,0,8,9,0,0,1547,140777,0,0,1002,59076,0,0,311,6025;QS=0,1;VDB=0.000460773;SGB=-0.690438;MQSB=0.981652;MQ0F=0	PL	255,51,0
+    #qry.snp_indel_qry_rev	304	.	G	GCTCTT	0	.	INDEL;IDV=10;IMF=0.769231;DP=13;I16=0,0,10,1,0,0,1392,185984,0,0,606,33444,0,0,161,2777;QS=0,1;VDB=0.184302;SGB=-0.676189;MQSB=1;MQ0F=0	PL	255,33,0
+    #qry.snp_indel_qry_rev	400	.	T	C,<*>	0	.	DP=33;I16=0,0,13,17,0,0,1200,48000,0,0,1800,108000,0,0,468,8084;QS=0,1,0;VDB=0.010605;SGB=-0.693097;MQSB=1;MQ0F=0PL	255,90,0,255,90,255
+    #qry.snp_indel_ref_rev	100	.	A	G,<*>	0	.	DP=29;I16=0,0,15,10,0,0,978,38554,0,0,1500,90000,0,0,313,4825;QS=0,1,0;VDB=0.540121;SGB=-0.692914;MQSB=1;MQ0F=0	PL	255,75,0,255,75,255
+    #qry.snp_indel_ref_rev	195	.	TG	TGCGTGG	0	.	INDEL;IDV=16;IMF=0.761905;DP=21;I16=0,0,9,9,0,0,2208,289344,0,0,1008,56592,0,0,253,4165;QS=0,1;VDB=0.184493;SGB=-0.691153;MQSB=0.28276;MQ0F=0	PL	255,54,0
+    #qry.snp_indel_ref_rev	395	.	TAGTC	T	0	.	INDEL;IDV=22;IMF=0.709677;DP=31;I16=0,0,16,6,0,0,1914,166518,0,0,1300,76840,0,0,395,7577;QS=0,1;VDB=0.000139106;SGB=-0.692562;MQSB=0.97584;MQ0F=0	PL	255,66,0
     expected_vcf_records = {
         'qry.snp_indel': [
             vcf_record.VcfRecord('qry.snp_indel\t100\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP\tGT\t1/1'),
@@ -80,6 +129,16 @@ def write_fasta_files(ref_fa, qry_fa):
         'qry.snp_indel.2': [
             vcf_record.VcfRecord('qry.snp_indel.2\t250\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP\tGT\t1/1'),
         ],
+        'qry.snp_indel_qry_rev' : [
+            vcf_record.VcfRecord('qry.snp_indel_qry_rev\t100\t.\tGGACT\tG\t.\t.\tSVTYPE=DNADIFF_DEL\tGT\t1/1'),
+            vcf_record.VcfRecord('qry.snp_indel_qry_rev\t304\t.\tG\tGCTCTT\t.\t.\tSVTYPE=DNADIFF_INS\tGT\t1/1'),
+            vcf_record.VcfRecord('qry.snp_indel_qry_rev\t400\t.\tT\tC\t.\t.\tSVTYPE=DNADIFF_SNP\tGT\t1/1'),
+        ],
+        'qry.snp_indel_ref_rev' : [
+            vcf_record.VcfRecord('qry.snp_indel_ref_rev\t100\t.\tA\tG\t.\t.\tSVTYPE=DNADIFF_SNP\tGT\t1/1'),
+            vcf_record.VcfRecord('qry.snp_indel_ref_rev\t196\t.\tG\tGCGTGG\t.\t.\tSVTYPE=DNADIFF_INS\tGT\t1/1'),
+            vcf_record.VcfRecord('qry.snp_indel_ref_rev\t395\t.\tTAGTC\tT\t.\t.\tSVTYPE=DNADIFF_DEL\tGT\t1/1'),
+        ]
     }
 
     expected_regions = {
@@ -232,7 +291,7 @@ class TestDnadiff(unittest.TestCase):
         outprefix = 'tmp.test_run_file.dnadiff'
         dnadiffer = dnadiff.Dnadiff(ref_fa, qry_fa, outprefix)
         dnadiffer.run()
-        self.assertEqual(expected_vcf_records, dnadiffer.variants)
+        self.assertEqual(expected_vcf_records['qry.snp_indel_ref_rev'], dnadiffer.variants['qry.snp_indel_ref_rev'])
         self.assertEqual(expected_regions, dnadiffer.big_variant_intervals)
         expected_all_variant_intervals = dnadiff.Dnadiff._make_all_variants_intervals(dnadiffer.variants, dnadiffer.big_variant_intervals)
         self.assertEqual(expected_all_variant_intervals, dnadiffer.all_variant_intervals)
