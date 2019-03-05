@@ -580,7 +580,8 @@ class MappingBasedVerifier:
                 print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_from_header, sep='\t', file=f)
                 for vcf_list in missed_vcf_records.values():
                     stats['false_negatives'] += len(vcf_list)
-                    print(*vcf_list, sep='\n', file=f)
+                    if len(vcf_list) > 0:
+                        print(*vcf_list, sep='\n', file=f)
 
         # write stats file
         with open(self.stats_out, 'w') as f:
