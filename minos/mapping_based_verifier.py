@@ -497,9 +497,8 @@ class MappingBasedVerifier:
                 if i == len(called_vcf_list):
                     missing_records[ref_seq].append(expected_record)
                 else:
-                    expected_alts = expected_record.called_alts_from_genotype()
-                    called_alts = called_vcf_list[i].called_alts_from_genotype()
-                    if expected_record.POS != called_vcf_list[i].POS or None in [expected_alts, called_alts] or expected_alts != called_alts:
+                    expected_ref_interval = pyfastaq.intervals.Interval(expected_record.POS, expected_record.ref_end_pos())
+                    if called_vcf_list[i].POS > expected_record.POS or expected_record.ref_end_pos() > called_vcf_list[i].ref_end_pos():
                         missing_records[ref_seq].append(expected_record)
 
         return missing_records
