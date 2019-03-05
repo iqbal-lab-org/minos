@@ -55,7 +55,7 @@ subparser_check_with_ref.add_argument('--expected_variants_vcf', help='File of a
 subparser_check_with_ref.add_argument('--run_dnadiff', action='store_true', help='Run dnadiff to get all expected variants we should see in vcf_file. Incompatible with --expected_variants_vcf')
 subparser_check_with_ref.add_argument('--flank_length', type=int, help='Number of nucleotides to use before and after each allele for mapping [%(default)s]', default=31, metavar='INT')
 subparser_check_with_ref.add_argument('--variant_merge_length', type=int, help='Variants up to this distance apart are merged, unless they conflict with each other [%(default)s]', default=31, metavar='INT')
-subparser_check_with_ref.add_argument('--allow_flank_mismatches', action='store_true', help='Allow mismatches in flanking regions when mapping to the truth reference. By default, only exact matches allowed')
+subparser_check_with_ref.add_argument('--no_flank_mismatches', action='store_true', help='Do not allow mismatches in flanking regions when mapping to the truth reference. By default, inexact matches are allowed')
 subparser_check_with_ref.add_argument('--no_filter_cluster', action='store_true', help='Do not filter and cluster the input VCF before checking accuracy')
 subparser_check_with_ref.add_argument('--include_ref_calls', action='store_true', help='Do not filter ref calls from input VCF before checking accuracy')
 subparser_check_with_ref.add_argument('--exclude_bed', help='BED file of regions of the truth reference to ignore (col1=seq name, col2=start, col3=end)', metavar='FILENAME')

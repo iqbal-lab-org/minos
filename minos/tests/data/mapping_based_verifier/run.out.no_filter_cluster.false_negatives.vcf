@@ -1,3 +1,2 @@
 ##fileformat=VCFv4.2
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	run.bwa.bam
-ref.1	700	.	AC	AGT	.	.	SVTYPE=MERGED	GT	1/1

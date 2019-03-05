@@ -186,8 +186,9 @@ class TestMappingBasedVerifier(unittest.TestCase):
         sam_in = os.path.join(data_dir, 'check_if_sam_match_is_good.ref.sam')
         samfile = pysam.AlignmentFile(sam_in, "r")
         for sam_record in samfile.fetch(until_eof=True):
-            expected = {'yes': True, 'no': False}[sam_record.query_name.split('.')[-1]]
-            self.assertEqual(expected, mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=True))
+            expected = {'yes': 'Good', 'no': 'Bad'}[sam_record.query_name.split('.')[-1]]
+            got = mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=True)
+            self.assertTrue(got.startswith(expected))
 
         samfile = pysam.AlignmentFile(sam_in, "r")
         first = True
@@ -196,38 +197,39 @@ class TestMappingBasedVerifier(unittest.TestCase):
                 self.assertTrue(mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=False))
                 first = False
             else:
-                self.assertFalse(mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=False))
+                got = mapping_based_verifier.MappingBasedVerifier._check_if_sam_match_is_good(sam_record, ref_seqs, 29, allow_mismatches=False)
+                self.assertTrue(got.startswith('Bad'))
 
 
     def test_check_called_genotype(self):
         '''test _check_called_genotype'''
-        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:0,0,0')
-        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:0,0,0:0')
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES\t0/0:Bad,Bad,Bad')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES:MINOS_CHECK_GENOTYPE\t0/0:Bad,Bad,Bad:0')
         mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
         self.assertEqual(expect_vcf, vcf)
 
-        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:0,0,1')
-        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:0,0,1:0')
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES\t0/0:Bad,Bad,Pass')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES:MINOS_CHECK_GENOTYPE\t0/0:Bad,Bad,Pass:0')
         mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
         self.assertEqual(expect_vcf, vcf)
 
-        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/0:1,0,0')
-        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/0:1,0,0:1')
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES\t0/0:Pass,Bad,Bad')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES:MINOS_CHECK_GENOTYPE\t0/0:Pass,Bad,Bad:1')
         mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
         self.assertEqual(expect_vcf, vcf)
 
-        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t0/1:1,0,0')
-        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0/1:1,0,0:HET')
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES\t0/1:Pass,Bad,Bad')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES:MINOS_CHECK_GENOTYPE\t0/1:Pass,Bad,Bad:HET')
         mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
         self.assertEqual(expect_vcf, vcf)
 
-        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS\t1/1:0,1,0')
-        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t1/1:0,1,0:1')
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES\t1/1:Bad,Pass,Bad')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT:MINOS_CHECK_ALLELES:MINOS_CHECK_GENOTYPE\t1/1:Bad,Pass,Bad:1')
         mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
         self.assertEqual(expect_vcf, vcf)
 
-        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tMINOS_CHECK_PASS\t0,0,0')
-        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tMINOS_CHECK_PASS:MINOS_CHECK_GENOTYPE\t0,0,0:UNKNOWN_NO_GT')
+        vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tMINOS_CHECK_ALLELES\tBad,Bad,Bad')
+        expect_vcf = vcf_record.VcfRecord('ref\t42\t.\tT\tA,G\t42.0\t.\tDP4=42\tMINOS_CHECK_ALLELES:MINOS_CHECK_GENOTYPE\tBad,Bad,Bad:UNKNOWN_NO_GT')
         mapping_based_verifier.MappingBasedVerifier._check_called_genotype(vcf)
         self.assertEqual(expect_vcf, vcf)
 
@@ -259,7 +261,6 @@ class TestMappingBasedVerifier(unittest.TestCase):
         expected = {
             'ref.1': [
                 vcf_record.VcfRecord('ref.1\t100\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
-                vcf_record.VcfRecord('ref.1\t200\t.\tC\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
             ],
             'ref.2': [
                 vcf_record.VcfRecord('ref.2\t50\t.\tT\tA\t42.0\t.\tDP4=42\tGT\t1/1'),

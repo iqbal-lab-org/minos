@@ -270,16 +270,24 @@ class MappingBasedVerifier:
                 vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE', 'HET')
             else:
                 called_alt = int(called_alts[0])
-                pass_per_alt = vcf_record.FORMAT['MINOS_CHECK_PASS'].split(',')
-                vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE',pass_per_alt[called_alt])
+                pass_per_alt = vcf_record.FORMAT['MINOS_CHECK_ALLELES'].split(',')
+                if pass_per_alt[called_alt] == 'Pass':
+                    check_geno = '1'
+                elif pass_per_alt[called_alt] == 'Exclude':
+                    check_geno = 'Exclude'
+                else:
+                    check_geno = '0'
+                vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE', check_geno)
         else:
             vcf_record.set_format_key_value('MINOS_CHECK_GENOTYPE', 'UNKNOWN_NO_GT')
 
 
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=3):
+        logging.debug(f'Checking SAM: {sam_record}')
+
         if sam_record.is_unmapped:
-            return False
+            return 'Unmapped'
 
         if not allow_mismatches:
             try:
@@ -288,12 +296,18 @@ class MappingBasedVerifier:
                 raise Error('No NM tag found in sam record:' + str(sam_record))
 
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
-            return all_mapped and nm == 0
+            if all_mapped and nm == 0:
+                logging.debug('SAM record passed no mismatches allowed check')
+                return 'Good'
+            else:
+                logging.debug('SAM record failed no mismatches allowed check')
+                return 'Bad_mismatches'
 
         # don't allow too many soft clipped bases
         if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) \
                 or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
-            return False
+            logging.debug('SAM record failed soft clipping check')
+            return 'Bad_soft_clipped'
 
         if query_sequence is None:
             query_sequence = sam_record.query_sequence
@@ -319,6 +333,7 @@ class MappingBasedVerifier:
             alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
+        logging.debug(f'aligned_pairs: {aligned_pairs}')
         wanted_aligned_pairs = []
         current_pos = 0
 
@@ -336,13 +351,16 @@ class MappingBasedVerifier:
 
             i += 1
 
+        logging.debug(f'wanted_aligned_pairs: {wanted_aligned_pairs}')
         assert len(wanted_aligned_pairs) > 0
 
         for pair in wanted_aligned_pairs:
             if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
-                return False
+                logging.debug('SAM record failed because mismatch in allele sequence plus 1bp either side')
+                return 'Bad_allele_mismatch'
 
-        return True
+        logging.debug('SAM record passed all checks')
+        return 'Good'
 
 
     @classmethod
@@ -359,7 +377,7 @@ class MappingBasedVerifier:
         if  exclude_regions is None:
             exclude_regions = {}
 
-        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT', 'E', 'tp_edit_dist', 'fp_edit_dist']}
+        stats = {x: 0 for x in ['total', '0', '1', 'HET', 'UNKNOWN_NO_GT', 'Exclude', 'tp_edit_dist', 'fp_edit_dist']}
         gt_conf_hists = {'TP': {}, 'FP': {}}
         sreader = sam_reader(infile)
 
@@ -384,7 +402,7 @@ class MappingBasedVerifier:
             vcfref_name, expected_start, vcf_record_index = vcf_probe_info_tuples.pop()
             expected_start = int(expected_start) - 1
             vcf_record_index = int(vcf_record_index)
-            results = {x: [] for x in ['MINOS_CHECK_PASS']}
+            results = {x: [] for x in ['MINOS_CHECK_ALLELES']}
 
             for allele_sam_list in sam_records_by_allele:
                 # Important! only the first hit actually has the sequence!
@@ -392,7 +410,7 @@ class MappingBasedVerifier:
                 match_result_types = set()
                 for i in range(len(allele_sam_list)):
                     if allele_sam_list[i].is_unmapped:
-                        match_result_types.add('0')
+                        match_result_types.add('Unmapped')
                     else:
                         exclude = False
                         truth_name = allele_sam_list[i].reference_name
@@ -403,28 +421,30 @@ class MappingBasedVerifier:
                             exclude = MappingBasedVerifier._interval_intersects_an_interval_in_list(interval, exclude_regions[truth_name])
 
                         if exclude:
-                            match_result_types.add('E')
+                            match_result_types.add('Exclude')
                         else:
-                            good_match = MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches, max_soft_clipped=max_soft_clipped)
-                            if good_match:
-                                match_result_types.add('1')
-                            else:
-                                match_result_types.add('0')
+                            match_type = MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches, max_soft_clipped=max_soft_clipped)
+                            match_result_types.add(match_type)
+                            #if good_match:
+                            #    match_result_types.add('1')
+                            #else:
+                            #    match_result_types.add('0')
 
 
                 #indexes_of_good_matches = [i for i in range(len(allele_sam_list)) if MappingBasedVerifier._check_if_sam_match_is_good(allele_sam_list[i], ref_seqs, flank_length, query_sequence=allele_sam_list[0].query_sequence, allow_mismatches=allow_mismatches)]
 
                 #if len(indexes_of_good_matches) > 0:
-                #    results['MINOS_CHECK_PASS'].append('1')
+                #    results['MINOS_CHECK_ALLELES'].append('1')
                 #else:
-                #    results['MINOS_CHECK_PASS'].append('0')
+                #    results['MINOS_CHECK_ALLELES'].append('0')
 
-                if '1' in match_result_types:
-                    results['MINOS_CHECK_PASS'].append('1')
-                elif 'E' in match_result_types:
-                    results['MINOS_CHECK_PASS'].append('E')
+                logging.debug(f'match_result_types: {match_result_types}')
+                if 'Good' in match_result_types:
+                    results['MINOS_CHECK_ALLELES'].append('Pass')
+                elif 'Exclude' in match_result_types:
+                    results['MINOS_CHECK_ALLELES'].append('Exclude')
                 else:
-                    results['MINOS_CHECK_PASS'].append('0')
+                    results['MINOS_CHECK_ALLELES'].append('Fail-' + '-'.join(sorted(list(match_result_types))))
 
             vcf_record = vcf_records[vcfref_name][vcf_record_index]
 
@@ -452,8 +472,8 @@ class MappingBasedVerifier:
         del stats['0']
         stats['gt_correct'] = stats['1']
         del stats['1']
-        stats['gt_excluded'] = stats['E']
-        del stats['E']
+        stats['gt_excluded'] = stats['Exclude']
+        del stats['Exclude']
         return stats, gt_conf_hists
 
 
@@ -477,9 +497,8 @@ class MappingBasedVerifier:
                 if i == len(called_vcf_list):
                     missing_records[ref_seq].append(expected_record)
                 else:
-                    expected_alts = expected_record.called_alts_from_genotype()
-                    called_alts = called_vcf_list[i].called_alts_from_genotype()
-                    if expected_record.POS != called_vcf_list[i].POS or None in [expected_alts, called_alts] or expected_alts != called_alts:
+                    expected_ref_interval = pyfastaq.intervals.Interval(expected_record.POS, expected_record.ref_end_pos())
+                    if called_vcf_list[i].POS > expected_record.POS or expected_record.ref_end_pos() > called_vcf_list[i].ref_end_pos():
                         missing_records[ref_seq].append(expected_record)
 
         return missing_records
@@ -561,7 +580,8 @@ class MappingBasedVerifier:
                 print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_from_header, sep='\t', file=f)
                 for vcf_list in missed_vcf_records.values():
                     stats['false_negatives'] += len(vcf_list)
-                    print(*vcf_list, sep='\n', file=f)
+                    if len(vcf_list) > 0:
+                        print(*vcf_list, sep='\n', file=f)
 
         # write stats file
         with open(self.stats_out, 'w') as f:
