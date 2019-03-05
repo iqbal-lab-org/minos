@@ -261,7 +261,6 @@ class TestMappingBasedVerifier(unittest.TestCase):
         expected = {
             'ref.1': [
                 vcf_record.VcfRecord('ref.1\t100\t.\tT\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
-                vcf_record.VcfRecord('ref.1\t200\t.\tC\tA,G\t42.0\t.\tDP4=42\tGT\t2/2'),
             ],
             'ref.2': [
                 vcf_record.VcfRecord('ref.2\t50\t.\tT\tA\t42.0\t.\tDP4=42\tGT\t1/1'),
