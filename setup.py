@@ -20,7 +20,7 @@ setup(
         'matplotlib',
         'pandas',
         'pyfastaq >= 3.14.0',
-        'pymummer >= 0.10.3',
+        'pymummer >= 0.11.0',
         'pysam >= 0.12',
         'scipy >= 1.0.0',
         'seaborn',
