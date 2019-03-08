@@ -1,7 +1,6 @@
 import logging
 import numpy as np
 from scipy import stats
-import random
 
 from minos import genotyper
 
