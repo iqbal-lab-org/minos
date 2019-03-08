@@ -74,7 +74,7 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
     logging.info('Build report file looks good from gramtools build: ' + build_report)
 
 
-def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_length, kmer_size=10):
+def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_length, kmer_size=10, seed=42):
     '''If build_dir does not exist, runs runs gramtools build and quasimap.
     Otherwise, just runs quasimap. quasimap output is in new
     directory called quasimap_dir.
@@ -92,6 +92,7 @@ def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_l
     quasimap_command = ' '.join([
         gramtools_exe,
         'quasimap',
+        f'--seed {seed}',
         '--gram-directory', build_dir,
         '--output-directory', quasimap_dir,
         ' '.join(['--reads ' + x for x in reads]),
