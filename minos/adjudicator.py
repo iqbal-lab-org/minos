@@ -178,7 +178,6 @@ class Adjudicator:
                 if 'GT_CONF' in vcf_record.FORMAT:
                     conf = int(round(float(vcf_record.FORMAT['GT_CONF'])))
                     if 'GT' in vcf_record.FORMAT and '.' not in vcf_record.FORMAT['GT']:
-                        allele_length = int(statistics.mean([len(x) for x in vcf_record.called_alts_from_genotype()]))
                         vcf_record.set_format_key_value('GT_CONF_PERCENTILE', str(simulations.get_percentile(conf)))
 
                 print(vcf_record, file=f)

@@ -496,10 +496,8 @@ class MappingBasedVerifier:
 
                 if i == len(called_vcf_list):
                     missing_records[ref_seq].append(expected_record)
-                else:
-                    expected_ref_interval = pyfastaq.intervals.Interval(expected_record.POS, expected_record.ref_end_pos())
-                    if called_vcf_list[i].POS > expected_record.POS or expected_record.ref_end_pos() > called_vcf_list[i].ref_end_pos():
-                        missing_records[ref_seq].append(expected_record)
+                elif called_vcf_list[i].POS > expected_record.POS or expected_record.ref_end_pos() > called_vcf_list[i].ref_end_pos():
+                    missing_records[ref_seq].append(expected_record)
 
         return missing_records
 

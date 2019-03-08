@@ -128,7 +128,6 @@ class Genotyper:
             )
             self.likelihoods.append(({allele_number, allele_number}, log_likelihood))
 
-        total_cov = Genotyper._total_coverage(self.allele_combination_cov)
         self.singleton_alleles_cov = Genotyper._singleton_alleles_and_coverage(self.allele_combination_cov, self.allele_groups_dict)
 
 
