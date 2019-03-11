@@ -23,6 +23,11 @@ class GenotypeConfidenceSimulator:
         allele_groups_dict = {'1': {0}, '2': {1}}
         i = 0
         confidences = []
+        # We can't use the negative binomial unless depth_variance > mean_depth.
+        # So force it to be so.
+        if depth_variance < mean_depth:
+            depth_variance = 2 * mean_depth
+            logging.warn('Variance in read depth is smaller than mean read depth. Setting variance = 2 * mean, so that variant simulations can run. GT_CONF_PERCENTILE in the output VCF file may not be very useful as a result of this.')
         no_of_successes = (mean_depth ** 2) / (depth_variance - mean_depth)
         prob_of_success = 1 - (depth_variance - mean_depth) / depth_variance
 
