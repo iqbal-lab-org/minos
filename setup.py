@@ -25,12 +25,12 @@ setup(
         'scipy >= 1.0.0',
         'seaborn',
     ],
-    license='GPLv3',
+    license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Programming Language :: Python :: 3 :: Only',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'License :: OSI Approved :: MIT License',
     ],
 )
 
