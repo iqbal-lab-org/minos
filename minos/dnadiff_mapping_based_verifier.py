@@ -92,7 +92,7 @@ class DnadiffMappingBasedVerifier:
         out_handle1 = open(ref_outfile, "w")
         out_handle2 = open(query_outfile, "w")
 
-        snps = pd.read_table(dnadiff_file, header=None)
+        snps = pd.read_table(dnadiff_file, header=0)
 
         for line in snps.itertuples():
             assert(len(line) > 4)
@@ -454,12 +454,12 @@ class DnadiffMappingBasedVerifier:
                                'ref_conf' : ref_conf,
                                'ref_allele': ref_allele,
                                'ref_match_flag': ref_match_flag,
-                               'ref_allele_flag': ref_allele_flag,
+                               'ref_allele_correct': ref_allele_flag,
                                'query_found': query_found,
                                'query_conf': query_conf,
                                'query_allele': query_allele,
                                'query_match_flag': query_match_flag,
-                               'query_allele_flag': query_allele_flag
+                               'query_allele_correct': query_allele_flag
                                })
         out_df.to_csv(outfile, sep='\t')
 
