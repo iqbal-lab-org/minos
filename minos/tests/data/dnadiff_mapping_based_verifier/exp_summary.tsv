@@ -1,5 +1,4 @@
-	id	ref	alt	ref_found	ref_conf	ref_allele	ref_match_flag	ref_allele_correct	query_found	query_conf	query_allele	query_match_correct
-	query_allele_flag
+	id	ref	alt	ref_found	ref_conf	ref_allele	ref_match_flag	ref_allele_correct	query_found	query_conf	query_allele	query_match_flag	query_allele_correct
 0	12	G	C	1	42	0	Good	1	1	42	1	Good	1
 1	72	C	T	0	0	0	Unmapped	0	0	0	0	Unmapped	0
 2	74	G	T	0	0	0	Unmapped	0	1	52	1	Good	1
