@@ -263,30 +263,29 @@ class DnadiffMappingBasedVerifier:
 
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, ref_seqs, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=3):
+        logging.debug(f'Checking SAM: {sam_record}')
         if sam_record.is_unmapped:
-            try:
-                #NB some mapped things at the edge of reference sequence will get unmapped flag, so check if this is one
-                nm = sam_record.get_tag('NM')
-                all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
-            except:
-                #real unmapped, no cigar or tag
-                return False
-
-        try:
-            nm = sam_record.get_tag('NM')
-        except:
-            raise Error('No NM tag found in sam record:' + str(sam_record))
+            return 'Unmapped'
 
         if not allow_mismatches:
+            try:
+                nm = sam_record.get_tag('NM')
+            except:
+                raise Error('No NM tag found in sam record:' + str(sam_record))
+
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
-            return all_mapped and nm == 0
+            if all_mapped and nm == 0:
+                logging.debug('SAM record passed no mismatches allowed check')
+                return 'Good'
+            else:
+                logging.debug('SAM record failed no mismatches allowed check')
+                return 'Bad_mismatches'
 
         # don't allow too many soft clipped bases
-        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
-            return False
-
-        if nm==0:
-            return True
+        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) \
+                or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
+            logging.debug('SAM record failed soft clipping check')
+            return 'Bad_soft_clipped'
 
         if query_sequence is None:
             query_sequence = sam_record.query_sequence
@@ -312,6 +311,7 @@ class DnadiffMappingBasedVerifier:
             alt_seq_end = len(query_sequence) - flank_length - 1
 
         aligned_pairs = sam_record.get_aligned_pairs()
+        logging.debug(f'aligned_pairs: {aligned_pairs}')
         wanted_aligned_pairs = []
         current_pos = 0
 
@@ -329,14 +329,16 @@ class DnadiffMappingBasedVerifier:
 
             i += 1
 
+        logging.debug(f'wanted_aligned_pairs: {wanted_aligned_pairs}')
         assert len(wanted_aligned_pairs) > 0
 
-        #for pair in wanted_aligned_pairs:
-        #    if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
-        #        return False
+        for pair in wanted_aligned_pairs:
+            if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
+                logging.debug('SAM record failed because mismatch in allele sequence plus 1bp either side')
+                return 'Bad_allele_mismatch'
 
-        return True
-
+        logging.debug('SAM record passed all checks')
+        return 'Good'
 
     @classmethod
     def _index_vcf(cls, vcffile):
@@ -457,7 +459,7 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(tsv_file, index_col=0)
         for line in snps.itertuples():
             stats['total'] += 1
-            if (line[4] == 'E' or line[7] == 'E'):
+            if (line[4] == 'Exclude' or line[7] == 'Exclude'):
                 stats['excluded_vars'] += 1
             elif (line[4] == 1 or line[7] == 1 or line[4] == '1' or line[7] == '1'):
                 stats['found_vars'] += 1
