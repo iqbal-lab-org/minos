@@ -193,36 +193,33 @@ class EvaluateRecall:
 
     @classmethod
     def _check_if_sam_match_is_good(cls, sam_record, flank_length, query_sequence=None, allow_mismatches=True, max_soft_clipped=3):
+        logging.debug(f'Checking SAM: {sam_record}')
         if sam_record.is_unmapped:
-            try:
-                #NB some mapped things at the edge of reference sequence will get unmapped flag, so check if this is one
-                nm = sam_record.get_tag('NM')
-                all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
-            except:
-                #real unmapped, no cigar or tag
-                return False
-
-        try:
-            nm = sam_record.get_tag('NM')
-        except:
-            raise Error('No NM tag found in sam record:' + str(sam_record))
+            return 'Unmapped'
 
         if not allow_mismatches:
+            try:
+                nm = sam_record.get_tag('NM')
+            except:
+                raise Error('No NM tag found in sam record:' + str(sam_record))
+
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
-            return all_mapped and nm == 0
+            if all_mapped and nm == 0:
+                logging.debug('SAM record passed no mismatches allowed check')
+                return 'Good'
+            else:
+                logging.debug('SAM record failed no mismatches allowed check')
+                return 'Bad_mismatches'
 
         # don't allow too many soft clipped bases
-        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
-            return False
-
-        if nm==0:
-            return True
+        if (sam_record.cigartuples[0][0] == 4 and sam_record.cigartuples[0][1] > max_soft_clipped) \
+                or (sam_record.cigartuples[-1][0] == 4 and sam_record.cigartuples[-1][1] > max_soft_clipped):
+            logging.debug('SAM record failed soft clipping check')
+            return 'Bad_soft_clipped'
 
         if query_sequence is None:
             query_sequence = sam_record.query_sequence
         assert query_sequence is not None
-
-        #assert sam_record.reference_name in ref_seqs
 
         # if the query is short, which happens when the variant we
         # are checking is too near the start or end of the ref sequence
@@ -241,7 +238,8 @@ class EvaluateRecall:
             alt_seq_start = flank_length
             alt_seq_end = len(query_sequence) - flank_length - 1
 
-        aligned_pairs = sam_record.get_aligned_pairs()
+        aligned_pairs = sam_record.get_aligned_pairs(with_seq=True)
+        logging.debug(f'aligned_pairs: {aligned_pairs}')
         wanted_aligned_pairs = []
         current_pos = 0
 
@@ -259,13 +257,16 @@ class EvaluateRecall:
 
             i += 1
 
-        #assert len(wanted_aligned_pairs) > 0
+        logging.debug(f'wanted_aligned_pairs: {wanted_aligned_pairs}')
+        assert len(wanted_aligned_pairs) > 0
 
-        #for pair in wanted_aligned_pairs:
-        #    if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
-        #        return False
+        for pair in wanted_aligned_pairs:
+            if None in pair or query_sequence[pair[0]].upper() != pair[2].upper():
+                logging.debug('SAM record failed because mismatch in allele sequence plus 1bp either side')
+                return 'Bad_allele_mismatch'
 
-        return True
+        logging.debug('SAM record passed all checks')
+        return 'Good'
 
 
     @classmethod
@@ -292,65 +293,83 @@ class EvaluateRecall:
 
     @classmethod
     def _parse_sam_file_and_vcf(cls, samfile, query_vcf_file, flank_length, allow_mismatches, exclude_regions=None, max_soft_clipped=3):
-        if  exclude_regions is None:
-            exclude_regions = {}
+        def _parse_sam_file_and_vcf(cls, samfile, vcffile, dnadiff_plus_flanks_file, flank_length, allow_mismatches,
+                                    exclude_regions=None, max_soft_clipped=3):
+            if exclude_regions is None:
+                exclude_regions = {}
 
-        found = []
-        gt_conf = []
-        allele = []
-        samfile_handle = pysam.AlignmentFile(samfile, "r")
-        sam_previous_record_name = None
-        for sam_record in samfile_handle.fetch(until_eof=True):
-            if sam_record.query_name == sam_previous_record_name:
-                continue
-            sam_previous_record_name = sam_record.query_name
-            found_conf = False
-            found_allele = False
+            found = []
+            match_flag = []
+            correct_allele = []
+            gt_conf = []
+            allele = []
+            dnadiff_file_seqs = {}
+            pyfastaq.tasks.file_to_dict(dnadiff_plus_flanks_file, dnadiff_file_seqs)
+            samfile_handle = pysam.AlignmentFile(samfile, "r")
+            sam_previous_record_name = None
+            for sam_record in samfile_handle.fetch(until_eof=True):
+                if sam_record.query_name == sam_previous_record_name:
+                    continue
+                sam_previous_record_name = sam_record.query_name
+                found_conf = False
+                found_allele = False
 
-            # see if excluded region in bed file
-            ref, start, ref_num, var_num, allele_num = sam_record.query_name.rsplit('.', maxsplit=5)
-            start = int(start) + flank_length
-            exclude = False
-            for ref_name in exclude_regions.keys():
-                end = int(start) + 1
-                interval = pyfastaq.intervals.Interval(start, end)
-                exclude = EvaluateRecall._interval_intersects_an_interval_in_list(interval,
-                                                                                  exclude_regions[ref_name])
-            if exclude:
-                found.append('E')
-                gt_conf.append(0)
-                allele.append('0')
-                continue
+                # see if excluded region in bed file
+                var_num, start = sam_record.query_name.rsplit('.', maxsplit=2)
+                exclude = False
+                for ref_name in exclude_regions.keys():
+                    end = int(start) + 1
+                    interval = pyfastaq.intervals.Interval(start, end)
+                    exclude = DnadiffMappingBasedVerifier._interval_intersects_an_interval_in_list(interval,
+                                                                                                   exclude_regions[
+                                                                                                       ref_name])
+                if exclude:
+                    found.append('Exclude')
+                    gt_conf.append(0)
+                    allele.append('0')
+                    continue
 
-            good_match = EvaluateRecall._check_if_sam_match_is_good(sam_record,
-                                                                    flank_length,
-                                                                    query_sequence=sam_record.query_sequence,
-                                                                    allow_mismatches=allow_mismatches,
-                                                                    max_soft_clipped=max_soft_clipped)
-            alignment_start = str(sam_record).split("\t")[3]
-            if good_match:
-                ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
+                match = DnadiffMappingBasedVerifier._check_if_sam_match_is_good(sam_record,
+                                                                                dnadiff_file_seqs,
+                                                                                flank_length,
+                                                                                query_sequence=sam_record.query_sequence,
+                                                                                allow_mismatches=allow_mismatches,
+                                                                                max_soft_clipped=max_soft_clipped)
+                alignment_start = str(sam_record).split("\t")[3]
+                match_flag.append(match)
+                if match == 'Good':
+                    logging.debug('SAM record is a good match')
+                    logging.debug('SAM record reference is %s' % sam_record.reference_name)
+                    ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit(
+                        '.', maxsplit=4)
 
-                vcf_reader = pysam.VariantFile(query_vcf_file)
-                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + int(alignment_start) + flank_length - 2, int(expected_start) + int(alignment_start) + flank_length)):
-                    if i == int(vcf_pos_index):
-                        sample_name = vcf_record.samples.keys()[0]
-                        if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
-                            if int(allele_index) == vcf_record.samples[sample_name]['GT'][0]:
-                                found.append('1')
-                                allele.append(str(allele_index))
-                                found_allele = True
-                                if 'GT_CONF' in vcf_record.format.keys():
-                                    gt_conf.append(int(float(vcf_record.samples[sample_name]['GT_CONF'])))
-                                    found_conf = True
-            if not found_allele:
-                found.append('0')
-                allele.append('0')
-            if not found_conf:
-                gt_conf.append(0)
-        assert len(found) == len(gt_conf)
-        assert len(found) == len(allele)
-        return found, gt_conf, allele
+                    vcf_reader = pysam.VariantFile(vcffile)
+                    for i, vcf_record in enumerate(
+                            vcf_reader.fetch(ref_name, int(expected_start) + int(alignment_start) + flank_length - 2,
+                                             int(expected_start) + int(alignment_start) + flank_length)):
+                        if i == int(vcf_pos_index):
+                            sample_name = vcf_record.samples.keys()[0]
+                            if 'GT' in vcf_record.format.keys() and len(
+                                    set(vcf_record.samples[sample_name]['GT'])) == 1:
+                                if int(allele_index) == vcf_record.samples[sample_name]['GT'][0]:
+                                    correct_allele.append('1')
+                                    found.append('1')
+                                    allele.append(str(allele_index))
+                                    found_allele = True
+                                    if 'GT_CONF' in vcf_record.format.keys():
+                                        gt_conf.append(int(float(vcf_record.samples[sample_name]['GT_CONF'])))
+                                        found_conf = True
+                if not found_allele:
+                    found.append('0')
+                    allele.append('0')
+                    correct_allele.append('0')
+                if not found_conf:
+                    gt_conf.append(0)
+            assert len(found) == len(gt_conf)
+            assert len(found) == len(allele)
+            assert len(found) == len(match_flag)
+            assert len(found) == len(correct_allele)
+            return found, gt_conf, allele, match_flag, correct_allele
 
     @classmethod
     def _parse_sam_files(cls, truth_vcf_file, samfile, query_vcf_file, outfile, flank_length, allow_mismatches=True, exclude_regions=None, max_soft_clipped=3):
@@ -373,7 +392,7 @@ class EvaluateRecall:
                 id.append(record.POS)
                 ref.append(record.REF)
                 alt.append(record.ALT[0])
-        query_found, query_conf, query_allele = EvaluateRecall._parse_sam_file_and_vcf(samfile, query_vcf_file,
+        query_found, query_conf, query_allele, query_match_flag, query_allele_flag = EvaluateRecall._parse_sam_file_and_vcf(samfile, query_vcf_file,
                                                                                        flank_length, allow_mismatches,
                                                                                        exclude_regions, max_soft_clipped)
         assert len(id) == len(query_found)
@@ -382,7 +401,9 @@ class EvaluateRecall:
                                'alt': alt,
                                'query_found': query_found,
                                'query_conf': query_conf,
-                               'query_allele': query_allele})
+                               'query_allele': query_allele,
+                               'query_match_flag': query_match_flag,
+                               'query_allele_correct': query_allele_flag})
         out_df.to_csv(outfile, sep='\t')
 
     @classmethod
@@ -390,12 +411,12 @@ class EvaluateRecall:
         stats = {x: 0 for x in ['total', 'found_vars', 'missed_vars', 'excluded_vars']}
         gt_conf_hist = {}
 
-        snps = pd.read_table(tsv_file, index_col=0)
+        snps = pd.read_csv(tsv_file, sep='\t', header=None)
         for line in snps.itertuples():
             stats['total'] += 1
-            if (line[4] == 'E'):
+            if (line['query_found'] == 'Exclude'):
                 stats['excluded_vars'] += 1
-            elif (line[4] == 1 or line[4] == '1'):
+            elif (line['query_found'] == 1 or line['query_found'] == '1'):
                 stats['found_vars'] += 1
                 gt_confs = [i for i in {line[5]} if not math.isnan(i)]
                 gt_conf = None

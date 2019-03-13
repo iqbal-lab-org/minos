@@ -472,7 +472,7 @@ class DnadiffMappingBasedVerifier:
         stats = {x: 0 for x in ['total', 'found_vars', 'missed_vars', 'excluded_vars']}
         gt_conf_hist = {}
 
-        snps = pd.read_csv(tsv_file, sep='\t', index_col=0, header=True)
+        snps = pd.read_csv(tsv_file, sep='\t', index_col=0, header=None)
         for line in snps.itertuples():
             stats['total'] += 1
             if (line['ref_found'] == 'Exclude' or line['query_found'] == 'Exclude'):
