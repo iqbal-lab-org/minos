@@ -393,14 +393,14 @@ class DnadiffMappingBasedVerifier:
                 allele.append('0')
                 continue
 
-            good_match = DnadiffMappingBasedVerifier._check_if_sam_match_is_good(sam_record,
+            match = DnadiffMappingBasedVerifier._check_if_sam_match_is_good(sam_record,
                                                                                  dnadiff_file_seqs,
                                                                                  flank_length,
                                                                                  query_sequence=sam_record.query_sequence,
                                                                                  allow_mismatches=allow_mismatches,
                                                                                  max_soft_clipped=max_soft_clipped)
             alignment_start = str(sam_record).split("\t")[3]
-            if good_match:
+            if match == 'Good':
                 logging.debug('SAM record is a good match')
                 logging.debug('SAM record reference is %s' %sam_record.reference_name)
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
