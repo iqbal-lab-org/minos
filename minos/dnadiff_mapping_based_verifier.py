@@ -291,8 +291,6 @@ class DnadiffMappingBasedVerifier:
             query_sequence = sam_record.query_sequence
         assert query_sequence is not None
 
-        #assert sam_record.reference_name in ref_seqs
-
         # if the query is short, which happens when the variant we
         # are checking is too near the start or end of the ref sequence
         if len(query_sequence) < 2 * flank_length + 1:
@@ -310,7 +308,7 @@ class DnadiffMappingBasedVerifier:
             alt_seq_start = flank_length
             alt_seq_end = len(query_sequence) - flank_length - 1
 
-        aligned_pairs = sam_record.get_aligned_pairs()
+        aligned_pairs = sam_record.get_aligned_pairs(with_seq=True)
         logging.debug(f'aligned_pairs: {aligned_pairs}')
         wanted_aligned_pairs = []
         current_pos = 0
@@ -333,7 +331,7 @@ class DnadiffMappingBasedVerifier:
         assert len(wanted_aligned_pairs) > 0
 
         for pair in wanted_aligned_pairs:
-            if None in pair or query_sequence[pair[0]] != ref_seqs[sam_record.reference_name][pair[1]]:
+            if None in pair or query_sequence[pair[0]].upper() != pair[2].upper():
                 logging.debug('SAM record failed because mismatch in allele sequence plus 1bp either side')
                 return 'Bad_allele_mismatch'
 
@@ -403,6 +401,8 @@ class DnadiffMappingBasedVerifier:
                                                                                  max_soft_clipped=max_soft_clipped)
             alignment_start = str(sam_record).split("\t")[3]
             if good_match:
+                logging.debug('SAM record is a good match')
+                logging.debug('SAM record reference is %s' %sam_record.reference_name)
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
 
                 vcf_reader = pysam.VariantFile(vcffile)
