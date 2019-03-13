@@ -404,7 +404,7 @@ class EvaluateRecall:
         stats = {x: 0 for x in ['total', 'found_vars', 'missed_vars', 'excluded_vars']}
         gt_conf_hist = {}
 
-        snps = pd.read_csv(tsv_file, sep='\t', header=None)
+        snps = pd.read_csv(tsv_file, sep='\t')
         for index, line in snps.iterrows():
             stats['total'] += 1
             if (line['query_found'] == 'Exclude'):
