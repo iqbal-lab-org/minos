@@ -92,7 +92,7 @@ class DnadiffMappingBasedVerifier:
         out_handle1 = open(ref_outfile, "w")
         out_handle2 = open(query_outfile, "w")
 
-        snps = pd.read_table(dnadiff_file, header=0)
+        snps = pd.read_csv(dnadiff_file, sep='\t', header=None)
 
         for line in snps.itertuples():
             assert(len(line) > 4)
@@ -446,7 +446,11 @@ class DnadiffMappingBasedVerifier:
         snps = pd.read_table(dnadiff_file, header=None)
         ref_found, ref_conf, ref_allele, ref_match_flag, ref_allele_flag = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches, exclude_regions1, max_soft_clipped)
         query_found, query_conf, query_allele, query_match_flag, query_allele_flag = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches, exclude_regions2, max_soft_clipped)
-        assert len(snps[0]) == len(ref_found) and len(snps[0]) == len(query_found)
+        logging.debug(f'Length of SNPs to verify: {len(snps[0])}')
+        logging.debug(f'Length of ref info found: {len(ref_found)}')
+        logging.debug(f'Length of query info found: {len(query_found)}')
+        assert len(snps[0]) == len(ref_found)
+        assert len(snps[0]) == len(query_found)
         out_df = pd.DataFrame({'id': snps[0],
                                'ref': snps[1],
                                'alt': snps[2],
