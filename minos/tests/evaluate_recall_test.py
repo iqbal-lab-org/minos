@@ -36,7 +36,7 @@ class TestEvaluateRecall(unittest.TestCase):
         flank = 5
         allow_mismatches = False
         evaluate_recall.EvaluateRecall._index_vcf(vcffile)
-        found, gt_conf, allele = evaluate_recall.EvaluateRecall._parse_sam_file_and_vcf(samfile, vcffile + ".gz",
+        found, gt_conf, allele, match_flag, correct_allele = evaluate_recall.EvaluateRecall._parse_sam_file_and_vcf(samfile, vcffile + ".gz",
                                                                                         flank,
                                                                                         allow_mismatches)
 
