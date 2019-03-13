@@ -443,7 +443,7 @@ class DnadiffMappingBasedVerifier:
         GT_CONF threshold.
         '''
 
-        snps = pd.read_table(dnadiff_file, header=None)
+        snps = pd.read_csv(dnadiff_file, sep='\t', header=None)
         ref_found, ref_conf, ref_allele, ref_match_flag, ref_allele_flag = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile1, vcffile1, reffasta1, flank_length, allow_mismatches, exclude_regions1, max_soft_clipped)
         query_found, query_conf, query_allele, query_match_flag, query_allele_flag = DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile2, vcffile2, reffasta2, flank_length, allow_mismatches, exclude_regions2, max_soft_clipped)
         logging.debug(f'Length of SNPs to verify: {len(snps[0])}')
