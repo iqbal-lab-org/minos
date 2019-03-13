@@ -414,9 +414,9 @@ class DnadiffMappingBasedVerifier:
                         sample_name = vcf_record.samples.keys()[0]
                         if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
                             if int(allele_index) == vcf_record.samples[sample_name]['GT'][0]:
-                                correct_allele.append('1')
                                 found.append('1')
                                 allele.append(str(allele_index))
+                                correct_allele.append('1')
                                 found_allele = True
                                 if 'GT_CONF' in vcf_record.format.keys():
                                     gt_conf.append(int(float(vcf_record.samples[sample_name]['GT_CONF'])))
@@ -473,7 +473,7 @@ class DnadiffMappingBasedVerifier:
         gt_conf_hist = {}
 
         snps = pd.read_csv(tsv_file, sep='\t', index_col=0, header=None)
-        for line in snps.itertuples():
+        for index,line in snps.iterrows():
             stats['total'] += 1
             if (line['ref_found'] == 'Exclude' or line['query_found'] == 'Exclude'):
                 stats['excluded_vars'] += 1
