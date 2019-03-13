@@ -69,7 +69,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         flank = 5
         allow_mismatches = False
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
-        found, gt_conf, allele = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", reffile, flank, allow_mismatches)
+        found, gt_conf, allele, match_flag, allele_flag = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", reffile, flank, allow_mismatches)
 
         exp_found = ['1','1','0','0','1','0','1'] #nb doesn't currently handle '.' alleles
         exp_gt_conf = [42, 42, 0, 0, 42, 0, 0]
@@ -88,7 +88,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         flank = 5
         allow_mismatches = False
         dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._index_vcf(vcffile)
-        found, gt_conf, allele = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", reffile, flank, allow_mismatches)
+        found, gt_conf, allele, match_flag, allele_flag = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._parse_sam_file_and_vcf(samfile, vcffile + ".gz", reffile, flank, allow_mismatches)
 
         exp_found = ['1','1','1','0','1','0','1']
         exp_gt_conf = [42, 42, 52, 0, 42, 0, 0]
@@ -109,6 +109,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         vcf_reference_file = os.path.join(data_dir, 'vcfref.fa')
         exp_out = os.path.join(data_dir, 'exp_stats.tsv')
         exp_gt_conf = os.path.join(data_dir, 'exp_gt_conf.tsv')
+        exp_summary = os.path.join(data_dir, 'exp_summary.tsv')
 
         tmp_out = 'tmp.dnadiff_mapping_based_verifier.out'
         verifier = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier(dnadiff_file_in, sample1_file_in, sample2_file_in, vcf_file1_in, vcf_file2_in, vcf_reference_file, tmp_out, flank_length=5, discard_ref_calls=False)
@@ -116,6 +117,7 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
 
         self.assertTrue(filecmp.cmp(exp_out, tmp_out + '.stats.tsv', shallow=False))
         self.assertTrue(filecmp.cmp(exp_gt_conf, tmp_out + '.gt_conf_hist.tsv', shallow=False))
+        self.assertTrue(filecmp.cmp(exp_summary, tmp_out + '.summary.tsv', shallow=False))
         for f in glob.glob(tmp_out + '*'):
             os.unlink(f)
 
