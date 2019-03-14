@@ -48,6 +48,7 @@ class EvaluateRecall:
 
         self.exclude_regions = EvaluateRecall._load_exclude_regions_bed_file(exclude_regions_bed_file)
         self.max_soft_clipped = max_soft_clipped
+        self.number_ns = 5
 
     @classmethod
     def _load_exclude_regions_bed_file(cls, infile):
@@ -133,7 +134,7 @@ class EvaluateRecall:
 
 
     @classmethod
-    def _write_vars_plus_flanks_to_fasta(cls, outfile, vcf_records, ref_seqs, flank_length, ref_only=False):
+    def _write_vars_plus_flanks_to_fasta(cls, outfile, vcf_records, ref_seqs, flank_length, ref_only=False, number_ns=0):
         '''Given a dict of vcf records made by vcf_file_read.vcf_file_to_dict(),
         and its correcsponding file of reference sequences, writes a new fasta file
         of each ref seq and inferred variant sequence plus flank_length nucleotides added to
@@ -152,6 +153,8 @@ class EvaluateRecall:
                         if not ref_only or allele_index == 0:
                             seq_name = '.'.join([ref_name, str(start_position + 1), str(j), str(i), str(allele_index)])
                             allele_seq = allele_seq.replace('.','')
+                            for n in range(number_ns):
+                                allele_seq = "N" + allele_seq + "N"
                             print('>' + seq_name, allele_seq, sep='\n', file=f)
                     if prev_ref_name == ref_name and prev_ref_pos == start_position:
                         j += 1
@@ -292,7 +295,7 @@ class EvaluateRecall:
         utils.syscall(command)
 
     @classmethod
-    def _parse_sam_file_and_vcf(cls, samfile, query_vcf_file, flank_length, allow_mismatches, exclude_regions=None, max_soft_clipped=3):
+    def _parse_sam_file_and_vcf(cls, samfile, query_vcf_file, flank_length, allow_mismatches, exclude_regions=None, max_soft_clipped=3, number_ns=0):
         if  exclude_regions is None:
             exclude_regions = {}
 
@@ -339,11 +342,14 @@ class EvaluateRecall:
                 ref_name, expected_start, vcf_pos_index, vcf_record_index, allele_index = sam_record.reference_name.rsplit('.', maxsplit=4)
 
                 vcf_reader = pysam.VariantFile(query_vcf_file)
-                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, int(expected_start) + int(alignment_start) + flank_length - 2,int(expected_start) + int(alignment_start) + flank_length)):
+                vcf_interval_start = int(expected_start) + int(alignment_start) + flank_length - 2 - number_ns
+                vcf_interval_end = int(expected_start) + int(alignment_start) + flank_length - number_ns
+                logging.debug('Find VCF records matching ref %s in interval [%i,%i]' %(ref_name, vcf_interval_start, vcf_interval_end))
+                for i, vcf_record in enumerate(vcf_reader.fetch(ref_name, vcf_interval_start, vcf_interval_end)):
                     if i == int(vcf_pos_index):
                         sample_name = vcf_record.samples.keys()[0]
                         if 'GT' in vcf_record.format.keys() and len(set(vcf_record.samples[sample_name]['GT'])) == 1:
-                            if int(allele_index) == vcf_record.samples[sample_name]['GT'][0]:
+                            if int(allele_index) == int(vcf_record.samples[sample_name]['GT'][0]):
                                 found.append('1')
                                 allele.append(str(allele_index))
                                 correct_allele.append('1')
@@ -365,7 +371,7 @@ class EvaluateRecall:
         return found, gt_conf, allele, match_flag, correct_allele
 
     @classmethod
-    def _parse_sam_files(cls, truth_vcf_file, samfile, query_vcf_file, outfile, flank_length, allow_mismatches=True, exclude_regions=None, max_soft_clipped=3):
+    def _parse_sam_files(cls, truth_vcf_file, samfile, query_vcf_file, outfile, flank_length, allow_mismatches=True, exclude_regions=None, max_soft_clipped=3, number_ns=0):
         '''Input is the original dnadiff snps file of sites we are searching for
         and 2 SAM files made by _map_seqs_to_seqs(), which show mappings of snp sites
         from from the dnadiff snps file to the vcf (i.e. searches if VCF contains an record
@@ -387,7 +393,7 @@ class EvaluateRecall:
                 alt.append(record.ALT[0])
         query_found, query_conf, query_allele, query_match_flag, query_allele_flag = EvaluateRecall._parse_sam_file_and_vcf(samfile, query_vcf_file,
                                                                                        flank_length, allow_mismatches,
-                                                                                       exclude_regions, max_soft_clipped)
+                                                                                       exclude_regions, max_soft_clipped, number_ns)
         assert len(id) == len(query_found)
         out_df = pd.DataFrame({'id': id,
                                'ref': ref,
@@ -445,7 +451,7 @@ class EvaluateRecall:
         pyfastaq.tasks.file_to_dict(self.query_vcf_ref, query_vcf_ref_seqs)
 
         EvaluateRecall._write_vars_plus_flanks_to_fasta(self.seqs_out_truth, vcf_records_truth, truth_vcf_ref_seqs, self.flank_length, ref_only=True)
-        EvaluateRecall._write_vars_plus_flanks_to_fasta(self.seqs_out_query, vcf_records_query, query_vcf_ref_seqs, self.flank_length)
+        EvaluateRecall._write_vars_plus_flanks_to_fasta(self.seqs_out_query, vcf_records_query, query_vcf_ref_seqs, self.flank_length, number_ns=self.number_ns)
         EvaluateRecall._map_seqs_to_seqs(self.seqs_out_query, self.seqs_out_truth, self.sam_file_out)
         #for f in glob.glob(self.seqs_out_truth + '*'):
             #os.unlink(f)
@@ -458,7 +464,8 @@ class EvaluateRecall:
                                         self.sam_summary, self.flank_length,
                                         allow_mismatches=self.allow_flank_mismatches,
                                         exclude_regions=self.exclude_regions,
-                                        max_soft_clipped=self.max_soft_clipped)
+                                        max_soft_clipped=self.max_soft_clipped,
+                                        number_ns=self.number_ns)
         stats, gt_conf_hist = EvaluateRecall._gather_stats(self.sam_summary)
         #os.unlink(self.seqs_out_truth)
         #os.unlink(self.seqs_out_truth)
