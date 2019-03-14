@@ -41,7 +41,8 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         vcf_ref_seqs = {}
         pyfastaq.tasks.file_to_dict(vcfref_file_in, vcf_ref_seqs)
         flank = 5
-        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(tmp_out,vcf_records, vcf_ref_seqs, flank)
+        ns = 1
+        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(tmp_out,vcf_records, vcf_ref_seqs, flank, ns)
 
         self.assertTrue(filecmp.cmp(expected_out, tmp_out, shallow=False))
         os.unlink(tmp_out)
@@ -56,7 +57,8 @@ class TestDnadiffMappingBasedVerifier(unittest.TestCase):
         vcf_ref_seqs = {}
         pyfastaq.tasks.file_to_dict(vcfref_file_in, vcf_ref_seqs)
         flank = 5
-        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(tmp_out,vcf_records, vcf_ref_seqs, flank)
+        ns = 1
+        dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier._write_vars_plus_flanks_to_fasta(tmp_out,vcf_records, vcf_ref_seqs, flank, ns)
 
         self.assertTrue(filecmp.cmp(expected_out, tmp_out, shallow=False))
         os.unlink(tmp_out)
