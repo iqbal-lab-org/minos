@@ -217,6 +217,8 @@ class Adjudicator:
             filtered_outfile=self.final_vcf
         )
 
+        logging.info(f'Adding GT_CONF_PERCENTLE to debug VCF file {self.unfiltered_vcf_file}, using mean depth {mean_depth}, depth variance {depth_variance}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
+        Adjudicator._add_gt_conf_percentile_to_vcf_file(self.unfiltered_vcf_file, mean_depth, depth_variance, self.read_error_rate, self.genotype_simulation_iterations)
         logging.info(f'Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf}, using mean depth {mean_depth}, depth variance {depth_variance}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
         Adjudicator._add_gt_conf_percentile_to_vcf_file(self.final_vcf, mean_depth, depth_variance, self.read_error_rate, self.genotype_simulation_iterations)
 
@@ -332,6 +334,8 @@ class Adjudicator:
 
         mean_depth = statistics.mean(mean_depths)
         depth_variance = statistics.mean(depth_variances)
+        logging.info(f'Adding GT_CONF_PERCENTLE to debug VCF file {self.unfiltered_vcf_file}, using mean depth {mean_depth}, depth variance {depth_variance}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
+        Adjudicator._add_gt_conf_percentile_to_vcf_file(self.unfiltered_vcf_file, mean_depth, depth_variance, self.read_error_rate, self.genotype_simulation_iterations)
         logging.info(f'Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf}, using mean depth {mean_depth}, depth variance {depth_variance}, error rate {self.read_error_rate}, and {self.genotype_simulation_iterations} simulation iterations')
         Adjudicator._add_gt_conf_percentile_to_vcf_file(self.final_vcf, mean_depth, depth_variance, self.read_error_rate, self.genotype_simulation_iterations)
 
