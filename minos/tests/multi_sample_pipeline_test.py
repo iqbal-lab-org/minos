@@ -138,7 +138,7 @@ class TestMultiSamplePipeline(unittest.TestCase):
         os.unlink(reads_file)
 
 
-    def test_run_no_small_var_vcf_chunking(self):
+    def _test_run_no_small_var_vcf_chunking(self):
         '''test run without chunking small variant VCF file'''
         input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
         ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
@@ -171,7 +171,7 @@ class TestMultiSamplePipeline(unittest.TestCase):
         os.unlink(input_tsv)
 
 
-    def test_run_with_small_var_vcf_chunking_vars_per_split(self):
+    def _test_run_with_small_var_vcf_chunking_vars_per_split(self):
         '''test run with chunking small variant VCF file using variants_per_split option'''
         input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
         ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
@@ -204,7 +204,7 @@ class TestMultiSamplePipeline(unittest.TestCase):
         os.unlink(input_tsv)
 
 
-    def test_run_with_small_var_vcf_chunking_total_splits(self):
+    def _test_run_with_small_var_vcf_chunking_total_splits(self):
         '''test run with chunking small variant VCF file using total_splits option'''
         input_tsv = 'tmp.multi_sample_pipeline.run.in.tsv'
         ref_fasta = os.path.join(data_dir, 'run.ref.0.fa')
