@@ -31,6 +31,7 @@ class MultiSamplePipeline:
         nf_ram_gramtools_build_small=12,
         nf_ram_minos_small_vars=5,
         nf_ram_merge_small_vars=4,
+        use_unmapped_reads=False,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
@@ -66,6 +67,7 @@ class MultiSamplePipeline:
         self.nf_ram_gramtools_build_small = nf_ram_gramtools_build_small
         self.nf_ram_minos_small_vars = nf_ram_minos_small_vars
         self.nf_ram_merge_small_vars = nf_ram_merge_small_vars
+        self.use_unmapped_reads = use_unmapped_reads
 
 
 
@@ -220,12 +222,19 @@ params.variants_per_split = 0
 params.alleles_per_split = 0
 params.total_splits = 0
 params.max_alleles_per_cluster = 5000
+params.use_unmapped_reads = false
 
 
 if (params.testing) {
     params.pre_cluster_small_vars_merge_threads = 2
 }
 
+if (params.use_unmapped_reads) {
+    use_unmapped_reads = "--use_unmapped_reads"
+}
+else {
+    use_unmapped_reads = ""
+}
 
 data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
 ref_fasta = file(params.ref_fasta).toAbsolutePath()
@@ -408,7 +417,7 @@ process minos_all_small_vars {
     """
     sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
     minos_outdir=small_vars.minos.${tsv_fields['sample_id']}
-    minos adjudicate --sample_name \$sample_name --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} \$minos_outdir ${ref_fasta} "small_vars_clustered.vcf"
+    minos adjudicate ${use_unmapped_reads} --sample_name \$sample_name --gramtools_build_dir "small_vars_clustered.gramtools.build" --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} \$minos_outdir ${ref_fasta} "small_vars_clustered.vcf"
     """
 }
 
@@ -505,6 +514,8 @@ process merge_small_vars_vcfs {
         if self.testing:
             nextflow_command.append('--testing')
 
+        if self.use_unmapped_reads:
+            nextflow_command.append('--use_unmapped_reads')
 
         if self.variants_per_split is not None:
             nextflow_command.append('--variants_per_split ' + str(self.variants_per_split))
