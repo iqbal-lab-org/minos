@@ -291,7 +291,7 @@ class Adjudicator:
 
                 gramtools_quasimap_dir = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.gramtools.quasimap')
                 if self.use_unmapped_reads:
-                    reads_files = [unmapped_reads_file, split_reads_file],
+                    reads_files = [unmapped_reads_file, split_reads_file]
                 else:
                     reads_files = [split_reads_file]
 
