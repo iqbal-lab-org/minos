@@ -184,7 +184,7 @@ class MappingBasedVerifier:
             print(*header_lines, sep='\n', file=f)
             for ref_name in vcf_records:
                 for vcf_record in vcf_records[ref_name]:
-                    if vcf_record.FILTER == 'MISMAPPED_UNPLACEABLE':
+                    if 'MISMAPPED_UNPLACEABLE' in vcf_record.FILTER:
                         continue
                     if vcf_record.FORMAT is None or 'GT' not in vcf_record.FORMAT:
                         logging.warning('No GT in vcf record:' + str(vcf_record))

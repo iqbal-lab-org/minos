@@ -187,7 +187,7 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
     cov_values = [gtyper.singleton_alleles_cov.get(x, 0) for x in range(1 + len(vcf_record.ALT))]
     cov_string = ','.join([str(x) for x in cov_values])
     vcf_record.QUAL = None
-    vcf_record.FILTER = '.'
+    vcf_record.FILTER = set()
     vcf_record.INFO = {'KMER': str(kmer_size)}
     vcf_record.format_keys = ['DP', 'GT', 'COV', 'GT_CONF']
     vcf_record.FORMAT = {

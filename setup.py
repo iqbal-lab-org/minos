@@ -15,7 +15,7 @@ setup(
     tests_require=['nose >= 1.3'],
     install_requires=[
         'biopython',
-        'cluster_vcf_records >= 0.9.2',
+        'cluster_vcf_records >= 0.10.0',
         'gramtools',
         'matplotlib',
         'pandas',
