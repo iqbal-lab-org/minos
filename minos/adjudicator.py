@@ -29,6 +29,7 @@ class Adjudicator:
         total_splits=None,
         clean=True,
         genotype_simulation_iterations=10000,
+        use_unmapped_reads=False,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -72,6 +73,7 @@ class Adjudicator:
 
         self.clean = clean
         self.genotype_simulation_iterations = genotype_simulation_iterations
+        self.use_unmapped_reads = use_unmapped_reads
 
 
     @classmethod
@@ -264,8 +266,10 @@ class Adjudicator:
         except:
             raise Error('Error making output split directory ' + self.split_output_dir)
 
-        unmapped_reads_file = os.path.join(self.split_output_dir, 'unmapped_reads.bam')
-        bam_read_extract.get_unmapped_reads(self.reads_files[0], unmapped_reads_file)
+        if self.use_unmapped_reads:
+            unmapped_reads_file = os.path.join(self.split_output_dir, 'unmapped_reads.bam')
+            bam_read_extract.get_unmapped_reads(self.reads_files[0], unmapped_reads_file)
+
         split_vcf_outfiles = {}
         split_vcf_outfiles_unfiltered = {}
         mean_depths = []
@@ -286,13 +290,17 @@ class Adjudicator:
                 )
 
                 gramtools_quasimap_dir = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.gramtools.quasimap')
+                if self.use_unmapped_reads:
+                    reads_files = [unmapped_reads_file, split_reads_file],
+                else:
+                    reads_files = [split_reads_file]
 
                 build_report, quasimap_report = gramtools.run_gramtools(
                     split_file.gramtools_build_dir,
                     gramtools_quasimap_dir,
                     split_file.filename,
                     self.ref_fasta,
-                    [unmapped_reads_file, split_reads_file],
+                    reads_files,
                     self.max_read_length,
                     kmer_size=self.gramtools_kmer_size,
                 )
@@ -356,5 +364,6 @@ class Adjudicator:
                 for file_list in d.values():
                     for filename in file_list:
                         os.unlink(filename)
-            os.unlink(unmapped_reads_file)
+            if self.use_unmapped_reads:
+                os.unlink(unmapped_reads_file)
 
