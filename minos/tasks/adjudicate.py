@@ -17,6 +17,7 @@ def run(options):
         total_splits=options.total_splits,
         clean=not options.debug,
         gramtools_kmer_size=options.gramtools_kmer_size,
+        use_unmapped_reads=options.use_unmapped_reads,
     )
     adj.run()
 

@@ -23,5 +23,6 @@ def run(options):
         nf_ram_minos_small_vars=options.nf_ram_minos_small_vars,
         nf_ram_merge_small_vars=options.nf_ram_merge_small_vars,
         testing=options.testing,
+        use_unmapped_reads=options.use_unmapped_reads,
     )
     pipeline.run()
