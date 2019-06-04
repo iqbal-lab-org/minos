@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='bio-minos',
-    version='0.6.0',
+    version='0.7.0',
     description='Variant call adjudication',
     packages = find_packages(),
     author='Martin Hunt',
