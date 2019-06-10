@@ -52,25 +52,6 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
         logging.info('Error running gramtools build. See build report file ' + build_report)
         raise Error('Error running gramtools build: ' + build_command)
 
-    # Older gramtools called the perl generated VCF file perl_generated_vcf.
-    # New gramtools calls it perl_generated.vcf.
-    # Whichever one doesn't exist, symlink it to the one that does
-    cwd = os.getcwd()
-    os.chdir(outdir)
-    vcf1 = 'perl_generated_vcf'
-    vcf2 = 'perl_generated.vcf'
-    if os.path.exists(vcf1):
-        assert not os.path.exists(vcf2)
-        os.symlink(vcf1, vcf2)
-    elif os.path.exists(vcf2):
-        assert not os.path.exists(vcf1)
-        os.symlink(vcf2, vcf1)
-    else:
-        message = f'Could not find perl generated VCF file in directory {outdir}. Looked for {vcf1}, {vcf2}. Cannot continue'
-        logging.error(message)
-        raise Error(message)
-    os.chdir(cwd)
-
     logging.info('Build report file looks good from gramtools build: ' + build_report)
 
 
