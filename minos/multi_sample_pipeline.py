@@ -216,8 +216,8 @@ class MultiSamplePipeline:
             params.cluster_small_vars_ram = 2
             params.gramtools_build_small_vars_ram = 12
             params.minos_small_vars_ram = 5
-            params.pre_cluster_small_vars_merge_ram = 50
-            params.pre_cluster_small_vars_merge_threads = 10
+            params.pre_cluster_small_vars_merge_ram = 30
+            params.pre_cluster_small_vars_merge_threads = 1
             params.merge_small_vars_ram = 4
             params.variants_per_split = 0
             params.alleles_per_split = 0
