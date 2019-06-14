@@ -61,7 +61,7 @@ class Adjudicator:
 
         self.gramtools_kmer_size = gramtools_kmer_size
         self.gramtools_quasimap_dir = os.path.join(self.outdir, 'gramtools.quasimap')
-        self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated_vcf')
+        self.perl_generated_vcf = os.path.join(self.gramtools_build_dir, 'perl_generated.vcf')
         self.read_error_rate = read_error_rate
         self.max_read_length = max_read_length
         self.variants_per_split = variants_per_split
@@ -306,7 +306,7 @@ class Adjudicator:
                 )
 
                 logging.info('Loading split gramtools quasimap output files ' + gramtools_quasimap_dir)
-                perl_generated_vcf = os.path.join(split_file.gramtools_build_dir, 'perl_generated_vcf')
+                perl_generated_vcf = os.path.join(split_file.gramtools_build_dir, 'perl_generated.vcf')
                 mean_depth, depth_variance, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(perl_generated_vcf, gramtools_quasimap_dir)
                 mean_depths.append(mean_depth)
                 depth_variances.append(depth_variance)
