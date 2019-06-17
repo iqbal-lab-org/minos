@@ -205,283 +205,280 @@ class MultiSamplePipeline:
     def _write_nextflow_script(cls, outfile):
         with open(outfile, 'w') as f:
             print(r'''
-            params.data_in_tsv = ""
-            params.ref_fasta = ""
-            params.min_large_ref_length = 0
-            params.gramtools_max_read_length = 0
-            params.gramtools_kmer_size = 0
-            params.gramtools_build_threads = 1
-            params.final_outdir = ""
-            params.testing = false
-            params.cluster_small_vars_ram = 2
-            params.gramtools_build_small_vars_ram = 12
-            params.minos_small_vars_ram = 5
-            params.pre_cluster_small_vars_merge_ram = 30
-            params.pre_cluster_small_vars_merge_threads = 1
-            params.merge_small_vars_ram = 4
-            params.variants_per_split = 0
-            params.alleles_per_split = 0
-            params.total_splits = 0
-            params.max_alleles_per_cluster = 5000
-            params.use_unmapped_reads = false
+params.data_in_tsv = ""
+params.ref_fasta = ""
+params.min_large_ref_length = 0
+params.gramtools_max_read_length = 0
+params.gramtools_kmer_size = 0
+params.gramtools_build_threads = 1
+params.final_outdir = ""
+params.testing = false
+params.cluster_small_vars_ram = 2
+params.gramtools_build_small_vars_ram = 12
+params.minos_small_vars_ram = 5
+params.pre_cluster_small_vars_merge_ram = 30
+params.pre_cluster_small_vars_merge_threads = 1
+params.merge_small_vars_ram = 4
+params.variants_per_split = 0
+params.alleles_per_split = 0
+params.total_splits = 0
+params.max_alleles_per_cluster = 5000
+params.use_unmapped_reads = false
 
 
-            if (params.testing) {
-                params.pre_cluster_small_vars_merge_threads = 2
-            }
+if (params.testing) {
+    params.pre_cluster_small_vars_merge_threads = 2
+}
 
-            if (params.use_unmapped_reads) {
-                use_unmapped_reads = "--use_unmapped_reads"
-            }
-            else {
-                use_unmapped_reads = ""
-            }
+if (params.use_unmapped_reads) {
+    use_unmapped_reads = "--use_unmapped_reads"
+}
+else {
+    use_unmapped_reads = ""
+}
 
-            data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
-            ref_fasta = file(params.ref_fasta).toAbsolutePath()
-            final_outdir = file(params.final_outdir).toAbsolutePath()
+data_in_tsv = file(params.data_in_tsv).toAbsolutePath()
+ref_fasta = file(params.ref_fasta).toAbsolutePath()
+final_outdir = file(params.final_outdir).toAbsolutePath()
 
-            if (!data_in_tsv.exists()) {
-                exit 1, "Input data TSV file not found: ${params.data_in_tsv} -- aborting"
-            }
+if (!data_in_tsv.exists()) {
+    exit 1, "Input data TSV file not found: ${params.data_in_tsv} -- aborting"
+}
 
-            if (!ref_fasta.exists()) {
-                exit 1, "Reference FASTA file not found: ${params.ref_fasta} -- aborting"
-            }
+if (!ref_fasta.exists()) {
+    exit 1, "Reference FASTA file not found: ${params.ref_fasta} -- aborting"
+}
 
-            if (params.min_large_ref_length < 1) {
-                exit 1, "Must use option --min_large_ref_length -- aborting"
-            }
+if (params.min_large_ref_length < 1) {
+    exit 1, "Must use option --min_large_ref_length -- aborting"
+}
 
-            if (params.gramtools_kmer_size < 1) {
-                exit 1, "Must use option --gramtools_kmer_size -- aborting"
-            }
+if (params.gramtools_kmer_size < 1) {
+    exit 1, "Must use option --gramtools_kmer_size -- aborting"
+}
 
-            if (!final_outdir.exists()) {
-                exit 1, "Output directory not found: ${params.final_outdir} -- aborting"
-            }
+if (!final_outdir.exists()) {
+    exit 1, "Output directory not found: ${params.final_outdir} -- aborting"
+}
 
-            split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
+split_tsv = Channel.from(data_in_tsv).splitCsv(header: true, sep:'\t')
 
-            process process_input_vcf_file {
-                memory '0.5 GB'
-                input:
-                val tsv_fields from split_tsv
+process process_input_vcf_file {
+    memory '0.5 GB'
+    input:
+    val tsv_fields from split_tsv
 
-                output:
-                file("small_vars.${tsv_fields['sample_id']}.vcf") into process_input_vcf_file_out_small
-                set(val(tsv_fields), file("big_vars.${tsv_fields['sample_id']}.vcf")) into merge_small_and_large_vars_in
-                set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) into minos_all_small_vars_tsv_in
-                stdout into max_read_lengths
+    output:
+    file("small_vars.${tsv_fields['sample_id']}.vcf") into process_input_vcf_file_out_small
+    set(val(tsv_fields), file("big_vars.${tsv_fields['sample_id']}.vcf")) into merge_small_and_large_vars_in
+    set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) into minos_all_small_vars_tsv_in
+    stdout into max_read_lengths
 
-                """
-                #!/usr/bin/env python3
-                from minos import multi_sample_pipeline
-                multi_sample_pipeline.MultiSamplePipeline._filter_input_file_for_clustering(
-                    "${tsv_fields.vcf_file}",
-                    'filtered.vcf'
-                )
-                max_read_length = multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
-                    'filtered.vcf',
-                    "small_vars.${tsv_fields['sample_id']}.vcf",
-                    "big_vars.${tsv_fields['sample_id']}.vcf",
-                    "sample_name.${tsv_fields['sample_id']}",
-                    ${params.min_large_ref_length}
-                )
-                if max_read_length is None:
-                    print(0, end='')
-                else:
-                    print(max_read_length, end='')
-                """
-            }
-
-
-            process pre_cluster_small_vars_merge {
-                errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
-                memory {params.testing ? '0.5 GB' : 1.GB * params.pre_cluster_small_vars_merge_ram * task.attempt}
-                maxRetries 3
-                cpus {params.testing? 2 : params.pre_cluster_small_vars_merge_threads}
-
-                input:
-                val(file_list) from process_input_vcf_file_out_small.collect()
-
-                output:
-                file('pre_cluster_small_vars_merge.vcf') into pre_cluster_small_vars_merge_out
-
-                """
-                #!/usr/bin/env python3
-                from cluster_vcf_records import vcf_merge
-                import pyfastaq
-                ref_seqs = dict()
-                pyfastaq.tasks.file_to_dict("${ref_fasta}", ref_seqs)
-
-                file_list = ["${file_list.join('", "')}"]
-
-                vcf_merge.merge_vcf_files(file_list, ref_seqs, "pre_cluster_small_vars_merge.vcf", threads=${params.pre_cluster_small_vars_merge_threads})
-                """
-
-            }
-
-            process cluster_small_vars_vcf {
-                errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
-                memory {params.testing ? '0.5 GB' : 1.GB * params.cluster_small_vars_ram * task.attempt}
-                maxRetries 3
-
-                input:
-                file('pre_cluster_small_vars_merge.vcf') from pre_cluster_small_vars_merge_out
-
-                output:
-                file('small_vars_clustered.vcf') into cluster_small_vars_vcf_out
-
-                """
-                #!/usr/bin/env python3
-                from cluster_vcf_records import vcf_clusterer
-                clusterer = vcf_clusterer.VcfClusterer(["pre_cluster_small_vars_merge.vcf"], "${ref_fasta}", "small_vars_clustered.vcf", max_alleles_per_cluster=${params.max_alleles_per_cluster})
-                clusterer.run()
-                """
-            }
+    """
+    #!/usr/bin/env python3
+    from minos import multi_sample_pipeline
+    multi_sample_pipeline.MultiSamplePipeline._filter_input_file_for_clustering(
+        "${tsv_fields.vcf_file}",
+        'filtered.vcf'
+    )
+    max_read_length = multi_sample_pipeline.MultiSamplePipeline._nextflow_helper_process_input_vcf_file(
+        'filtered.vcf',
+        "small_vars.${tsv_fields['sample_id']}.vcf",
+        "big_vars.${tsv_fields['sample_id']}.vcf",
+        "sample_name.${tsv_fields['sample_id']}",
+        ${params.min_large_ref_length}
+    )
+    if max_read_length is None:
+        print(0, end='')
+    else:
+        print(max_read_length, end='')
+    """
+}
 
 
-            process split_vcfs {
-                errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
-                memory {params.testing ? '0.5 GB' : 1.GB * params.gramtools_build_small_vars_ram * task.attempt}
-                maxRetries 3
+process pre_cluster_small_vars_merge {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.pre_cluster_small_vars_merge_ram * task.attempt}
+    maxRetries 3
+    cpus {params.testing? 2 : params.pre_cluster_small_vars_merge_threads}
 
-                input:
-                file('small_vars_clustered.vcf') from cluster_small_vars_vcf_out
-                val(max_read_length) from max_read_lengths.max()
+    input:
+    val(file_list) from process_input_vcf_file_out_small.collect()
 
-                output:
-                file('small_vars_clustered.vcf') into minos_adju_splits
-                file("gramtools.build_dir/split*.vcf") into gramtools_build_small_vars_vcfs mode flatten
+    output:
+    file('pre_cluster_small_vars_merge.vcf') into pre_cluster_small_vars_merge_out
 
-                """
-                #!/usr/bin/env python3
-                import sys, shutil, glob, os
-                from minos import gramtools, vcf_chunker
-                if ${params.gramtools_max_read_length} == 0:
-                    max_read_length = ${max_read_length}
-                else:
-                    max_read_length = ${params.gramtools_max_read_length}
+    """
+    #!/usr/bin/env python3
+    from cluster_vcf_records import vcf_merge
+    import pyfastaq
+    ref_seqs = dict()
+    pyfastaq.tasks.file_to_dict("${ref_fasta}", ref_seqs)
 
-                if max_read_length == 0:
-                    print('Error! max read length could not be inferred from input VCF files. Must use option --gramtools_max_read_length')
-                    sys.exit(1)
+    file_list = ["${file_list.join('", "')}"]
 
-                total_splits = ${params.total_splits} if ${params.total_splits} > 0 else None
-                variants_per_split = ${params.variants_per_split} if ${params.variants_per_split} > 0 else None
-                alleles_per_split = ${params.alleles_per_split} if ${params.alleles_per_split} > 0 else None
-                print("total_splits", total_splits)
-                print("variants_per_split", variants_per_split)
-                print("alleles_per_split", alleles_per_split)
+    vcf_merge.merge_vcf_files(file_list, ref_seqs, "pre_cluster_small_vars_merge.vcf", threads=${params.pre_cluster_small_vars_merge_threads})
+    """
 
-                if total_splits is None and variants_per_split is None and alleles_per_split is None:
-                    gramtools.run_gramtools_build(
-                        "gramtools.build_dir",
-                        "small_vars_clustered.vcf",
-                        "${params.ref_fasta}",
-                        max_read_length,
-                        kmer_size=${params.gramtools_kmer_size},
-                    )
-                else:
-                    chunker = vcf_chunker.VcfChunker(
-                        "gramtools.build_dir",
-                        vcf_infile="small_vars_clustered.vcf",
-                        ref_fasta="${params.ref_fasta}",
-                        variants_per_split=variants_per_split,
-                        alleles_per_split=alleles_per_split,
-                        max_read_length=max_read_length,
-                        total_splits=total_splits,
-                        flank_length=max_read_length,
-                        gramtools_kmer_size=${params.gramtools_kmer_size},
-                        threads=${params.gramtools_build_threads},
-                    )
-                    chunker.make_split_vcf_files()
-                """
-            }
+}
+
+process cluster_small_vars_vcf {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.cluster_small_vars_ram * task.attempt}
+    maxRetries 3
+
+    input:
+    file('pre_cluster_small_vars_merge.vcf') from pre_cluster_small_vars_merge_out
+
+    output:
+    file('small_vars_clustered.vcf') into cluster_small_vars_vcf_out
+
+    """
+    #!/usr/bin/env python3
+    from cluster_vcf_records import vcf_clusterer
+    clusterer = vcf_clusterer.VcfClusterer(["pre_cluster_small_vars_merge.vcf"], "${ref_fasta}", "small_vars_clustered.vcf", max_alleles_per_cluster=${params.max_alleles_per_cluster})
+    clusterer.run()
+    """
+}
 
 
-            // Parallelised gramtools build. The build chunks will go in same dir as split vcfs
-            // This is required for `minos adjudicate` so that it recognises that split vcf and build have been done already.
-            process gramtools_build_chunks{
-                errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
-                memory {params.testing ? '0.5 GB' : 1.GB * params.gramtools_build_small_vars_ram * task.attempt}
-                maxRetries 3
-                cpus params.gramtools_build_threads
+process split_vcfs {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.gramtools_build_small_vars_ram * task.attempt}
+    maxRetries 3
 
-                input:
-                    file vcf_split from gramtools_build_small_vars_vcfs
+    input:
+    file('small_vars_clustered.vcf') from cluster_small_vars_vcf_out
+    val(max_read_length) from max_read_lengths.max()
 
-                output:
-                    file("gmtools_build_dir") into gramtools_build_small_vars_out
-                
+    output:
+    file('small_vars_clustered.vcf') into minos_adju_splits
+    file("gramtools.build_dir/split*.vcf") into gramtools_build_small_vars_vcfs mode flatten
 
-                """
-                #!/usr/bin/env python3
-                import sys,os,shutil
-                from minos import gramtools
+    """
+    #!/usr/bin/env python3
+    import sys, shutil, glob, os
+    from minos import gramtools, vcf_chunker
+    if ${params.gramtools_max_read_length} == 0:
+        max_read_length = ${max_read_length}
+    else:
+        max_read_length = ${params.gramtools_max_read_length}
 
-                sample_id = "${vcf_split}".split(".")[1]
-                par_dir = os.path.dirname(os.path.realpath("${vcf_split}"))
-                build_dir = os.path.join(par_dir,"split.{}.gramtools_build".format(sample_id))
-                os.symlink(par_dir,"./gmtools_build_dir")
-                gramtools.run_gramtools_build(build_dir, "${vcf_split}", "${params.ref_fasta}", 150, "${params.gramtools_kmer_size}")
-                """
-            }
+    if max_read_length == 0:
+        print('Error! max read length could not be inferred from input VCF files. Must use option --gramtools_max_read_length')
+        sys.exit(1)
 
+    total_splits = ${params.total_splits} if ${params.total_splits} > 0 else None
+    variants_per_split = ${params.variants_per_split} if ${params.variants_per_split} > 0 else None
+    alleles_per_split = ${params.alleles_per_split} if ${params.alleles_per_split} > 0 else None
+    print("total_splits", total_splits)
+    print("variants_per_split", variants_per_split)
+    print("alleles_per_split", alleles_per_split)
 
-            // Per sample minos adjudicate. Each of this process will run quasimap/infer on each split, and merge the results into one vcf.
-            process minos_all_small_vars {
-                //errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
-                memory {params.testing ? '0.5 GB' : 1.GB * params.minos_small_vars_ram * task.attempt}
-                maxRetries 3
-                echo true
-
-                input:
-                file('small_vars_clustered.vcf') from minos_adju_splits
-                val build_dir from gramtools_build_small_vars_out.collect()
-                set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) from minos_all_small_vars_tsv_in
-
-                output:
-                file("small_vars.minos.${tsv_fields['sample_id']}") into minos_all_small_vars_out
-
-                """
-                sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
-                minos_outdir=small_vars.minos.${tsv_fields['sample_id']}
-                minos adjudicate ${use_unmapped_reads} --sample_name \$sample_name --gramtools_build_dir ${build_dir[0]} --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} \$minos_outdir ${ref_fasta} "small_vars_clustered.vcf"
-                """
-            }
-
-            // This takes the list per-sample vcfs output by minos_all_small_vars
-            // and merges them into a multi-samp vcf.
-            process merge_small_vars_vcfs {
-                memory '1 GB'
-                publishDir path: final_outdir, mode: 'move', overwrite: true
-
-                input:
-                val(minos_dir_list) from minos_all_small_vars_out.collect()
-
-                output:
-                file('combined_calls.vcf')
-
-                """
-                #!/usr/bin/env python3
-                # Files end with .N (N=0,1,2,3,...) Sort numerically on this N
-                import os
-                from minos import multi_sample_pipeline
-
-                minos_dir_list = ["${minos_dir_list.join('", "')}"]
-                tuple_list = []
-                for filename in minos_dir_list:
-                    fields = filename.rsplit('.', maxsplit=1)
-                    tuple_list.append((int(fields[1]), filename))
-                tuple_list.sort()
-                filenames = [os.path.join(x[1], 'debug.calls_with_zero_cov_alleles.vcf')  for x in tuple_list]
-                multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(filenames, 'combined_calls.vcf')
-                """
-            }
+    if total_splits is None and variants_per_split is None and alleles_per_split is None:
+        gramtools.run_gramtools_build(
+            "gramtools.build_dir",
+            "small_vars_clustered.vcf",
+            "${params.ref_fasta}",
+            max_read_length,
+            kmer_size=${params.gramtools_kmer_size},
+        )
+    else:
+        chunker = vcf_chunker.VcfChunker(
+            "gramtools.build_dir",
+            vcf_infile="small_vars_clustered.vcf",
+            ref_fasta="${params.ref_fasta}",
+            variants_per_split=variants_per_split,
+            alleles_per_split=alleles_per_split,
+            max_read_length=max_read_length,
+            total_splits=total_splits,
+            flank_length=max_read_length,
+            gramtools_kmer_size=${params.gramtools_kmer_size},
+            threads=${params.gramtools_build_threads},
+        )
+        chunker.make_split_vcf_files()
+    """
+}
 
 
+// Parallelised gramtools build. The build chunks will go in same dir as split vcfs
+// This is required for `minos adjudicate` so that it recognises that split vcf and build have been done already.
+process gramtools_build_chunks{
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.gramtools_build_small_vars_ram * task.attempt}
+    maxRetries 3
+    cpus params.gramtools_build_threads
+
+    input:
+        file vcf_split from gramtools_build_small_vars_vcfs
+
+    output:
+        file("gmtools_build_dir") into gramtools_build_small_vars_out
+    
+
+    """
+    #!/usr/bin/env python3
+    import sys,os,shutil
+    from minos import gramtools
+
+    sample_id = "${vcf_split}".split(".")[1]
+    par_dir = os.path.dirname(os.path.realpath("${vcf_split}"))
+    build_dir = os.path.join(par_dir,"split.{}.gramtools_build".format(sample_id))
+    os.symlink(par_dir,"./gmtools_build_dir")
+    gramtools.run_gramtools_build(build_dir, "${vcf_split}", "${params.ref_fasta}", 150, "${params.gramtools_kmer_size}")
+    """
+}
+
+
+// Per sample minos adjudicate. Each of this process will run quasimap/infer on each split, and merge the results into one vcf.
+process minos_all_small_vars {
+    errorStrategy {task.attempt < 3 ? 'retry' : 'terminate'}
+    memory {params.testing ? '0.5 GB' : 1.GB * params.minos_small_vars_ram * task.attempt}
+    maxRetries 3
+
+    input:
+    file('small_vars_clustered.vcf') from minos_adju_splits
+    val build_dir from gramtools_build_small_vars_out.collect()
+    set(val(tsv_fields), file("sample_name.${tsv_fields['sample_id']}")) from minos_all_small_vars_tsv_in
+
+    output:
+    file("small_vars.minos.${tsv_fields['sample_id']}") into minos_all_small_vars_out
+
+    """
+    sample_name=\$(cat sample_name.${tsv_fields['sample_id']})
+    minos_outdir=small_vars.minos.${tsv_fields['sample_id']}
+    minos adjudicate ${use_unmapped_reads} --sample_name \$sample_name --gramtools_build_dir ${build_dir[0]} --reads ${tsv_fields['reads_files'].replaceAll(/ /, " --reads ")} \$minos_outdir ${ref_fasta} "small_vars_clustered.vcf"
+    """
+}
+
+// This takes the list per-sample vcfs output by minos_all_small_vars
+// and merges them into a multi-samp vcf.
+process merge_small_vars_vcfs {
+    memory '1 GB'
+    publishDir path: final_outdir, mode: 'move', overwrite: true
+
+    input:
+    val(minos_dir_list) from minos_all_small_vars_out.collect()
+
+    output:
+    file('combined_calls.vcf')
+
+    """
+    #!/usr/bin/env python3
+    # Files end with .N (N=0,1,2,3,...) Sort numerically on this N
+    import os
+    from minos import multi_sample_pipeline
+
+    minos_dir_list = ["${minos_dir_list.join('", "')}"]
+    tuple_list = []
+    for filename in minos_dir_list:
+        fields = filename.rsplit('.', maxsplit=1)
+        tuple_list.append((int(fields[1]), filename))
+    tuple_list.sort()
+    filenames = [os.path.join(x[1], 'debug.calls_with_zero_cov_alleles.vcf')  for x in tuple_list]
+    multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(filenames, 'combined_calls.vcf')
+    """
+}
 ''', file=f)
 
 
