@@ -337,8 +337,11 @@ class Adjudicator:
                                                         iterations, min_dp=2, min_gt_conf_percentile=2.5):
         '''Overwrites vcf_file, with new version that has GT_CONF_PERCENTILE added,
         and filter for DP and GT_CONF_PERCENTILE'''
-        simulations = genotype_confidence_simulator.GenotypeConfidenceSimulator(mean_depth, depth_variance, error_rate, allele_length=1, iterations=iterations)
-        simulations.run_simulations()
+        if mean_depth > 0:
+            simulations = genotype_confidence_simulator.GenotypeConfidenceSimulator(mean_depth,
+                                                                                    depth_variance, error_rate,
+                                                                                    allele_length=1, iterations=iterations)
+            simulations.run_simulations()
         vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
         for i, line in enumerate(vcf_header):
             if line.startswith('##FORMAT=<ID=GT_CONF'):

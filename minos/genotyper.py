@@ -155,7 +155,9 @@ class Genotyper:
 
 
     def run(self):
-        if len(self.allele_combination_cov) == 0 or Genotyper._total_coverage(self.allele_combination_cov) == 0:
+        if len(self.allele_combination_cov) == 0 or \
+                Genotyper._total_coverage(self.allele_combination_cov) == 0 or \
+                self.mean_depth == 0:
             self.genotype = {'.'}
             self.genotype_confidence = 0.0
         else:

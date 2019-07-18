@@ -211,7 +211,8 @@ def update_vcf_record_using_gramtools_allele_depths(vcf_record, allele_combinati
     return filtered_record
 
 
-def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage, allele_groups, read_error_rate, outfile, kmer_size, sample_name='SAMPLE', max_read_length=None, filtered_outfile=None):
+def write_vcf_annotated_using_coverage_from_gramtools(mean_depth, vcf_records, all_allele_coverage,
+                                                      allele_groups, read_error_rate, outfile, kmer_size, sample_name='SAMPLE', max_read_length=None, filtered_outfile=None):
     '''mean_depth, vcf_records, all_allele_coverage, allele_groups should be those
     returned by load_gramtools_vcf_and_allele_coverage_files().
     Writes a new VCF that has allele counts for all the ALTs'''

@@ -119,3 +119,25 @@ class TestAdjudicator(unittest.TestCase):
         self.assertTrue(filecmp.cmp(tmp_file, expect_file, shallow=False))
         os.unlink(tmp_file)
 
+    def test_0MeanDepth_stillRuns(self):
+        '''
+        When mean depth is 0, we can get math errors: math.log(0) in genotype likelihood computation,
+        and division by 0 in genotype confidence simulation.
+
+        Note the former only actually occurs if there is a variant site with non-zero coverage;
+        in this case, mean depth can get set to 0 due to rounding imprecision. This is tested in genotyper unit tests.
+        '''
+
+        outdir = 'tmp.adjudicator.out'
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+        ref_fasta = os.path.join(data_dir, 'run.ref.fa')
+        reads_file = os.path.join(data_dir, 'no_map_reads.fastq')
+        vcf_files = [os.path.join(data_dir, 'run.calls.1.vcf')]
+
+        adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False, gramtools_kmer_size=5)
+        adj.run()
+        # Make sure the coverage is 0
+        self.assertEqual(adj.mean_depths[0], 0)
+        # And also the test passes if it raises no math related errors.
+
