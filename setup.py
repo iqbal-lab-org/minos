@@ -13,6 +13,11 @@ setup(
     scripts=glob.glob('scripts/*'),
     test_suite='nose.collector',
     tests_require=['nose >= 1.3'],
+    entry_points={
+        'console_scripts' : [
+            'minos = minos.minos',
+        ],
+    },
     install_requires=[
         'biopython',
         'cluster_vcf_records >= 0.10.0',
