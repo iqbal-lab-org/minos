@@ -359,9 +359,9 @@ class Adjudicator:
             for vcf_record in vcf_lines:
                 vcf_record.FILTER = set()
 
-                if 'GT_CONF' in vcf_record.FORMAT:
-                    conf = int(round(float(vcf_record.FORMAT['GT_CONF'])))
-                    if 'GT' in vcf_record.FORMAT and '.' not in vcf_record.FORMAT['GT']:
+                if 'GT' in vcf_record.FORMAT and 'GT_CONF' in vcf_record.FORMAT:
+                    if '.' not in vcf_record.FORMAT['GT']:
+                        conf = int(round(float(vcf_record.FORMAT['GT_CONF'])))
                         vcf_record.set_format_key_value('GT_CONF_PERCENTILE', str(simulations.get_percentile(conf)))
                         if 'DP' in vcf_record.FORMAT and float(vcf_record.FORMAT['DP']) < min_dp:
                             vcf_record.FILTER.add('MIN_DP')
@@ -369,6 +369,9 @@ class Adjudicator:
                             vcf_record.FILTER.add('MIN_GCP')
                         if len(vcf_record.FILTER) == 0:
                             vcf_record.FILTER.add('PASS')
+                    else:
+                        # Add a default null percentile
+                        vcf_record.set_format_key_value('GT_CONF_PERCENTILE', '0.0')
 
                 print(vcf_record, file=f)
 
