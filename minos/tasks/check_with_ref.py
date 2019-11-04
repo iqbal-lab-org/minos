@@ -1,5 +1,6 @@
 from minos import mapping_based_verifier
 
+
 def run(options):
     verifier = mapping_based_verifier.MappingBasedVerifier(
         options.vcf_file,
@@ -14,7 +15,6 @@ def run(options):
         allow_flank_mismatches=not options.no_flank_mismatches,
         merge_length=options.variant_merge_length,
         exclude_regions_bed_file=options.exclude_bed,
-        max_soft_clipped=options.max_soft_clipped
+        max_soft_clipped=options.max_soft_clipped,
     )
     verifier.run()
-
