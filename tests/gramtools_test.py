@@ -8,8 +8,8 @@ from cluster_vcf_records import vcf_file_read, vcf_record
 from minos import gramtools
 from minos import __version__ as minos_version
 
-modules_dir = os.path.dirname(os.path.abspath(gramtools.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'gramtools')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'gramtools')
 
 
 class TestGramtools(unittest.TestCase):

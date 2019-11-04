@@ -3,8 +3,8 @@ import unittest
 
 from minos import utils
 
-modules_dir = os.path.dirname(os.path.abspath(utils.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'utils')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'utils')
 
 class TestUtils(unittest.TestCase):
     def test_estimate_max_read_length_and_read_error_rate_from_qual_scores_fastq_file(self):

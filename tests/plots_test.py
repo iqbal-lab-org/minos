@@ -7,8 +7,8 @@ import pandas as pd
 
 from minos import plots
 
-modules_dir = os.path.dirname(os.path.abspath(plots.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'plots')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'plots')
 
 class TestPlots(unittest.TestCase):
     def test_load_dp_and_gt_conf_data_from_file(self):

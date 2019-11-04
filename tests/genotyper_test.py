@@ -3,8 +3,8 @@ import unittest
 
 from minos import genotyper
 
-modules_dir = os.path.dirname(os.path.abspath(genotyper.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'genotyper')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'genotyper')
 
 class TestGenotyper(unittest.TestCase):
     '''test _singleton_alleles_and_coverage'''

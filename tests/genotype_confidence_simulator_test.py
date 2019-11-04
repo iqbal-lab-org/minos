@@ -4,8 +4,8 @@ import unittest
 
 from minos import genotype_confidence_simulator
 
-modules_dir = os.path.dirname(os.path.abspath(genotype_confidence_simulator.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'genotype_confidence_simulator')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'genotype_confidence_simulator')
 
 class TestGenotypeConfidenceSimulator(unittest.TestCase):
     def test_simulate_confidence_scores(self):

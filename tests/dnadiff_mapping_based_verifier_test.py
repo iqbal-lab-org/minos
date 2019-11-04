@@ -9,8 +9,8 @@ from cluster_vcf_records import vcf_file_read
 
 from minos import dnadiff_mapping_based_verifier
 
-modules_dir = os.path.dirname(os.path.abspath(dnadiff_mapping_based_verifier.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'dnadiff_mapping_based_verifier')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'dnadiff_mapping_based_verifier')
 
 
 class TestDnadiffMappingBasedVerifier(unittest.TestCase):

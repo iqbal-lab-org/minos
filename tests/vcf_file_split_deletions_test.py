@@ -5,8 +5,8 @@ import unittest
 
 from minos import vcf_file_split_deletions
 
-modules_dir = os.path.dirname(os.path.abspath(vcf_file_split_deletions.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'vcf_file_split_deletions')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'vcf_file_split_deletions')
 
 class TestVcfFileSplitDeletions(unittest.TestCase):
     def test_run(self):

@@ -7,8 +7,8 @@ import cluster_vcf_records
 
 from minos import vcf_chunker
 
-modules_dir = os.path.dirname(os.path.abspath(vcf_chunker.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'vcf_chunker')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'vcf_chunker')
 
 class TestVcfChunker(unittest.TestCase):
     def test_total_variants_and_alleles_in_vcf_dict(self):

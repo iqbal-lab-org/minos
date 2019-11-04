@@ -169,8 +169,8 @@ dnadiff_output_extensions = [
 ]
 
 
-modules_dir = os.path.dirname(os.path.abspath(dnadiff.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'dnadiff')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'dnadiff')
 
 class TestDnadiff(unittest.TestCase):
     def test_load_seq_file(self):

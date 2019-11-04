@@ -8,8 +8,8 @@ import pyfastaq
 
 from minos import mapping_based_verifier
 
-modules_dir = os.path.dirname(os.path.abspath(mapping_based_verifier.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'mapping_based_verifier')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'mapping_based_verifier')
 
 
 class TestMappingBasedVerifier(unittest.TestCase):

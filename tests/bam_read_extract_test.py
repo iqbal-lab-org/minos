@@ -6,8 +6,8 @@ import pysam
 
 from minos import bam_read_extract
 
-modules_dir = os.path.dirname(os.path.abspath(bam_read_extract.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'bam_read_extract')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'bam_read_extract')
 
 
 def read_names_match(bam1, bam2):

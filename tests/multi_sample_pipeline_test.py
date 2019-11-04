@@ -7,8 +7,8 @@ from cluster_vcf_records import vcf_file_read
 
 from minos import multi_sample_pipeline
 
-modules_dir = os.path.dirname(os.path.abspath(multi_sample_pipeline.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'multi_sample_pipeline')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'multi_sample_pipeline')
 
 class TestMultiSamplePipeline(unittest.TestCase):
     def test_load_input_data_tsv(self):

@@ -5,8 +5,8 @@ import unittest
 
 from minos import adjudicator
 
-modules_dir = os.path.dirname(os.path.abspath(adjudicator.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data', 'adjudicator')
+this_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(this_dir, 'data', 'adjudicator')
 
 class TestAdjudicator(unittest.TestCase):
     def test_get_gramtools_kmer_size(self):
