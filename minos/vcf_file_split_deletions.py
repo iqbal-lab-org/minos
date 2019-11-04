@@ -1,7 +1,5 @@
 from cluster_vcf_records import vcf_file_read
 
-class Error (Exception): pass
-
 class VcfFileSplitDeletions:
     def __init__(self,
         infile,

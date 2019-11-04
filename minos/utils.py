@@ -4,8 +4,6 @@ import sys
 import pyfastaq
 import pysam
 
-class Error (Exception): pass
-
 def syscall(command, allow_fail=False):
     completed_process = subprocess.run(command, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
     if (not allow_fail) and completed_process.returncode != 0:
@@ -13,7 +11,7 @@ def syscall(command, allow_fail=False):
         print('Return code:', completed_process.returncode, file=sys.stderr)
         print('\nOutput from stdout:', completed_process.stdout, sep='\n', file=sys.stderr)
         print('\nOutput from stderr:', completed_process.stderr, sep='\n', file=sys.stderr)
-        raise Error('Error in system call. Cannot continue')
+        raise Exception('Error in system call. Cannot continue')
 
     return completed_process
 
@@ -33,7 +31,7 @@ def estimate_max_read_length_and_read_error_rate_from_qual_scores(infile, number
         f = pyfastaq.sequences.file_reader(infile)
         filetype = 'fastaq'
     except:
-        raise Error('Error opening file ' + infile)
+        raise Exception('Error opening file ' + infile)
 
     total = 0
     base_count = 0

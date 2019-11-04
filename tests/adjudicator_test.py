@@ -93,7 +93,7 @@ class TestAdjudicator(unittest.TestCase):
         reads_file = os.path.join(data_dir, 'run.bwa.bam')
         vcf_files =  [os.path.join(data_dir, x) for x in ['run.calls.empty.1.vcf', 'run.calls.empty.2.vcf']]
         adj = adjudicator.Adjudicator(outdir, ref_fasta, [reads_file], vcf_files, clean=False, gramtools_kmer_size=5, genotype_simulation_iterations=1000)
-        with self.assertRaises(adjudicator.Error):
+        with self.assertRaises(Exception):
             adj.run()
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(adj.log_file))

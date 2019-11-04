@@ -77,7 +77,7 @@ class TestGramtools(unittest.TestCase):
         vcf_file = os.path.join(data_dir, 'run_gramtools.empty.vcf')
         ref_file = os.path.join(data_dir, 'run_gramtools.ref.fa')
         reads_file = os.path.join(data_dir, 'run_gramtools.reads.fq')
-        with self.assertRaises(gramtools.Error):
+        with self.assertRaises(Exception):
             gramtools.run_gramtools(tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, 150, kmer_size=5)
         shutil.rmtree(tmp_out_build)
 
@@ -119,15 +119,15 @@ class TestGramtools(unittest.TestCase):
 
         # now test bad files cause error to be raised
         vcf_file = os.path.join(data_dir, 'load_gramtools_vcf_and_allele_coverage.short.vcf')
-        with self.assertRaises(gramtools.Error):
+        with self.assertRaises(Exception):
             gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
 
         vcf_file = os.path.join(data_dir, 'load_gramtools_vcf_and_allele_coverage.long.vcf')
-        with self.assertRaises(gramtools.Error):
+        with self.assertRaises(Exception):
             gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
 
         vcf_file = os.path.join(data_dir, 'load_gramtools_vcf_and_allele_coverage.bad_allele_count.vcf')
-        with self.assertRaises(gramtools.Error):
+        with self.assertRaises(Exception):
             gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
 
 

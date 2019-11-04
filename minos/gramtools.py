@@ -10,8 +10,6 @@ from cluster_vcf_records import vcf_file_read
 from minos import dependencies, genotyper, utils
 from minos import __version__ as minos_version
 
-class Error (Exception): pass
-
 
 def _build_json_file_is_good(json_build_report):
     '''Returns true iff looks like gramtools build_report.json
@@ -50,7 +48,7 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
     ran_ok = _build_json_file_is_good(build_report) and completed_process.returncode == 0
     if not ran_ok:
         logging.info('Error running gramtools build. See build report file ' + build_report)
-        raise Error('Error running gramtools build: ' + build_command)
+        raise Exception('Error running gramtools build: ' + build_command)
 
     logging.info('Build report file looks good from gramtools build: ' + build_report)
 
@@ -95,7 +93,7 @@ def run_gramtools(build_dir, quasimap_dir, vcf_file, ref_file, reads, max_read_l
     if not files_ok:
         error_message = 'Looks like something went wrong duing gramtools run. At least one output file not present. Cannot continue.'
         logging.error(error_message)
-        raise Error(error_message)
+        raise Exception(error_message)
 
     with open(build_report) as f:
         json_build_report = json.load(f)
@@ -118,11 +116,11 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     coverages = []
 
     if len(all_allele_coverage) != len(vcf_lines):
-        raise Error('Number of records in VCF (' + str(len(vcf_lines)) + ') does not match number output from gramtools.(' + str(len(all_allele_coverage)) + '). Cannot continue')
+        raise Exception('Number of records in VCF (' + str(len(vcf_lines)) + ') does not match number output from gramtools.(' + str(len(all_allele_coverage)) + '). Cannot continue')
 
     for i, (allele_combi_coverage, allele_per_base_coverage) in enumerate(all_allele_coverage):
         if len(allele_per_base_coverage) != 1 + len(vcf_lines[i].ALT):
-            raise Error('Mismatch in number of alleles for this VCF record:\n' + str(vcf_lines[i]) + '\nLine number is ' + str(i+1))
+            raise Exception('Mismatch in number of alleles for this VCF record:\n' + str(vcf_lines[i]) + '\nLine number is ' + str(i+1))
 
         coverages.append(sum(allele_combi_coverage.values()))
 
@@ -263,21 +261,21 @@ def load_allele_files(allele_base_counts_file, grouped_allele_counts_file):
     try:
         allele_base_counts = json_base_counts_data['allele_base_counts']
     except:
-        raise Error('Error in json file ' + allele_base_counts_file + '. allele_base_counts not found.')
+        raise Exception('Error in json file ' + allele_base_counts_file + '. allele_base_counts not found.')
 
     try:
         site_counts = json_allele_counts_data['grouped_allele_counts']['site_counts']
     except:
-        raise Error('Error in json file ' + grouped_allele_counts_file + '. site_counts not found.')
+        raise Exception('Error in json file ' + grouped_allele_counts_file + '. site_counts not found.')
 
 
     try:
         allele_groups = json_allele_counts_data['grouped_allele_counts']['allele_groups']
     except:
-         raise Error('Error in json file ' + grouped_allele_counts_file + '. allele_groups not found.')
+         raise Exception('Error in json file ' + grouped_allele_counts_file + '. allele_groups not found.')
 
     if len(allele_base_counts) != len(site_counts):
-        raise Error('Mismatch between number of records in json files ' + allele_base_counts_file + ' and ' + grouped_allele_counts_file)
+        raise Exception('Mismatch between number of records in json files ' + allele_base_counts_file + ' and ' + grouped_allele_counts_file)
 
     for key, value in allele_groups.items():
         allele_groups[key] = set(value)

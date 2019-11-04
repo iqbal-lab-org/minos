@@ -6,8 +6,6 @@ from cluster_vcf_records import vcf_file_read
 
 from minos import dependencies, utils, vcf_file_split_deletions
 
-class Error (Exception): pass
-
 class MultiSamplePipeline:
     def __init__(self,
         ref_fasta,
@@ -35,11 +33,11 @@ class MultiSamplePipeline:
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
-            raise Error('Reference FASTA file not found: ' + ref_fasta)
+            raise Exception('Reference FASTA file not found: ' + ref_fasta)
 
         self.input_data_tsv = os.path.abspath(input_data_tsv)
         if not os.path.exists(self.input_data_tsv):
-            raise Error('Data TSV file not found: ' + input_data_tsv)
+            raise Exception('Data TSV file not found: ' + input_data_tsv)
 
         self.output_dir = os.path.abspath(output_dir)
         self.nextflow_config_file = None if nextflow_config_file is None else os.path.abspath(nextflow_config_file)
@@ -80,13 +78,13 @@ class MultiSamplePipeline:
                 try:
                     vcf_file, *reads_files = line.rstrip().split('\t')
                 except:
-                    raise Error('Bad line in input TSV file: ' + line.rstrip())
+                    raise Exception('Bad line in input TSV file: ' + line.rstrip())
 
                 if not(os.path.exists(vcf_file)):
-                    raise Error('VCF file not found: ' + vcf_file)
+                    raise Exception('VCF file not found: ' + vcf_file)
                 for reads_file in reads_files:
                     if not(os.path.exists(reads_file)):
-                        raise Error('Reads file not found: ' + reads_file)
+                        raise Exception('Reads file not found: ' + reads_file)
 
                 data.append((os.path.abspath(vcf_file), [os.path.abspath(x) for x in reads_files]))
 
@@ -414,7 +412,7 @@ process gramtools_build_chunks{
 
     output:
         file("gmtools_build_dir") into gramtools_build_small_vars_out
-    
+
 
     """
     #!/usr/bin/env python3
@@ -487,7 +485,7 @@ process merge_small_vars_vcfs {
             if self.force:
                 shutil.rmtree(self.output_dir)
             else:
-                raise Error('Error! Output directory already exists. ' + self.output_dir)
+                raise Exception('Error! Output directory already exists. ' + self.output_dir)
         os.mkdir(self.output_dir)
 
 

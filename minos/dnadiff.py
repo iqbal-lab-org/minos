@@ -8,8 +8,6 @@ from cluster_vcf_records import vcf_clusterer, vcf_file_read, vcf_record
 
 from minos import utils
 
-class Error (Exception): pass
-
 dnadiff_output_extensions = [
     '1coords',
     '1delta',
@@ -155,7 +153,7 @@ class Dnadiff:
                     '1/1',
                 ]))
             else:
-                raise Error('Unknown variant type: ' + str(variant))
+                raise Exception('Unknown variant type: ' + str(variant))
 
             assert new_record.REF == query_seqs[new_record.CHROM][new_record.POS:new_record.POS + len(new_record.REF)]
 

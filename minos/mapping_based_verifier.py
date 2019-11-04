@@ -10,8 +10,6 @@ from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
 from minos import dependencies, dnadiff, plots, utils
 
-class Error (Exception): pass
-
 
 def sam_reader(infile):
     '''Reads SAM file made by _MappingBasedVerifier._map_seqs_to_ref().
@@ -69,7 +67,7 @@ class MappingBasedVerifier:
         self.expected_variants_vcf = expected_variants_vcf
         self.run_dnadiff = run_dnadiff
         if self.run_dnadiff and self.expected_variants_vcf is not None:
-            raise Error('Error! Incompatible options. expected_variants_vcf file provided, and run_dnadiff is True')
+            raise Exception('Error! Incompatible options. expected_variants_vcf file provided, and run_dnadiff is True')
         self.dnadiff_outprefix = os.path.abspath(outprefix + '.dnadiff')
         self.vcf_false_negatives_file_out = os.path.abspath(outprefix + '.false_negatives.vcf')
         self.filter_and_cluster_vcf = filter_and_cluster_vcf
@@ -204,7 +202,7 @@ class MappingBasedVerifier:
                             try:
                                 vcf_record.ALT = [vcf_record.ALT[int(genotypes[0]) - 1]]
                             except:
-                                raise Error('BAD VCf line:' + str(vcf_record))
+                                raise Exception('BAD VCf line:' + str(vcf_record))
                         else:
                             vcf_record.set_format_key_value('GT', '0/0')
                             vcf_record.ALT = [vcf_record.ALT[0]]
@@ -293,7 +291,7 @@ class MappingBasedVerifier:
             try:
                 nm = sam_record.get_tag('NM')
             except:
-                raise Error('No NM tag found in sam record:' + str(sam_record))
+                raise Exception('No NM tag found in sam record:' + str(sam_record))
 
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
             if all_mapped and nm == 0:

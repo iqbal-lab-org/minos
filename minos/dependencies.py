@@ -7,14 +7,13 @@ import pyfastaq
 
 from minos import utils, __version__
 
-class Error (Exception): pass
 
 
 def find_binary(program, allow_fail=False):
     binary = os.environ.get('MINOS_' + program.upper(), program)
     which_output = shutil.which(binary)
     if which_output is None and not allow_fail:
-        raise Error('Error finding ' + program + ' in $PATH. Looked for "' + binary + '"')
+        raise Exception('Error finding ' + program + ' in $PATH. Looked for "' + binary + '"')
     return which_output
 
 
@@ -72,7 +71,7 @@ def get_version_of_program(program, binary=None, allow_fail=False):
                 return version
         return None
     else:
-        raise Error('Program name "' + program + '" not recognised. Cannot continue')
+        raise Exception('Program name "' + program + '" not recognised. Cannot continue')
 
 
 def find_python_packages():
@@ -160,5 +159,5 @@ def check_and_report_dependencies(outfile=None, programs=None):
         for line in report_lines:
             logging.info('Depencency check: ' + line)
     if not all_ok:
-        raise Error('At least one dependency not found')
+        raise Exception('At least one dependency not found')
 

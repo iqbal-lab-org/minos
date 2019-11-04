@@ -13,8 +13,6 @@ from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
 from minos import dependencies, dnadiff, plots, utils
 
-class Error (Exception): pass
-
 class EvaluateRecall:
     '''tto write'''
     def __init__(self, truth_vcf_file, truth_vcf_ref, query_vcf_file, query_vcf_ref, outprefix, flank_length=31, merge_length=None, filter_and_cluster_vcf=True, discard_ref_calls=True, allow_flank_mismatches=True, exclude_regions_bed_file=None, max_soft_clipped=3):
@@ -108,7 +106,7 @@ class EvaluateRecall:
                             try:
                                 vcf_record.ALT = [vcf_record.ALT[int(genotypes[0]) - 1]]
                             except:
-                                raise Error('BAD VCf line:' + str(vcf_record))
+                                raise Exception('BAD VCf line:' + str(vcf_record))
                         else:
                             vcf_record.set_format_key_value('GT', '0/0')
                             vcf_record.ALT = [vcf_record.ALT[0]]
@@ -204,7 +202,7 @@ class EvaluateRecall:
             try:
                 nm = sam_record.get_tag('NM')
             except:
-                raise Error('No NM tag found in sam record:' + str(sam_record))
+                raise Exception('No NM tag found in sam record:' + str(sam_record))
 
             all_mapped = len(sam_record.cigartuples) == 1 and sam_record.cigartuples[0][0] == 0
             if all_mapped and nm == 0:

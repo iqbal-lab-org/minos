@@ -9,8 +9,6 @@ from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
 from minos import bam_read_extract, dependencies, genotype_confidence_simulator, gramtools, plots, utils, vcf_chunker
 
-class Error (Exception): pass
-
 class Adjudicator:
     """
     Runs gramtools build and quasimap, genotyping, and confidence simulations for a set of vcfs and a fasta ref.
@@ -61,9 +59,9 @@ class Adjudicator:
             self.split_input_dir = self.gramtools_build_dir
             self.user_supplied_gramtools_build_dir = True
             if not os.path.exists(self.gramtools_build_dir):
-                raise Error('Error! gramtools_build_dir=' + self.gramtools_build_dir + ' used, but directory not found on disk. Cannot continue')
+                raise Exception('Error! gramtools_build_dir=' + self.gramtools_build_dir + ' used, but directory not found on disk. Cannot continue')
             if len(self.vcf_files) != 1:
-                raise Error('Error! If gramtools_build_dir is used, then There Can Be Only One input VCF file (which is assumed to be clustered')
+                raise Exception('Error! If gramtools_build_dir is used, then There Can Be Only One input VCF file (which is assumed to be clustered')
 
 
         self.gramtools_kmer_size = gramtools_kmer_size
@@ -75,7 +73,7 @@ class Adjudicator:
         self.total_splits = total_splits
 
         if (self.total_splits is not None or self.variants_per_split is not None or self.alleles_per_split is not None) and len(self.reads_files) != 1:
-            raise Error('Error! If using splitting, must input one reads file (which is assumed to be a sorted indexed BAM file)')
+            raise Exception('Error! If using splitting, must input one reads file (which is assumed to be a sorted indexed BAM file)')
 
         self.clean = clean
         self.genotype_simulation_iterations = genotype_simulation_iterations
@@ -90,10 +88,10 @@ class Adjudicator:
                 shutil.rmtree(self.outdir)
                 os.mkdir(self.outdir)
             else:
-                raise Error(f'Output directory {self.outdir} already exists. '
+                raise Exception(f'Output directory {self.outdir} already exists. '
                             f'Rerun command with --force flag if you are OK with overwriting it')
         except Exception as e:
-            raise Error(f'Could not make {self.outdir} due to {e}')
+            raise Exception(f'Could not make {self.outdir} due to {e}')
 
     @classmethod
     def _get_gramtools_kmer_size(cls, build_dir, input_kmer_size):
@@ -105,7 +103,7 @@ class Adjudicator:
             if 'kmer_size' in json_build_report:
                 kmer_size_from_json = json_build_report['kmer_size']
             else:
-                raise Error('kmer_size not found in graamtools build report' + json_file)
+                raise Exception('kmer_size not found in graamtools build report' + json_file)
 
             if input_kmer_size is not None:
                 logging.warning('gramtools_kmer_size option used, but going to ignore it because gramtools_build_dir used, which means that gramtools build has already been run')
@@ -158,7 +156,7 @@ class Adjudicator:
         if not vcf_file_read.vcf_file_has_at_least_one_record(self.clustered_vcf):
             error_message = 'No VCF records. Cannot continue. Please check that the input VCF files contained at least one variant'
             logging.error(error_message)
-            raise Error(error_message)
+            raise Exception(error_message)
 
 
         if self.total_splits is not None or self.variants_per_split is not None or \
@@ -202,7 +200,7 @@ class Adjudicator:
         try:
             os.mkdir(self.split_output_dir)
         except:
-            raise Error('Error making output split directory ' + self.split_output_dir)
+            raise Exception('Error making output split directory ' + self.split_output_dir)
 
         if self.use_unmapped_reads:
             unmapped_reads_file = os.path.join(self.split_output_dir, 'unmapped_reads.bam')
@@ -231,7 +229,7 @@ class Adjudicator:
                     reads_files = [unmapped_reads_file, split_reads_file]
                 else:
                     reads_files = [split_reads_file]
-                
+
                 split_vcf_out = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number) + '.out.vcf')
                 unfiltered_vcf_out = os.path.join(self.split_output_dir, 'split.' + str(split_file.file_number)
                                                   + '.out.debug.calls_with_zero_cov_alleles.vcf')

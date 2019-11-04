@@ -9,8 +9,6 @@ import cluster_vcf_records
 
 from minos import gramtools
 
-class Error (Exception): pass
-
 
 split_file_attributes = [
     'filename',
@@ -56,14 +54,14 @@ class VcfChunker:
             self.max_read_length = max_read_length
 
             if not os.path.exists(self.vcf_infile):
-                raise Error('VCF file not found: ' + self.vcf_infile)
+                raise Exception('VCF file not found: ' + self.vcf_infile)
             if not os.path.exists(self.ref_fasta):
-                raise Error('Reference FASTA file not found: ' + self.ref_fasta)
+                raise Exception('Reference FASTA file not found: ' + self.ref_fasta)
 
             try:
                 os.mkdir(self.outdir)
             except:
-                raise Error('Error mkdir ' + self.outdir)
+                raise Exception('Error mkdir ' + self.outdir)
 
             self.vcf_split_files = {} # ref name -> list of SplitFile
 
@@ -248,6 +246,6 @@ class VcfChunker:
                         print(records_to_merge[j], file=f)
 
         if self.total_input_records != total_output_records:
-            raise Error('Number of input VCF records = ' + str(self.total_input_records) + ' != ' + str(total_output_records) + ' = numnber of output VCF records. Cannot continue')
+            raise Exception('Number of input VCF records = ' + str(self.total_input_records) + ' != ' + str(total_output_records) + ' = numnber of output VCF records. Cannot continue')
 
         logging.info('Finished making merged VCF file. Total records: ' + str(self.total_input_records))

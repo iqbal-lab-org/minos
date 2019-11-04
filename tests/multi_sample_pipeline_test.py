@@ -38,7 +38,7 @@ class TestMultiSamplePipeline(unittest.TestCase):
         for filename in [vcf1, vcf2, vcf3, reads1, reads3_1, reads3_2]:
             with open(filename, 'w'):
                 pass
-            with self.assertRaises(multi_sample_pipeline.Error):
+            with self.assertRaises(Exception):
                 multi_sample_pipeline.MultiSamplePipeline._load_input_data_tsv(tsv_file)
 
         with open(reads2, 'w'):
