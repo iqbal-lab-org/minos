@@ -1,8 +1,5 @@
-import shutil
 import os
 import unittest
-
-import pysam
 
 from minos import bam_read_extract
 

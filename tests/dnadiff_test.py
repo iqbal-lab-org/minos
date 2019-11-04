@@ -1,7 +1,6 @@
 import copy
 import os
 import random
-import shutil
 import unittest
 
 import pyfastaq
@@ -18,9 +17,7 @@ def write_fasta_files(ref_fa, qry_fa):
     # reported by dnadiff in the {q,r}diff files
     qry_seq = copy.copy(ref_seq)
     # gap in each of the seqs (will be in .qdiff)
-    ref_seq_deletion = "".join(ref_seq[999:1500])
     ref_seq = ref_seq[:1000] + ref_seq[1500:]
-    qry_seq_deletion = "".join(qry_seq[3999:4500])
     qry_seq = qry_seq[:4000] + qry_seq[4500:]
     ref_seqs = {"ref.gap": pyfastaq.sequences.Fasta("ref.gap", "".join(ref_seq))}
     qry_seqs = {"qry.gap": pyfastaq.sequences.Fasta("qry.gap", "".join(qry_seq))}

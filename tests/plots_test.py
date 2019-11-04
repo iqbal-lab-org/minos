@@ -1,5 +1,4 @@
 import filecmp
-import shutil
 import os
 import unittest
 

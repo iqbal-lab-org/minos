@@ -1,6 +1,5 @@
 import filecmp
 import os
-import shutil
 import unittest
 
 from minos import vcf_file_split_deletions

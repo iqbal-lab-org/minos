@@ -46,7 +46,7 @@ class TestGramtools(unittest.TestCase):
         if os.path.exists(tmp_out_build):
             shutil.rmtree(tmp_out_build)
         if os.path.exists(tmp_out_quasimap):
-            shutil.rmtree(tmp_quasimap)
+            shutil.rmtree(tmp_out_quasimap)
         vcf_file = os.path.join(data_dir, "run_gramtools.calls.vcf")
         ref_file = os.path.join(data_dir, "run_gramtools.ref.fa")
         reads_file = os.path.join(data_dir, "run_gramtools.reads.fq")
@@ -88,7 +88,7 @@ class TestGramtools(unittest.TestCase):
         if os.path.exists(tmp_out_build):
             shutil.rmtree(tmp_out_build)
         if os.path.exists(tmp_out_quasimap):
-            shutil.rmtree(tmp_quasimap)
+            shutil.rmtree(tmp_out_quasimap)
         vcf_file = os.path.join(data_dir, "run_gramtools.empty.vcf")
         ref_file = os.path.join(data_dir, "run_gramtools.ref.fa")
         reads_file = os.path.join(data_dir, "run_gramtools.reads.fq")
@@ -111,7 +111,7 @@ class TestGramtools(unittest.TestCase):
         if os.path.exists(tmp_out_build):
             shutil.rmtree(tmp_out_build)
         if os.path.exists(tmp_out_quasimap):
-            shutil.rmtree(tmp_quasimap)
+            shutil.rmtree(tmp_out_quasimap)
         vcf_file = os.path.join(data_dir, "run_gramtools.calls.vcf")
         ref_file = os.path.join(data_dir, "run_gramtools.ref.fa")
         reads_file1 = os.path.join(data_dir, "run_gramtools.reads_1.fq")
@@ -215,7 +215,6 @@ class TestGramtools(unittest.TestCase):
         record = vcf_record.VcfRecord(
             "ref\t4\t.\tT\tTC,G\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0"
         )
-        allele_depths = {"T": 1, "G": 80}
         allele_combination_cov = {"1": 1, "2": 80}
         allele_groups_dict = {"1": {0}, "2": {2}, "3": {1, 2}}
         allele_per_base_cov = [[1], [0, 0], [80]]
@@ -245,7 +244,6 @@ class TestGramtools(unittest.TestCase):
         record = vcf_record.VcfRecord(
             "ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0"
         )
-        allele_depths = {"T": 0}
         allele_combination_cov = {"1": 0, "2": 0}
         allele_groups_dict = {"1": {0}}
         allele_per_base_cov = [[0], [0], [0, 0]]
