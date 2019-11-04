@@ -1,5 +1,6 @@
 from minos import adjudicator
 
+
 def run(options):
     adj = adjudicator.Adjudicator(
         options.outdir,
@@ -20,4 +21,3 @@ def run(options):
         use_unmapped_reads=options.use_unmapped_reads,
     )
     adj.run()
-

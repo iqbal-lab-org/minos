@@ -1,5 +1,6 @@
 from minos import multi_sample_pipeline
 
+
 def run(options):
     pipeline = multi_sample_pipeline.MultiSamplePipeline(
         options.ref_fasta,

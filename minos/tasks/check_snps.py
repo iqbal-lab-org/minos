@@ -1,5 +1,6 @@
 from minos import dnadiff_mapping_based_verifier
 
+
 def run(options):
     verifier = dnadiff_mapping_based_verifier.DnadiffMappingBasedVerifier(
         options.dnadiff_snps_file,
@@ -19,4 +20,3 @@ def run(options):
         max_soft_clipped=options.max_soft_clipped,
     )
     verifier.run()
-

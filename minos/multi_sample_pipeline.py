@@ -6,10 +6,10 @@ from cluster_vcf_records import vcf_file_read
 
 from minos import dependencies, utils, vcf_file_split_deletions
 
-class Error (Exception): pass
 
 class MultiSamplePipeline:
-    def __init__(self,
+    def __init__(
+        self,
         ref_fasta,
         input_data_tsv,
         output_dir,
@@ -35,14 +35,18 @@ class MultiSamplePipeline:
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         if not os.path.exists(self.ref_fasta):
-            raise Error('Reference FASTA file not found: ' + ref_fasta)
+            raise Exception("Reference FASTA file not found: " + ref_fasta)
 
         self.input_data_tsv = os.path.abspath(input_data_tsv)
         if not os.path.exists(self.input_data_tsv):
-            raise Error('Data TSV file not found: ' + input_data_tsv)
+            raise Exception("Data TSV file not found: " + input_data_tsv)
 
         self.output_dir = os.path.abspath(output_dir)
-        self.nextflow_config_file = None if nextflow_config_file is None else os.path.abspath(nextflow_config_file)
+        self.nextflow_config_file = (
+            None
+            if nextflow_config_file is None
+            else os.path.abspath(nextflow_config_file)
+        )
         self.max_alleles_per_cluster = max_alleles_per_cluster
         self.min_large_ref_length = min_large_ref_length
         self.gramtools_max_read_length = gramtools_max_read_length
@@ -50,55 +54,59 @@ class MultiSamplePipeline:
         self.gramtools_build_threads = gramtools_build_threads
 
         if nextflow_work_dir is None:
-            self.nextflow_work_dir = os.path.join(self.output_dir, 'nextflow.work')
+            self.nextflow_work_dir = os.path.join(self.output_dir, "nextflow.work")
         else:
             self.nextflow_work_dir = os.path.abspath(nextflow_work_dir)
 
         self.force = force
-        self.nextflow_input_tsv = os.path.join(self.output_dir, 'nextflow.input.tsv')
-        self.log_file = os.path.join(self.output_dir, 'log.txt')
+        self.nextflow_input_tsv = os.path.join(self.output_dir, "nextflow.input.tsv")
+        self.log_file = os.path.join(self.output_dir, "log.txt")
         self.no_run = no_run
         self.clean = clean
         self.testing = testing
         self.variants_per_split = variants_per_split
         self.alleles_per_split = alleles_per_split
         self.total_splits = total_splits
-        self.nf_ram_cluster_small_vars =  nf_ram_cluster_small_vars
+        self.nf_ram_cluster_small_vars = nf_ram_cluster_small_vars
         self.nf_ram_gramtools_build_small = nf_ram_gramtools_build_small
         self.nf_ram_minos_small_vars = nf_ram_minos_small_vars
         self.nf_ram_merge_small_vars = nf_ram_merge_small_vars
         self.use_unmapped_reads = use_unmapped_reads
 
-
-
     @classmethod
     def _load_input_data_tsv(cls, infile):
-        logging.info('Start reading file ' + infile)
+        logging.info("Start reading file " + infile)
         data = []
         with open(infile) as f:
             for line in f:
                 try:
-                    vcf_file, *reads_files = line.rstrip().split('\t')
+                    vcf_file, *reads_files = line.rstrip().split("\t")
                 except:
-                    raise Error('Bad line in input TSV file: ' + line.rstrip())
+                    raise Exception("Bad line in input TSV file: " + line.rstrip())
 
-                if not(os.path.exists(vcf_file)):
-                    raise Error('VCF file not found: ' + vcf_file)
+                if not (os.path.exists(vcf_file)):
+                    raise Exception("VCF file not found: " + vcf_file)
                 for reads_file in reads_files:
-                    if not(os.path.exists(reads_file)):
-                        raise Error('Reads file not found: ' + reads_file)
+                    if not (os.path.exists(reads_file)):
+                        raise Exception("Reads file not found: " + reads_file)
 
-                data.append((os.path.abspath(vcf_file), [os.path.abspath(x) for x in reads_files]))
+                data.append(
+                    (
+                        os.path.abspath(vcf_file),
+                        [os.path.abspath(x) for x in reads_files],
+                    )
+                )
 
-        logging.info('Finish reading file ' + infile + '. Loaded ' + str(len(data)) + ' samples')
+        logging.info(
+            "Finish reading file " + infile + ". Loaded " + str(len(data)) + " samples"
+        )
         return data
-
 
     @classmethod
     def _merge_vcf_files(cls, infiles_list, outfile):
-        '''Reimplementation of bcftools merge. Load all files into
+        """Reimplementation of bcftools merge. Load all files into
         memory, then write output. bcftools opens all files at the same
-        time, which doesn't work for lots of files'''
+        time, which doesn't work for lots of files"""
         vcf_file_data_list_per_sample = []
         sample_names = []
         header_lines = []
@@ -110,15 +118,17 @@ class MultiSamplePipeline:
 
             with open(filename) as f_vcf:
                 for vcf_line in f_vcf:
-                    if vcf_line.startswith('#'):
-                        if first_file and vcf_line.startswith('##'):
+                    if vcf_line.startswith("#"):
+                        if first_file and vcf_line.startswith("##"):
                             header_lines.append(vcf_line.rstrip())
-                        elif vcf_line.startswith('#CHROM'):
-                            fields = vcf_line.rstrip().split('\t')
+                        elif vcf_line.startswith("#CHROM"):
+                            fields = vcf_line.rstrip().split("\t")
                             assert len(fields) == 10
                             sample_names.append(fields[-1])
                     else:
-                        first_columns, last_column = vcf_line.rstrip().rsplit('\t', maxsplit=1)
+                        first_columns, last_column = vcf_line.rstrip().rsplit(
+                            "\t", maxsplit=1
+                        )
                         new_data.append(last_column)
                         if first_file:
                             common_first_column_data.append(first_columns)
@@ -126,64 +136,94 @@ class MultiSamplePipeline:
             vcf_file_data_list_per_sample.append(new_data)
             first_file = False
 
-        with open(outfile, 'w') as f:
-            print(*header_lines, sep='\n', file=f)
-            print('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', *sample_names, sep='\t', file=f)
+        with open(outfile, "w") as f:
+            print(*header_lines, sep="\n", file=f)
+            print(
+                "#CHROM",
+                "POS",
+                "ID",
+                "REF",
+                "ALT",
+                "QUAL",
+                "FILTER",
+                "INFO",
+                "FORMAT",
+                *sample_names,
+                sep="\t",
+                file=f
+            )
             for i, common_first_data in enumerate(common_first_column_data):
-                sample_data_cols = [vcf_file_data_list_per_sample[j][i] for j in range(len(vcf_file_data_list_per_sample))]
-                print(common_first_data, *sample_data_cols, sep='\t', file=f)
-
+                sample_data_cols = [
+                    vcf_file_data_list_per_sample[j][i]
+                    for j in range(len(vcf_file_data_list_per_sample))
+                ]
+                print(common_first_data, *sample_data_cols, sep="\t", file=f)
 
     @classmethod
     def _filter_input_file_for_clustering(cls, infile, outfile):
-        header_lines, vcf_records = vcf_file_read.vcf_file_to_dict(infile, sort=True, homozygous_only=False, remove_asterisk_alts=True, remove_useless_start_nucleotides=True)
-        with open(outfile, 'w') as f:
-            print(*header_lines, sep='\n', file=f)
+        header_lines, vcf_records = vcf_file_read.vcf_file_to_dict(
+            infile,
+            sort=True,
+            homozygous_only=False,
+            remove_asterisk_alts=True,
+            remove_useless_start_nucleotides=True,
+        )
+        with open(outfile, "w") as f:
+            print(*header_lines, sep="\n", file=f)
             for ref_name in vcf_records:
                 for vcf_record in vcf_records[ref_name]:
-                    if 'MISMAPPED_UNPLACEABLE' in vcf_record.FILTER:
+                    if "MISMAPPED_UNPLACEABLE" in vcf_record.FILTER:
                         continue
-                    if vcf_record.FORMAT is None or 'GT' not in vcf_record.FORMAT:
-                        logging.warning('No GT in vcf record:' + str(vcf_record))
+                    if vcf_record.FORMAT is None or "GT" not in vcf_record.FORMAT:
+                        logging.warning("No GT in vcf record:" + str(vcf_record))
                         continue
 
-                    genotype = vcf_record.FORMAT['GT']
-                    genotypes = genotype.split('/')
+                    genotype = vcf_record.FORMAT["GT"]
+                    genotypes = genotype.split("/")
 
                     called_alleles = set(genotypes)
-                    if called_alleles == {'0'} or '.' in called_alleles:
+                    if called_alleles == {"0"} or "." in called_alleles:
                         continue
 
                     genotypes = sorted([int(x) for x in genotypes])
 
                     if len(called_alleles) == 1:
                         assert 0 not in genotypes
-                        vcf_record.set_format_key_value('GT', '1/1')
+                        vcf_record.set_format_key_value("GT", "1/1")
                         vcf_record.ALT = [vcf_record.ALT[int(genotypes[0]) - 1]]
                     else:
                         assert len(called_alleles) == 2
-                        vcf_record.set_format_key_value('GT', '0/1')
+                        vcf_record.set_format_key_value("GT", "0/1")
                         if 0 in genotypes:
-                            vcf_record.set_format_key_value('GT', '0/1')
+                            vcf_record.set_format_key_value("GT", "0/1")
                             vcf_record.ALT = [vcf_record.ALT[genotypes[1] - 1]]
                         else:
-                            vcf_record.set_format_key_value('GT', '1/2')
-                            vcf_record.ALT = [vcf_record.ALT[genotypes[0] - 1], vcf_record.ALT[genotypes[1] - 1]]
+                            vcf_record.set_format_key_value("GT", "1/2")
+                            vcf_record.ALT = [
+                                vcf_record.ALT[genotypes[0] - 1],
+                                vcf_record.ALT[genotypes[1] - 1],
+                            ]
 
                     print(vcf_record, file=f)
 
-
     @classmethod
-    def _nextflow_helper_process_input_vcf_file(cls, infile, out_small_vars, out_big_vars, out_sample_name, min_large_ref_length):
-        splitter = vcf_file_split_deletions.VcfFileSplitDeletions(infile, out_small_vars, out_big_vars, min_large_ref_length=min_large_ref_length)
+    def _nextflow_helper_process_input_vcf_file(
+        cls, infile, out_small_vars, out_big_vars, out_sample_name, min_large_ref_length
+    ):
+        splitter = vcf_file_split_deletions.VcfFileSplitDeletions(
+            infile,
+            out_small_vars,
+            out_big_vars,
+            min_large_ref_length=min_large_ref_length,
+        )
         splitter.run()
         header_lines = vcf_file_read.get_header_lines_from_vcf_file(infile)
         sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(header_lines)
         assert sample_name is not None
         max_read_length = None
         for line in header_lines:
-            if line.startswith('##minos_max_read_length='):
-                max_read_length = int(line.rstrip().split('=')[1])
+            if line.startswith("##minos_max_read_length="):
+                max_read_length = int(line.rstrip().split("=")[1])
 
         with open(out_sample_name, "w") as f:
             sample_name = vcf_file_read.get_sample_name_from_vcf_file(infile)
@@ -192,19 +232,18 @@ class MultiSamplePipeline:
 
         return max_read_length
 
-
     @classmethod
     def _write_nextflow_data_tsv(cls, data, outfile):
-        with open(outfile, 'w') as f:
-            print('sample_id', 'vcf_file', 'reads_files', sep='\t', file=f)
+        with open(outfile, "w") as f:
+            print("sample_id", "vcf_file", "reads_files", sep="\t", file=f)
             for i, (vcf_file, reads_files) in enumerate(data):
-                print(i, vcf_file, ' '.join(reads_files), sep='\t', file=f)
-
+                print(i, vcf_file, " ".join(reads_files), sep="\t", file=f)
 
     @classmethod
     def _write_nextflow_script(cls, outfile):
-        with open(outfile, 'w') as f:
-            print(r'''
+        with open(outfile, "w") as f:
+            print(
+                r'''
 params.data_in_tsv = ""
 params.ref_fasta = ""
 params.min_large_ref_length = 0
@@ -414,7 +453,7 @@ process gramtools_build_chunks{
 
     output:
         file("gmtools_build_dir") into gramtools_build_small_vars_out
-    
+
 
     """
     #!/usr/bin/env python3
@@ -479,102 +518,131 @@ process merge_small_vars_vcfs {
     multi_sample_pipeline.MultiSamplePipeline._merge_vcf_files(filenames, 'combined_calls.vcf')
     """
 }
-''', file=f)
-
+''',
+                file=f,
+            )
 
     def _make_output_dir(self):
         if os.path.exists(self.output_dir):
             if self.force:
                 shutil.rmtree(self.output_dir)
             else:
-                raise Error('Error! Output directory already exists. ' + self.output_dir)
+                raise Exception(
+                    "Error! Output directory already exists. " + self.output_dir
+                )
         os.mkdir(self.output_dir)
-
 
     def _prepare_nextflow_input_files(self):
         input_data = MultiSamplePipeline._load_input_data_tsv(self.input_data_tsv)
-        MultiSamplePipeline._write_nextflow_data_tsv(input_data, self.nextflow_input_tsv)
-
+        MultiSamplePipeline._write_nextflow_data_tsv(
+            input_data, self.nextflow_input_tsv
+        )
 
     def run(self):
         self._make_output_dir()
-        fh = logging.FileHandler(self.log_file, mode='w')
+        fh = logging.FileHandler(self.log_file, mode="w")
         log = logging.getLogger()
-        formatter = logging.Formatter('[minos %(asctime)s %(levelname)s] %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+        formatter = logging.Formatter(
+            "[minos %(asctime)s %(levelname)s] %(message)s", datefmt="%d-%m-%Y %H:%M:%S"
+        )
         fh.setFormatter(formatter)
         log.addHandler(fh)
-        dependencies.check_and_report_dependencies(programs=['nextflow'])
+        dependencies.check_and_report_dependencies(programs=["nextflow"])
 
         self._prepare_nextflow_input_files()
         original_dir = os.getcwd()
         os.chdir(self.output_dir)
-        nextflow_script = 'nextflow.run.nf'
+        nextflow_script = "nextflow.run.nf"
         MultiSamplePipeline._write_nextflow_script(nextflow_script)
-        logging.info('Prepared nextflow files. cd ' + self.output_dir)
+        logging.info("Prepared nextflow files. cd " + self.output_dir)
 
-        nextflow = dependencies.find_binary('nextflow')
+        nextflow = dependencies.find_binary("nextflow")
         nextflow_command = [
-            nextflow, 'run',
-            '-work-dir', self.nextflow_work_dir,
-            '-with-dag', 'nextflow.out.dag.pdf',
-            '-with-trace', 'nextflow.out.trace.txt',
+            nextflow,
+            "run",
+            "-work-dir",
+            self.nextflow_work_dir,
+            "-with-dag",
+            "nextflow.out.dag.pdf",
+            "-with-trace",
+            "nextflow.out.trace.txt",
         ]
 
         if self.nextflow_config_file is not None:
-            nextflow_command.extend(['-c', self.nextflow_config_file])
+            nextflow_command.extend(["-c", self.nextflow_config_file])
 
         nextflow_command += [
             nextflow_script,
-            '--ref_fasta', self.ref_fasta,
-            '--data_in_tsv', self.nextflow_input_tsv,
-            '--max_alleles_per_cluster', str(self.max_alleles_per_cluster),
-            '--min_large_ref_length', str(self.min_large_ref_length),
-            '--final_outdir', self.output_dir,
-            '--gramtools_max_read_length', str(self.gramtools_max_read_length),
-            '--cluster_small_vars_ram', str(self.nf_ram_cluster_small_vars),
-            '--gramtools_build_small_vars_ram', str(self.nf_ram_gramtools_build_small),
-            '--gramtools_kmer_size', str(self.gramtools_kmer_size),
-            '--gramtools_build_threads', str(self.gramtools_build_threads),
-            '--minos_small_vars_ram', str(self.nf_ram_minos_small_vars),
-            '--merge_small_vars_ram', str(self.nf_ram_merge_small_vars),
+            "--ref_fasta",
+            self.ref_fasta,
+            "--data_in_tsv",
+            self.nextflow_input_tsv,
+            "--max_alleles_per_cluster",
+            str(self.max_alleles_per_cluster),
+            "--min_large_ref_length",
+            str(self.min_large_ref_length),
+            "--final_outdir",
+            self.output_dir,
+            "--gramtools_max_read_length",
+            str(self.gramtools_max_read_length),
+            "--cluster_small_vars_ram",
+            str(self.nf_ram_cluster_small_vars),
+            "--gramtools_build_small_vars_ram",
+            str(self.nf_ram_gramtools_build_small),
+            "--gramtools_kmer_size",
+            str(self.gramtools_kmer_size),
+            "--gramtools_build_threads",
+            str(self.gramtools_build_threads),
+            "--minos_small_vars_ram",
+            str(self.nf_ram_minos_small_vars),
+            "--merge_small_vars_ram",
+            str(self.nf_ram_merge_small_vars),
         ]
 
         if self.testing:
-            nextflow_command.append('--testing')
+            nextflow_command.append("--testing")
 
         if self.use_unmapped_reads:
-            nextflow_command.append('--use_unmapped_reads')
+            nextflow_command.append("--use_unmapped_reads")
 
         if self.variants_per_split is not None:
-            nextflow_command.append('--variants_per_split ' + str(self.variants_per_split))
+            nextflow_command.append(
+                "--variants_per_split " + str(self.variants_per_split)
+            )
         if self.alleles_per_split is not None:
-            nextflow_command.append('--alleles_per_split ' + str(self.alleles_per_split))
+            nextflow_command.append(
+                "--alleles_per_split " + str(self.alleles_per_split)
+            )
         elif self.total_splits is not None:
-            nextflow_command.append('--total_splits ' + str(self.total_splits))
+            nextflow_command.append("--total_splits " + str(self.total_splits))
 
-        nextflow_command = ' '.join(nextflow_command)
+        nextflow_command = " ".join(nextflow_command)
 
         if self.no_run:
-            print('Prepared nextflow pipeline. --no_run used, so not running. The nextflow command to run is:')
+            print(
+                "Prepared nextflow pipeline. --no_run used, so not running. The nextflow command to run is:"
+            )
             print(nextflow_command)
             return
         else:
-            logging.info('Start running nextflow: ' + nextflow_command)
+            logging.info("Start running nextflow: " + nextflow_command)
             syscall_process = utils.syscall(nextflow_command)
-            logging.info('Finish running nextflow. Writing nextflow stdout/stderr to files')
-            with open('nextflow.stdout', 'w') as f:
+            logging.info(
+                "Finish running nextflow. Writing nextflow stdout/stderr to files"
+            )
+            with open("nextflow.stdout", "w") as f:
                 print(syscall_process.stdout.rstrip(), file=f)
-            with open('nextflow.stderr', 'w') as f:
+            with open("nextflow.stderr", "w") as f:
                 print(syscall_process.stderr.rstrip(), file=f)
 
-            logging.info('cd ' + original_dir)
+            logging.info("cd " + original_dir)
 
         if self.clean:
-            logging.info('Delete nextflow work directory ' + self.nextflow_work_dir)
+            logging.info("Delete nextflow work directory " + self.nextflow_work_dir)
             shutil.rmtree(self.nextflow_work_dir)
-            logging.info('Delete .nextflow directory')
-            shutil.rmtree('.nextflow')
+            logging.info("Delete .nextflow directory")
+            shutil.rmtree(".nextflow")
 
-        logging.info('Rename .nextflow.log -> nextflow.log')
-        os.rename('.nextflow.log', 'nextflow.log')
+        logging.info("Rename .nextflow.log -> nextflow.log")
+        os.rename(".nextflow.log", "nextflow.log")
         os.chdir(original_dir)

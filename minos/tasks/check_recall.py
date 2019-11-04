@@ -1,5 +1,6 @@
 from minos import evaluate_recall
 
+
 def run(options):
     verifier = evaluate_recall.EvaluateRecall(
         options.truth_vcf_file,
@@ -16,4 +17,3 @@ def run(options):
         max_soft_clipped=options.max_soft_clipped,
     )
     verifier.run()
-

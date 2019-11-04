@@ -1,5 +1,6 @@
 from minos import vcf_chunker
 
+
 def run(options):
     chunker = vcf_chunker.VcfChunker(
         options.outdir,
@@ -14,5 +15,3 @@ def run(options):
         threads=options.threads,
     )
     chunker.make_split_files()
-
-

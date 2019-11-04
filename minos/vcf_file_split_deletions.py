@@ -1,9 +1,9 @@
 from cluster_vcf_records import vcf_file_read
 
-class Error (Exception): pass
 
 class VcfFileSplitDeletions:
-    def __init__(self,
+    def __init__(
+        self,
         infile,
         outfile_small_vars,
         outfile_long_deletions,
@@ -14,13 +14,14 @@ class VcfFileSplitDeletions:
         self.outfile_long_deletions = outfile_long_deletions
         self.min_large_ref_length = min_large_ref_length
 
-
     def run(self):
         header_lines, vcf_records = vcf_file_read.vcf_file_to_list(self.infile)
 
-        with open(self.outfile_small_vars, 'w') as f_small, open(self.outfile_long_deletions, 'w') as f_big:
-            print(*header_lines, sep='\n', file=f_small)
-            print(*header_lines, sep='\n', file=f_big)
+        with open(self.outfile_small_vars, "w") as f_small, open(
+            self.outfile_long_deletions, "w"
+        ) as f_big:
+            print(*header_lines, sep="\n", file=f_small)
+            print(*header_lines, sep="\n", file=f_big)
 
             for original_record in vcf_records:
                 split_records = original_record.split_into_snps()
