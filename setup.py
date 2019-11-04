@@ -10,14 +10,9 @@ setup(
     author='Martin Hunt',
     author_email='mhunt@ebi.ac.uk',
     url='https://github.com/iqbal-lab-org/minos',
-    scripts=glob.glob('scripts/*'),
     test_suite='nose.collector',
     tests_require=['nose >= 1.3'],
-    entry_points={
-        'console_scripts' : [
-            'minos = minos.minos',
-        ],
-    },
+    entry_points={"console_scripts": ["minos = minos.__main__:main"]},
     install_requires=[
         'biopython',
         'cluster_vcf_records >= 0.10.0',
