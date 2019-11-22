@@ -1,28 +1,12 @@
 {
-    "start_time": "1524153313",
-    "end_time": "1524153329",
-    "total_runtime": 16,
-    "kmer_size": 15,
-    "max_read_length": 200,
-    "prg_build_report": {
-        "command": "perl foo bar baz",
-        "return_value_is_0": true,
-        "stdout": [
-            "Finished printing linear PRG. Final number in alphabet is  78"
-        ]
-    },
-    "gramtools_cpp_build": {
-        "command": "/usr/local/lib/python3.6/dist-packages/gramtools/bin/gram build foo",
-        "return_value_is_0": false,
-        "stdout": [
-            "maximum thread count: 1",
-            "Executing build command",
-            "Generating integer encoded PRG",
-            "Number of charecters in integer encoded linear PRG: 4411709",
-            "Generating FM-Index",
-            "Generating PRG masks",
-            "Building kmer index"
-        ]
+    "start_time": "1574166931",
+    "end_time": "1574166931",
+    "total_runtime": 0,
+    "success": false,
+    "vcf_record_clustering": {
+        "success": true,
+        "error_message": null,
+        "Run time": 0
     },
     "current_working_directory": "/home/kryten/"
 }

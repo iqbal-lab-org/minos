@@ -373,12 +373,11 @@ class Adjudicator:
             kmer_size=self.gramtools_kmer_size,
         )
 
-        # TODO: change this in future releases
-        perl_generated_vcf = os.path.join(build_dir, "perl_generated.vcf")
+        build_vcf = os.path.join(build_dir, "build.vcf")
 
         logging.info("Loading gramtools quasimap output files " + quasimap_dir)
         mean_depth, variance_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(
-            perl_generated_vcf, quasimap_dir
+            build_vcf, quasimap_dir
         )
         Adjudicator.mean_depths.append(mean_depth)
         Adjudicator.variance_depths.append(variance_depth)
