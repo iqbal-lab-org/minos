@@ -64,17 +64,17 @@ class TestGramtools(unittest.TestCase):
         self.assertTrue(os.path.exists(tmp_out_build))
         self.assertTrue(os.path.exists(tmp_out_quasimap))
         self.assertTrue(
-            os.path.exists(os.path.join(tmp_out_quasimap, "allele_base_coverage.json"))
+            os.path.exists(os.path.join(tmp_out_quasimap, "quasimap_outputs", "allele_base_coverage.json"))
         )
         self.assertTrue(
             os.path.exists(
-                os.path.join(tmp_out_quasimap, "grouped_allele_counts_coverage.json")
+                os.path.join(tmp_out_quasimap, "quasimap_outputs", "grouped_allele_counts_coverage.json")
             )
         )
+        self.assertIn("gramtools_build", build_report)
+        self.assertIn("gramtools_cpp_quasimap", quasimap_report)
         shutil.rmtree(tmp_out_build)
         shutil.rmtree(tmp_out_quasimap)
-        self.assertIn("prg_build_report", build_report)
-        self.assertIn("gramtools_cpp_quasimap", quasimap_report)
 
     def test_run_gramtools_fails(self):
         """test run_gramtools when fails"""
@@ -130,11 +130,11 @@ class TestGramtools(unittest.TestCase):
         self.assertTrue(os.path.exists(tmp_out_build))
         self.assertTrue(os.path.exists(tmp_out_quasimap))
         self.assertTrue(
-            os.path.exists(os.path.join(tmp_out_quasimap, "allele_base_coverage.json"))
+            os.path.exists(os.path.join(tmp_out_quasimap, "quasimap_outputs", "allele_base_coverage.json"))
         )
         self.assertTrue(
             os.path.exists(
-                os.path.join(tmp_out_quasimap, "grouped_allele_counts_coverage.json")
+                os.path.join(tmp_out_quasimap, "quasimap_outputs", "grouped_allele_counts_coverage.json")
             )
         )
         shutil.rmtree(tmp_out_build)
