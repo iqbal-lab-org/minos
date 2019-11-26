@@ -116,7 +116,6 @@ class TestAdjudicator(unittest.TestCase):
         shutil.rmtree(outdir)
         shutil.rmtree(outdir2)
 
-
     def test_run_clean_is_true(self):
         """test run when we do clean files afterwards"""
         # We're just testing that it doesn't crash.
@@ -136,7 +135,6 @@ class TestAdjudicator(unittest.TestCase):
             ref_fasta,
             [reads_file],
             vcf_files,
-            #variants_per_split=3,
             clean=True,
             gramtools_kmer_size=5,
             genotype_simulation_iterations=1000,
@@ -145,7 +143,6 @@ class TestAdjudicator(unittest.TestCase):
         self.assertTrue(os.path.exists(outdir))
         self.assertTrue(os.path.exists(os.path.join(outdir, "final.vcf")))
         shutil.rmtree(outdir)
-
 
     def test_run_empty_vcf_input_files(self):
         """test run when input files have no variants"""
