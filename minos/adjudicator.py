@@ -386,7 +386,7 @@ class Adjudicator:
 
         if self.clean:
             os.rename(
-                os.path.join(quasimap_dir, "report.json"), quasimap_dir + ".report.json"
+                os.path.join(quasimap_dir, "quasimap_outputs", "quasimap_report.json"), quasimap_dir + ".report.json"
             )
             shutil.rmtree(quasimap_dir)
 

@@ -24,13 +24,13 @@ class TestAdjudicator(unittest.TestCase):
             10, adjudicator.Adjudicator._get_gramtools_kmer_size(None, None)
         )
 
-    def test_run(self):
-        """test run"""
+    def test_run_clean_is_false(self):
+        """test run when not cleaning up files afterwards"""
         # We're just testing that it doesn't crash.
         # Check the output files exist, but not their contents.
         # First run using splitting of VCF file.
         # Then run without splitting.
-        outdir = "tmp.adjudicator.out"
+        outdir = "tmp.adjudicator.noclean.out"
         if os.path.exists(outdir):
             shutil.rmtree(outdir)
         ref_fasta = os.path.join(data_dir, "run.ref.fa")
@@ -115,6 +115,37 @@ class TestAdjudicator(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(outdir2, "gramtools.build")))
         shutil.rmtree(outdir)
         shutil.rmtree(outdir2)
+
+
+    def test_run_clean_is_true(self):
+        """test run when we do clean files afterwards"""
+        # We're just testing that it doesn't crash.
+        # Check the output files exist, but not their contents.
+        # First run using splitting of VCF file.
+        # Then run without splitting.
+        outdir = "tmp.adjudicator.clean.out"
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+        ref_fasta = os.path.join(data_dir, "run.ref.fa")
+        reads_file = os.path.join(data_dir, "run.bwa.bam")
+        vcf_files = [
+            os.path.join(data_dir, x) for x in ["run.calls.1.vcf", "run.calls.2.vcf"]
+        ]
+        adj = adjudicator.Adjudicator(
+            outdir,
+            ref_fasta,
+            [reads_file],
+            vcf_files,
+            #variants_per_split=3,
+            clean=True,
+            gramtools_kmer_size=5,
+            genotype_simulation_iterations=1000,
+        )
+        adj.run()
+        self.assertTrue(os.path.exists(outdir))
+        self.assertTrue(os.path.exists(os.path.join(outdir, "final.vcf")))
+        shutil.rmtree(outdir)
+
 
     def test_run_empty_vcf_input_files(self):
         """test run when input files have no variants"""
