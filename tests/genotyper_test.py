@@ -8,9 +8,25 @@ data_dir = os.path.join(this_dir, "data", "genotyper")
 
 
 class TestGenotyper(unittest.TestCase):
-    """test _singleton_alleles_and_coverage"""
+    def test_get_min_cov_to_be_more_likely_than_error(self):
+        """test get_min_cov_to_be_more_likely_than_error"""
+        self.assertEqual(
+            1, genotyper.Genotyper.get_min_cov_to_be_more_likely_than_error(10, 0.0001)
+        )
+        self.assertEqual(
+            2, genotyper.Genotyper.get_min_cov_to_be_more_likely_than_error(10, 0.001)
+        )
+        self.assertEqual(
+            10, genotyper.Genotyper.get_min_cov_to_be_more_likely_than_error(100, 0.001)
+        )
+        self.assertEqual(
+            0, genotyper.Genotyper.get_min_cov_to_be_more_likely_than_error(0, 0.001)
+        )
+        with self.assertRaises(RuntimeError):
+            genotyper.Genotyper.get_min_cov_to_be_more_likely_than_error(10000, 0.5)
 
     def test_singleton_alleles_and_coverage(self):
+        """test _singleton_alleles_and_coverage"""
         allele_combination_cov = {"1": 20, "3": 1}
         allele_groups_dict = {"1": {0}, "2": {1}, "3": {1, 2}, "4": {5, 6}}
         self.assertEqual(
