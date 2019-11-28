@@ -13,6 +13,7 @@ class Genotyper:
         allele_combination_cov,
         allele_per_base_cov,
         allele_groups_dict,
+        min_cov_more_than_error=None,
     ):
         self.mean_depth = mean_depth
         self.error_rate = error_rate
@@ -23,6 +24,33 @@ class Genotyper:
         self.genotype = None
         self.genotype_confidence = None
         self.singleton_alleles_cov = {}
+        if min_cov_more_than_error is None:
+            self.min_cov_more_than_error = Genotyper.get_min_cov_to_be_more_likely_than_error(
+                self.mean_depth, self.error_rate
+            )
+        else:
+            self.min_cov_more_than_error = min_cov_more_than_error
+
+    @classmethod
+    def get_min_cov_to_be_more_likely_than_error(cls, mean_depth, error_rate):
+        # For each allele, We want to get the number of positions that have read
+        # depth higher than we would expect by chance. Work out the minimum
+        # depth needed once here (code was previously repeatedly calling
+        # poisson.pmf in _non_zeros_from_allele_per_base_cov()). Doing it once
+        # here is about 80 to 90 times faster.
+
+        # If the mean depth is zero, we'll be returning null genotypes with zero
+        # confidence. Doesn't matter what we calculate here.
+        if mean_depth == 0:
+            return 0
+        min_cov = 0
+        while poisson.pmf(min_cov, mean_depth) <= pow(error_rate, min_cov):
+            min_cov += 1
+            if min_cov >= 1000:
+                raise RuntimeError(
+                    f"Something has likely gone wrong calculating minimum read depth that is more likely to happen than by chance due to read errors. error_rate={error_rate}, mean_depth={mean_depth}. Cannot continue"
+                )
+        return min_cov
 
     @classmethod
     def _singleton_alleles_and_coverage(
@@ -135,7 +163,7 @@ class Genotyper:
     def _non_zeros_from_allele_per_base_cov(cls, allele_per_base_cov, min_cov):
         non_zeros = []
         for per_base_cov in allele_per_base_cov:
-            non_zero_count = len([c for c in per_base_cov if c > min_cov])
+            non_zero_count = len([c for c in per_base_cov if c >= min_cov])
             non_zeros.append(non_zero_count)
         return non_zeros
 
@@ -145,17 +173,8 @@ class Genotyper:
         self.likelihoods = []
         total_depth = sum(self.allele_combination_cov.values())
 
-        # For each allele, We want to get the number of positions that have read
-        # depth higher than we would expect by chance. Work out the minimum
-        # depth needed once here (code was previously repeatedly calling
-        # poisson.pmf in _non_zeros_from_allele_per_base_cov()). Doing it once
-        # here is about 80 to 90 times faster.
-        min_cov = 0
-        while poisson.pmf(min_cov, self.mean_depth) <= pow(self.error_rate, min_cov):
-            min_cov += 1
-
         non_zeros_per_allele = Genotyper._non_zeros_from_allele_per_base_cov(
-            self.allele_per_base_cov, min_cov
+            self.allele_per_base_cov, self.min_cov_more_than_error
         )
 
         for allele_number, per_base_cov in enumerate(self.allele_per_base_cov):
