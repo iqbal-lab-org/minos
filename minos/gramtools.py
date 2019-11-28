@@ -63,7 +63,9 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
         logging.info(
             "Error running gramtools build. See build report file " + build_report
         )
-        raise Exception(f"Error running gramtools build: {build_command}\nstdout:{completed_process.stdout}\nstderr:\n{completed_process.stderr}")
+        raise Exception(
+            f"Error running gramtools build: {build_command}\nstdout:{completed_process.stdout}\nstderr:\n{completed_process.stderr}"
+        )
 
     logging.info("Build report file looks good from gramtools build: " + build_report)
 
@@ -150,7 +152,9 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     lines in vcf) and 2) number of alts agree on each line.
     Raises error at the first time somthing wrong is found.
     Returns a list of tuples: (VcfRecord, dict of allele -> coverage)"""
-    allele_base_counts_file = os.path.join(quasimap_dir, "quasimap_outputs", "allele_base_coverage.json")
+    allele_base_counts_file = os.path.join(
+        quasimap_dir, "quasimap_outputs", "allele_base_coverage.json"
+    )
     grouped_allele_counts_file = os.path.join(
         quasimap_dir, "quasimap_outputs", "grouped_allele_counts_coverage.json"
     )
@@ -209,6 +213,7 @@ def update_vcf_record_using_gramtools_allele_depths(
     mean_depth,
     read_error_rate,
     kmer_size,
+    min_cov_more_than_error=None,
 ):
     """allele_depths should be a dict of allele -> coverage.
     The REF allele must also be in the dict.
@@ -222,6 +227,7 @@ def update_vcf_record_using_gramtools_allele_depths(
         allele_combination_cov,
         allele_per_base_cov,
         allele_groups_dict,
+        min_cov_more_than_error=min_cov_more_than_error,
     )
     gtyper.run()
     genotype_indexes = set()
@@ -344,6 +350,10 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         )
     )
 
+    min_cov_more_than_error = genotyper.Genotyper.get_min_cov_to_be_more_likely_than_error(
+        mean_depth, read_error_rate
+    )
+
     if filtered_outfile is not None:
         f_filter = open(filtered_outfile, "w")
         print(*header_lines, sep="\n", file=f_filter)
@@ -361,6 +371,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(
                 mean_depth,
                 read_error_rate,
                 kmer_size,
+                min_cov_more_than_error=min_cov_more_than_error,
             )
             print(vcf_records[i], file=f)
             if filtered_outfile is not None:
