@@ -323,7 +323,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         "##fileDate=" + str(datetime.date.today()),
         '##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">',
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
-        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">',
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total read depth from gramtools">',
         '##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">',
     ]
 
