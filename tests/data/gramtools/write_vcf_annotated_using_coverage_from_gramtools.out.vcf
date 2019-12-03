@@ -5,9 +5,8 @@
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">
 ##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
-##INFO=<ID=KMER,Number=1,Type=Integer,Description="Kmer size at which variant was discovered (kmer-size used by gramtools build)">
 ##minos_max_read_length=200
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_42
-ref	1	.	G	T	.	.	KMER=42	DP:GT:COV:GT_CONF	11:1/1:0,10:11.15
-ref	2	.	A	C,TA,G	.	.	KMER=42	DP:GT:COV:GT_CONF	10:2/3:1,0,3,5:18.2
-ref	42	.	A	G	.	.	KMER=42	DP:GT:COV:GT_CONF	0:./.:0,0:0.0
+ref	1	.	G	T	.	.	.	DP:GT:COV:GT_CONF	11:1/1:0,10:11.15
+ref	2	.	A	C,TA,G	.	.	.	DP:GT:COV:GT_CONF	10:2/3:1,0,3,5:18.2
+ref	42	.	A	G	.	.	.	DP:GT:COV:GT_CONF	0:./.:0,0:0.0

@@ -212,7 +212,6 @@ def update_vcf_record_using_gramtools_allele_depths(
     allele_groups_dict,
     mean_depth,
     read_error_rate,
-    kmer_size,
     min_cov_more_than_error=None,
 ):
     """allele_depths should be a dict of allele -> coverage.
@@ -253,13 +252,13 @@ def update_vcf_record_using_gramtools_allele_depths(
     ]
     cov_string = ",".join([str(x) for x in cov_values])
     vcf_record.QUAL = None
+    vcf_record.INFO.clear()
     vcf_record.FILTER = set()
     vcf_record.FORMAT.clear()
     vcf_record.set_format_key_value("DP", str(sum(allele_combination_cov.values())))
     vcf_record.set_format_key_value("GT", genotype)
     vcf_record.set_format_key_value("COV", cov_string)
     vcf_record.set_format_key_value("GT_CONF", str(gtyper.genotype_confidence))
-    vcf_record.INFO = {"KMER": str(kmer_size)}
 
     # Make new record where all zero coverage alleles are removed
     filtered_record = copy.deepcopy(vcf_record)
@@ -307,7 +306,6 @@ def write_vcf_annotated_using_coverage_from_gramtools(
     allele_groups,
     read_error_rate,
     outfile,
-    kmer_size,
     sample_name="SAMPLE",
     max_read_length=None,
     filtered_outfile=None,
@@ -325,7 +323,6 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
         '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">',
         '##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">',
-        '##INFO=<ID=KMER,Number=1,Type=Integer,Description="Kmer size at which variant was discovered (kmer-size used by gramtools build)">',
     ]
 
     if max_read_length is not None:
@@ -368,7 +365,6 @@ def write_vcf_annotated_using_coverage_from_gramtools(
                 allele_groups,
                 mean_depth,
                 read_error_rate,
-                kmer_size,
                 min_cov_more_than_error=min_cov_more_than_error,
             )
             print(vcf_records[i], file=f)
