@@ -271,9 +271,9 @@ def update_vcf_record_using_gramtools_allele_depths(
     indexes_to_keep.update(genotype_indexes)
     indexes_to_keep = list(indexes_to_keep)
     indexes_to_keep.sort()
-    filtered_record.set_format_key_value("COV", ",".join(
-        [str(cov_values[i]) for i in indexes_to_keep]
-    ))
+    filtered_record.set_format_key_value(
+        "COV", ",".join([str(cov_values[i]) for i in indexes_to_keep])
+    )
     assert indexes_to_keep[0] == 0
     filtered_record.ALT = [filtered_record.ALT[i - 1] for i in indexes_to_keep[1:]]
 
@@ -295,7 +295,9 @@ def update_vcf_record_using_gramtools_allele_depths(
     if len(new_genotype_indexes) == 1:
         new_genotype_indexes.append(new_genotype_indexes[0])
     assert len(new_genotype_indexes) == 2
-    filtered_record.set_format_key_value("GT", "/".join([str(x) for x in new_genotype_indexes]))
+    filtered_record.set_format_key_value(
+        "GT", "/".join([str(x) for x in new_genotype_indexes])
+    )
     return filtered_record
 
 
