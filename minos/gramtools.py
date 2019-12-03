@@ -260,13 +260,6 @@ def update_vcf_record_using_gramtools_allele_depths(
     vcf_record.set_format_key_value("COV", cov_string)
     vcf_record.set_format_key_value("GT_CONF", str(gtyper.genotype_confidence))
     vcf_record.INFO = {"KMER": str(kmer_size)}
-    #vcf_record.format_keys = ["DP", "GT", "COV", "GT_CONF"]
-    #vcf_record.FORMAT = {
-    #    "DP": str(sum(allele_combination_cov.values())),
-    #    "GT": genotype,
-    #    "COV": cov_string,
-    #    "GT_CONF": str(gtyper.genotype_confidence),
-    #}
 
     # Make new record where all zero coverage alleles are removed
     filtered_record = copy.deepcopy(vcf_record)
