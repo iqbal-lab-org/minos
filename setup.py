@@ -14,7 +14,7 @@ setup(
     entry_points={"console_scripts": ["minos = minos.__main__:main"]},
     install_requires=[
         "biopython",
-        "cluster_vcf_records >= 0.10.2",
+        "cluster_vcf_records >= 0.10.3",
         "gramtools",
         "matplotlib",
         "pandas",
