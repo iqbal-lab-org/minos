@@ -6,11 +6,10 @@
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">
 ##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
 ##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF"
-##INFO=<ID=KMER,Number=1,Type=Integer,Description="Kmer size at which variant was discovered (kmer-size used by gramtools build)">
 ##minos_max_read_length=100
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample.1	sample.2
-ref.0	75	.	A	G	.	.	KMER=5	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	9:0/0:9,0:118.49:5.49	10:1/1:0,10:119.41:35.47
-ref.0	150	.	G	A,T	.	.	KMER=5	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	17:1/1:0,17,0:195.83:35.48	19:2/2:0,0,19:202.56:71.03
-ref.0	450	.	T	C	.	.	KMER=5	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	26:1/1:0,26:278.36:75.24	24:0/0:24,0:246.77:83.28
-ref.0	610	.	A	G	.	.	KMER=5	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	31:1/1:0,31:322.81:87.93	0:./.:0,0:0.0
-ref.0	800	.	C	CA	.	.	KMER=5	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	22:1/1:0,22:242.14:59.44	23:0/0:23,0:238.02:81.18
+ref.0	75	.	A	G	.	.	.	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	9:0/0:9,0:118.49:5.49	10:1/1:0,10:119.41:35.47
+ref.0	150	.	G	A,T	.	.	.	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	17:1/1:0,17,0:195.83:35.48	19:2/2:0,0,19:202.56:71.03
+ref.0	450	.	T	C	.	.	.	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	26:1/1:0,26:278.36:75.24	24:0/0:24,0:246.77:83.28
+ref.0	610	.	A	G	.	.	.	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	31:1/1:0,31:322.81:87.93	0:./.:0,0:0.0
+ref.0	800	.	C	CA	.	.	.	DP:GT:COV:GT_CONF:GT_CONF_PERCENTILE	22:1/1:0,22:242.14:59.44	23:0/0:23,0:238.02:81.18
