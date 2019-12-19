@@ -46,6 +46,8 @@ class Adjudicator:
         clean=True,
         genotype_simulation_iterations=10000,
         use_unmapped_reads=False,
+        filter_min_dp=5,
+        filter_min_gcp=5,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -102,6 +104,8 @@ class Adjudicator:
         self.clean = clean
         self.genotype_simulation_iterations = genotype_simulation_iterations
         self.use_unmapped_reads = use_unmapped_reads
+        self.filter_min_dp = filter_min_dp
+        self.filter_min_gcp = filter_min_gcp
 
     def build_output_dir(self):
         try:
@@ -437,6 +441,8 @@ class Adjudicator:
                 variance_depth,
                 self.read_error_rate,
                 self.genotype_simulation_iterations,
+                min_dp=self.filter_min_dp,
+                min_gcp=self.filter_min_gcp,
             )
 
     @classmethod
@@ -447,8 +453,8 @@ class Adjudicator:
         depth_variance,
         error_rate,
         iterations,
-        min_dp=2,
-        min_gt_conf_percentile=2.5,
+        min_dp=5,
+        min_gcp=5,
     ):
         """Overwrites vcf_file, with new version that has GT_CONF_PERCENTILE added,
         and filter for DP and GT_CONF_PERCENTILE"""
@@ -479,7 +485,7 @@ class Adjudicator:
         )
         vcf_header.insert(
             i + 1,
-            f'##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of {min_gt_conf_percentile}">',
+            f'##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of {min_gcp}">',
         )
 
         with open(vcf_file, "w") as f:
@@ -499,10 +505,7 @@ class Adjudicator:
                             and float(vcf_record.FORMAT["DP"]) < min_dp
                         ):
                             vcf_record.FILTER.add("MIN_DP")
-                        if (
-                            float(vcf_record.FORMAT["GT_CONF_PERCENTILE"])
-                            < min_gt_conf_percentile
-                        ):
+                        if float(vcf_record.FORMAT["GT_CONF_PERCENTILE"]) < min_gcp:
                             vcf_record.FILTER.add("MIN_GCP")
                         if len(vcf_record.FILTER) == 0:
                             vcf_record.FILTER.add("PASS")

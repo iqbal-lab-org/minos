@@ -99,6 +99,18 @@ def main(args=None):
         action="store_true",
         help="When using splitting (with --total_splits, --variants_per_split, or --alleles_per_split), use the unmapped reads with each split. Default is to ignore them. Using this option may add huge increase to run time, with little benefit to variant call accuracy",
     )
+    subparser_adjudicate.add_argument(
+        "--filter_min_dp",
+        type=int,
+        help="Minimum depth to be used for MIN_DP filter in output VCF file [%(default)s]",
+        default=5,
+    )
+    subparser_adjudicate.add_argument(
+        "--filter_min_gcp",
+        type=float,
+        help="Minimum genotype confidence percentile to be used for MIN_GCP filter in output VCF file [%(default)s]",
+        default=5.0,
+    )
     subparser_adjudicate.add_argument("outdir", help="Name of output directory")
     subparser_adjudicate.add_argument(
         "ref_fasta", help="Reference FASTA filename (must match VCF file(s))"

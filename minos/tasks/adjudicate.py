@@ -19,5 +19,7 @@ def run(options):
         clean=not options.debug,
         gramtools_kmer_size=options.gramtools_kmer_size,
         use_unmapped_reads=options.use_unmapped_reads,
+        filter_min_dp=options.filter_min_dp,
+        filter_min_gcp=options.filter_min_gcp,
     )
     adj.run()
