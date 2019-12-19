@@ -47,7 +47,6 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
             ref_file,
             "--max-read-length",
             str(max_read_length),
-            "--all-kmers",
             "--kmer-size",
             str(kmer_size),
         ]
