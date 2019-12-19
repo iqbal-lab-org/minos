@@ -31,6 +31,9 @@ def _build_json_file_is_good(json_build_report):
 def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=10):
     """Runs gramtools build. Makes new directory called 'outdir' for
     the output"""
+    if os.path.exists(outdir):
+        raise FileExistsError(f"Gramtools build output directory '{outdir}' already exists. Cannot continue")
+    os.mkdir(outdir)
     gramtools_exe = dependencies.find_binary("gramtools")
     build_command = " ".join(
         [
@@ -44,7 +47,6 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
             ref_file,
             "--max-read-length",
             str(max_read_length),
-            "--all-kmers",
             "--kmer-size",
             str(kmer_size),
         ]
