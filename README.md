@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/iqbal-lab-org/minos.svg?branch=master)](https://travis-ci.org/iqbal-lab-org/minos)
+
 # minos
 Variant call adjudication.
 
