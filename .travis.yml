@@ -12,6 +12,7 @@ before_script:
 script:
   - echo $HOME
   - nextflow -version
+  - ls -alh
   #- tox
   - tox tests/dependencies_test.py::TestDependencies::test_get_version_of_program_nextflow
 
