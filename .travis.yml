@@ -10,7 +10,9 @@ before_script:
     - export PATH=$HOME/tools:$PATH
 
 script:
-  - tox
+  - echo $HOME
+  - nextflow -version
+    #- tox
 
 notifications:
   email: false
