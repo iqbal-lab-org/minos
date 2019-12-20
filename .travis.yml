@@ -12,3 +12,5 @@ before_script:
 script:
   - tox
 
+notifications:
+  email: false
