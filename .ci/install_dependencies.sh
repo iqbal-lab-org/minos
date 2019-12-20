@@ -26,6 +26,9 @@ apt-get install -y \
   zlib1g-dev
 
 
+if [ ! -d $install_root ]; then
+  mkdir $install_root
+fi
 mkdir $install_root
 cd $install_root
 
@@ -70,7 +73,7 @@ make install
 
 
 
-pip3 install pysam matplotlib pandas seaborn pymummer cluster_vcf_records
+pip3 install pysam matplotlib pandas seaborn pymummer cluster_vcf_records tox
 
 cd $install_root
 git clone https://github.com/iqbal-lab-org/gramtools
