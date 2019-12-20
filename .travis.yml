@@ -11,8 +11,11 @@ before_script:
 
 script:
   - echo $HOME
+  - pwd
   - nextflow -version
   - ls -alh
+  - ls -alh /home/
+  - ls -alh /home/travis
   #- tox
   - tox tests/dependencies_test.py::TestDependencies::test_get_version_of_program_nextflow
 
