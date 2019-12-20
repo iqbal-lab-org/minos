@@ -4,7 +4,7 @@ language: python
 python:
   - '3.6'
 
-install: ./ci/install_dependencies.sh $HOME/tools
+install: ./.ci/install_dependencies.sh $HOME/tools
 
 before_script:
     - export PATH=$HOME/tools:$PATH
