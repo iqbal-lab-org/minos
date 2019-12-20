@@ -1,0 +1,26 @@
+BootStrap: debootstrap
+OSVersion: bionic
+MirrorURL: http://us.archive.ubuntu.com/ubuntu/
+
+%environment
+export PATH=/bioinf-tools/:$PATH
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+
+%setup
+    mkdir $SINGULARITY_ROOTFS/minos
+    rsync -a .ci/install_dependencies.sh MANIFEST.in minos requirements.txt setup.py tests tox.ini $SINGULARITY_ROOTFS/minos/
+
+
+%post
+    #_____________________ setup $PATH _______________________#
+    export PATH=/bioinf-tools/:$PATH
+
+    /minos/install_dependencies.sh /bioinf-tools
+    cd /minos
+    tox
+    pip3 install .
+
+
+%runscript
+    minos "$@"
