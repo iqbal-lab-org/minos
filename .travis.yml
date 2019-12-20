@@ -8,6 +8,7 @@ install: sudo ./.ci/install_dependencies.sh $HOME/tools
 
 before_script:
     - export PATH=$HOME/tools:$PATH
+    - sudo chmod 777 --recursive $HOME/.nextflow
 
 script:
   - echo $HOME
@@ -16,6 +17,7 @@ script:
   - ls -alh
   - ls -alh /home/
   - ls -alh /home/travis
+  - ls -alh /home/travis/.nextflow
   #- tox
   - tox tests/dependencies_test.py::TestDependencies::test_get_version_of_program_nextflow
 
