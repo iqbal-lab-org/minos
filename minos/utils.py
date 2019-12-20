@@ -13,8 +13,6 @@ def syscall(command, allow_fail=False):
         stdout=subprocess.PIPE,
         universal_newlines=True,
     )
-    print("command", command, "stdout", completed_process.stdout)
-    print("command", command, "stderr", completed_process.stderr)
     if (not allow_fail) and completed_process.returncode != 0:
         print("Error running this command:", command, file=sys.stderr)
         print("Return code:", completed_process.returncode, file=sys.stderr)

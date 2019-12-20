@@ -8,18 +8,13 @@ install: sudo ./.ci/install_dependencies.sh $HOME/tools
 
 before_script:
     - export PATH=$HOME/tools:$PATH
+    # the install script makes $HOME/.nextflow, owned by root with permissions
+    # tha tmake the tests fail because when nextflow runs, it tries to write
+    # there
     - sudo chmod 777 --recursive $HOME/.nextflow
 
 script:
-  - echo $HOME
-  - pwd
-  - nextflow -version
-  - ls -alh
-  - ls -alh /home/
-  - ls -alh /home/travis
-  - ls -alh /home/travis/.nextflow
-  #- tox
-  - tox tests/dependencies_test.py::TestDependencies::test_get_version_of_program_nextflow
+  - tox
 
 notifications:
   email: false

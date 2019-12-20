@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 import shutil
 
 
-#if shutil.which("gramtools") is None:
-#    raise RuntimeError("Please install gramtools. Cannot continue")
+if shutil.which("gramtools") is None:
+    raise RuntimeError("Please install gramtools. Cannot continue")
 
 with open("requirements.txt") as f:
     install_requires = [x.rstrip() for x in f]
