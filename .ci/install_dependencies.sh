@@ -75,5 +75,5 @@ pip3 install pysam matplotlib pandas seaborn pymummer cluster_vcf_records
 cd $install_root
 git clone https://github.com/iqbal-lab-org/gramtools
 cd gramtools
-git checkout cf5cc208891ad3903d5a7bfd8d71aed143014ce3
+git checkout b95321b7e15c0a574863b298475c880099ea6e5d
 pip3 install .
