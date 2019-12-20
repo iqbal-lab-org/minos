@@ -13,7 +13,7 @@ script:
   - echo $HOME
   - nextflow -version
   #- tox
-  - tox tests/dependencies_test.py::TestDependencies::test_get_version_of_program_nextflow
+  - pytest tests/dependencies_test.py::TestDependencies::test_get_version_of_program_nextflow
 
 notifications:
   email: false
