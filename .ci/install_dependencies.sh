@@ -37,8 +37,6 @@ cd $install_root
 wget -qO- https://get.nextflow.io | bash
 chmod 755 nextflow
 ls -lh
-pip3 install tox
-exit
 
 #_________________________ bcftools _______________________#
 cd $install_root
@@ -77,6 +75,7 @@ make install
 
 #pip3 install pysam matplotlib pandas seaborn pymummer cluster_vcf_records tox
 pip3 install tox
+exit
 
 cd $install_root
 git clone https://github.com/iqbal-lab-org/gramtools
