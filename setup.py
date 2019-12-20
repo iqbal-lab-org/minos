@@ -1,5 +1,12 @@
 from setuptools import setup, find_packages
+import shutil
 
+
+if shutil.which("gramtools") is None:
+    raise RuntimeError("Please install gramtools. Cannot continue")
+
+with open("requirements.txt") as f:
+    install_requires = [x.rstrip() for x in f]
 
 setup(
     name="bio-minos",
@@ -10,20 +17,9 @@ setup(
     author_email="mhunt@ebi.ac.uk",
     url="https://github.com/iqbal-lab-org/minos",
     test_suite="nose.collector",
-    tests_require=["nose >= 1.3"],
+    tests_require=["pytest"],
     entry_points={"console_scripts": ["minos = minos.__main__:main"]},
-    install_requires=[
-        "biopython",
-        "cluster_vcf_records >= 0.10.3",
-        "gramtools",
-        "matplotlib",
-        "pandas",
-        "pyfastaq >= 3.14.0",
-        "pymummer >= 0.11.0",
-        "pysam >= 0.12",
-        "scipy >= 1.0.0",
-        "seaborn",
-    ],
+    install_requires=install_requires,
     license="MIT",
     classifiers=[
         "Development Status :: 4 - Beta",
