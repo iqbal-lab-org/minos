@@ -9,7 +9,7 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 %setup
     mkdir $SINGULARITY_ROOTFS/minos
-    rsync -a ../minos ../setup.py ../tests ../ci/install_dependencies.sh $SINGULARITY_ROOTFS/minos/
+    rsync -a .ci/install_dependencies.sh MANIFEST.in minos requirements.txt setup.py tests tox.ini $SINGULARITY_ROOTFS/minos/
 
 
 %post
