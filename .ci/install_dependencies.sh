@@ -37,6 +37,7 @@ cd $install_root
 wget -qO- https://get.nextflow.io | bash
 chmod 755 nextflow
 ls -lh
+pip3 install tox
 exit
 
 #_________________________ bcftools _______________________#
