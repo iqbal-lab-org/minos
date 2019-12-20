@@ -29,7 +29,6 @@ apt-get install -y \
 if [ ! -d $install_root ]; then
   mkdir $install_root
 fi
-mkdir $install_root
 cd $install_root
 
 #________________________ nextflow ____________________________#
