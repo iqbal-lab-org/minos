@@ -680,14 +680,14 @@ class DnadiffMappingBasedVerifier:
                     self.vcf_reference_file,
                     self.clustered_vcf1,
                     merge_method="simple",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
                 clusterer2 = vcf_clusterer.VcfClusterer(
                     [self.filtered_vcf2],
                     self.vcf_reference_file,
                     self.clustered_vcf2,
                     merge_method="simple",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
             else:
                 clusterer1 = vcf_clusterer.VcfClusterer(
@@ -695,14 +695,14 @@ class DnadiffMappingBasedVerifier:
                     self.vcf_reference_file,
                     self.clustered_vcf1,
                     merge_method="gt_aware",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
                 clusterer2 = vcf_clusterer.VcfClusterer(
                     [self.filtered_vcf2],
                     self.vcf_reference_file,
                     self.clustered_vcf2,
                     merge_method="gt_aware",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
             clusterer1.run()
             clusterer2.run()

@@ -570,14 +570,14 @@ class EvaluateRecall:
                     self.query_vcf_ref,
                     self.clustered_vcf_query,
                     merge_method="simple",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
                 clusterer_truth = vcf_clusterer.VcfClusterer(
                     [self.filtered_truth_vcf],
                     self.truth_vcf_ref,
                     self.clustered_vcf_truth,
                     merge_method="simple",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
             else:
                 clusterer_query = vcf_clusterer.VcfClusterer(
@@ -585,14 +585,14 @@ class EvaluateRecall:
                     self.query_vcf_ref,
                     self.clustered_vcf_query,
                     merge_method="gt_aware",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
                 clusterer_truth = vcf_clusterer.VcfClusterer(
                     [self.filtered_truth_vcf],
                     self.truth_vcf_ref,
                     self.clustered_vcf_truth,
                     merge_method="gt_aware",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
             clusterer_query.run()
             clusterer_truth.run()
