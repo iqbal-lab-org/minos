@@ -675,7 +675,7 @@ class MappingBasedVerifier:
                     self.vcf_reference_file,
                     self.clustered_vcf,
                     merge_method="simple",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
             else:
                 clusterer = vcf_clusterer.VcfClusterer(
@@ -683,7 +683,7 @@ class MappingBasedVerifier:
                     self.vcf_reference_file,
                     self.clustered_vcf,
                     merge_method="gt_aware",
-                    max_distance_between_variants=self.merge_length,
+                    cluster_boundary_size=self.merge_length,
                 )
             clusterer.run()
 

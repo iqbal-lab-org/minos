@@ -206,7 +206,7 @@ class Adjudicator:
                 self.vcf_files,
                 self.ref_fasta,
                 self.clustered_vcf,
-                max_distance_between_variants=1,
+                cluster_boundary_size=0,
                 max_alleles_per_cluster=self.max_alleles_per_cluster,
             )
             clusterer.run()

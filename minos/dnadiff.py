@@ -247,6 +247,7 @@ class Dnadiff:
             self.query_fasta,
             self.merged_vcf,
             merge_method="simple",
+            cluster_boundary_size=31,
         )
         clusterer.run()
         header, self.variants = vcf_file_read.vcf_file_to_dict(

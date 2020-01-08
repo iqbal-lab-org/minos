@@ -375,7 +375,7 @@ process cluster_small_vars_vcf {
     """
     #!/usr/bin/env python3
     from cluster_vcf_records import vcf_clusterer
-    clusterer = vcf_clusterer.VcfClusterer(["pre_cluster_small_vars_merge.vcf"], "${ref_fasta}", "small_vars_clustered.vcf", max_alleles_per_cluster=${params.max_alleles_per_cluster})
+    clusterer = vcf_clusterer.VcfClusterer(["pre_cluster_small_vars_merge.vcf"], "${ref_fasta}", "small_vars_clustered.vcf", max_alleles_per_cluster=${params.max_alleles_per_cluster}, cluster_boundary_size=0)
     clusterer.run()
     """
 }
