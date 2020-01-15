@@ -49,20 +49,16 @@ class TestGenotyper(unittest.TestCase):
         self.assertEqual(1, genotyper.Genotyper._total_coverage({"x": 1}))
         self.assertEqual(42, genotyper.Genotyper._total_coverage({"x": 1, "y": 41}))
 
-    def test_coverage_of_one_haploid_allele(self):
-        """test _coverage_of_one_haploid_allele"""
+
+    def test_haploid_allele_coverages(self):
+        """test  _haploid_allele_coverages"""
         allele_combination_cov = {"1": 20, "2": 1}
         allele_groups_dict = {"0": {0}, "1": {1}, "2": {1, 2}, "3": {5, 6}}
+        num_distinct_alleles = 7 # 1 + the max allele index
         self.assertEqual(
-            0,
-            genotyper.Genotyper._coverage_of_one_haploid_allele(
-                0, allele_combination_cov, allele_groups_dict
-            ),
-        )
-        self.assertEqual(
-            21,
-            genotyper.Genotyper._coverage_of_one_haploid_allele(
-                1, allele_combination_cov, allele_groups_dict
+            [0, 21, 1, 0, 0, 0, 0],
+            genotyper.Genotyper._haploid_allele_coverages(
+                7, allele_combination_cov, allele_groups_dict
             ),
         )
 

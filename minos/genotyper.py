@@ -23,7 +23,8 @@ class Genotyper:
         self.likelihoods = None
         self.genotype = None
         self.genotype_confidence = None
-        self.singleton_alleles_cov = {}
+        self.singleton_allele_coverages = {}
+        self.haploid_allele_coverages = []
         if min_cov_more_than_error is None:
             self.min_cov_more_than_error = Genotyper.get_min_cov_to_be_more_likely_than_error(
                 self.mean_depth, self.error_rate
@@ -59,8 +60,7 @@ class Genotyper:
         singleton_alleles = {}
         for allele_key in allele_combination_cov:
             if len(allele_groups_dict[allele_key]) == 1:
-                allele = allele_groups_dict[allele_key].pop()
-                allele_groups_dict[allele_key].add(allele)
+                allele = next(iter(allele_groups_dict[allele_key]))
                 singleton_alleles[allele] = allele_combination_cov[allele_key]
         return singleton_alleles
 
@@ -69,14 +69,15 @@ class Genotyper:
         return sum(allele_combination_cov.values())
 
     @classmethod
-    def _coverage_of_one_haploid_allele(
-        cls, allele, allele_combination_cov, allele_groups_dict
+    def _haploid_allele_coverages(
+        cls, num_distinct_alleles, allele_combination_cov, allele_groups_dict
     ):
-        coverage = 0
-        for allele_key in allele_combination_cov:
-            if allele in allele_groups_dict[allele_key]:
-                coverage += allele_combination_cov[allele_key]
-        return coverage
+        haploid_allele_coverages = [0 for i in range(num_distinct_alleles)]
+        for allele_key, coverage in allele_combination_cov.items():
+            alleles = list(iter(allele_groups_dict[allele_key]))
+            for allele in alleles:
+                haploid_allele_coverages[allele] += coverage
+        return haploid_allele_coverages
 
     @classmethod
     def _coverage_of_diploid_alleles(
@@ -177,12 +178,14 @@ class Genotyper:
             self.allele_per_base_cov, self.min_cov_more_than_error
         )
 
+        self.haploid_allele_coverages = Genotyper._haploid_allele_coverages(
+            len(self.allele_per_base_cov), self.allele_combination_cov, self.allele_groups_dict
+        )
+
         for allele_number, per_base_cov in enumerate(self.allele_per_base_cov):
-            allele_depth = Genotyper._coverage_of_one_haploid_allele(
-                allele_number, self.allele_combination_cov, self.allele_groups_dict
-            )
             allele_length = len(per_base_cov)
             non_zeros = non_zeros_per_allele[allele_number]
+            allele_depth = self.haploid_allele_coverages[allele_number]
 
             log_likelihood = Genotyper._log_likelihood_homozygous(
                 self.mean_depth,
@@ -194,19 +197,18 @@ class Genotyper:
             )
             self.likelihoods.append(({allele_number, allele_number}, log_likelihood))
 
-        self.singleton_alleles_cov = Genotyper._singleton_alleles_and_coverage(
+        self.singleton_allele_coverages = Genotyper._singleton_alleles_and_coverage(
             self.allele_combination_cov, self.allele_groups_dict
         )
 
         for (allele_number1, allele_number2) in itertools.combinations(
-            self.singleton_alleles_cov.keys(), 2
+            self.singleton_allele_coverages.keys(), 2
         ):
             allele1_depth, allele2_depth = Genotyper._coverage_of_diploid_alleles(
                 allele_number1,
                 allele_number2,
                 self.allele_combination_cov,
                 self.allele_groups_dict,
-                self.singleton_alleles_cov,
             )
             allele1_length = len(self.allele_per_base_cov[allele_number1])
             allele2_length = len(self.allele_per_base_cov[allele_number2])
@@ -244,7 +246,7 @@ class Genotyper:
             self.genotype, best_log_likelihood = self.likelihoods[0]
 
             for allele in self.genotype:
-                if self.singleton_alleles_cov.get(allele, 0) == 0:
+                if self.singleton_allele_coverages.get(allele, 0) == 0:
                     self.genotype = {"."}
                     self.genotype_confidence = 0.0
                     break
