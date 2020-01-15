@@ -111,10 +111,13 @@ class Genotyper:
                 allele2_total_cov += coverage
 
         ## Perform the dispatching in ambiguous equiv classes ##
-        if allele1_total_cov != 0 or allele2_total_cov != 0:  # If both are zero, there is no dispatching to do.
+        if allele1_total_cov == 0 and allele2_total_cov == 0:  # If both are zero, do equal dispatching
+            allele1_belonging = 0.5
+        else:
             allele1_belonging = allele1_total_cov / (allele1_total_cov + allele2_total_cov)
-            allele1_total_cov += allele1_belonging * shared_cov
-            allele2_total_cov += (1 - allele1_belonging) * shared_cov
+
+        allele1_total_cov += allele1_belonging * shared_cov
+        allele2_total_cov += (1 - allele1_belonging) * shared_cov
         return allele1_total_cov, allele2_total_cov
 
     @classmethod

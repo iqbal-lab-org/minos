@@ -62,7 +62,24 @@ class TestGenotyper(unittest.TestCase):
             ),
         )
 
-    def test_coverage_of_diploid_alleles(self):
+    def test_coverage_of_diploid_alleles_equal_dispatching(self):
+        """
+        test _coverage_of_diploid_alleles function
+        # Equiv class -> coverage:
+        #   {0,1}: 9
+        We collect coverages of alleles 0 and 1.
+        This is an edge case where the only coverage is on both: then we dispatch equally.
+        """
+        allele_combination_cov = {"1": 9}
+        allele_groups_dict = {"1": {0, 1}}
+        self.assertEqual(
+            (4.5, 4.5),
+            genotyper.Genotyper._coverage_of_diploid_alleles(
+                0, 1, allele_combination_cov, allele_groups_dict,
+            ),
+        )
+
+    def test_coverage_of_diploid_alleles_correct_dispatching(self):
         """
         test _coverage_of_diploid_alleles function
         # Equiv class -> coverage:
