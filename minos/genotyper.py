@@ -86,31 +86,35 @@ class Genotyper:
         allele2,
         allele_combination_cov,
         allele_groups_dict,
-        singleton_alleles_cov,
     ):
-        allele1_cov = singleton_alleles_cov.get(allele1, 0)
-        allele2_cov = singleton_alleles_cov.get(allele2, 0)
-        if allele1_cov + allele2_cov == 0:
-            allele1_cov = allele2_cov = 1
-        allele1_total_cov = 0
-        allele2_total_cov = 0
+        """
+        Collects coverage on each of two alleles.
+        Define specific coverage for one allele as the sum of coverages for equivalence classes involving that
+        allele but not the other one.
 
-        for allele_key in allele_combination_cov:
+        When an equivalence class contains both alleles, the coverage on it is dispatched
+        to each allele proportionally to how much specific coverage each has.
+        """
+        shared_cov = 0
+        allele1_total_cov, allele2_total_cov = 0, 0
+
+        for allele_key, coverage in allele_combination_cov.items():
+            assert coverage >= 0
             allele_combination = allele_groups_dict[allele_key]
-            if allele_combination.issuperset({allele1, allele2}):
-                allele1_total_cov += (
-                    allele1_cov / (allele1_cov + allele2_cov)
-                ) * allele_combination_cov[allele_key]
-                allele2_total_cov += (
-                    allele2_cov / (allele1_cov + allele2_cov)
-                ) * allele_combination_cov[allele_key]
-            elif allele1 in allele_combination:
-                assert allele2 not in allele_combination
-                allele1_total_cov += allele_combination_cov[allele_key]
-            elif allele2 in allele_combination:
-                assert allele1 not in allele_combination
-                allele2_total_cov += allele_combination_cov[allele_key]
+            has_allele_1 = allele1 in allele_combination
+            has_allele_2 = allele2 in allele_combination
+            if has_allele_1 and has_allele_2:
+                shared_cov += coverage
+            elif has_allele_1:
+                allele1_total_cov += coverage
+            elif has_allele_2:
+                allele2_total_cov += coverage
 
+        ## Perform the dispatching in ambiguous equiv classes ##
+        if allele1_total_cov != 0 or allele2_total_cov != 0:  # If both are zero, there is no dispatching to do.
+            allele1_belonging = allele1_total_cov / (allele1_total_cov + allele2_total_cov)
+            allele1_total_cov += allele1_belonging * shared_cov
+            allele2_total_cov += (1 - allele1_belonging) * shared_cov
         return allele1_total_cov, allele2_total_cov
 
     @classmethod

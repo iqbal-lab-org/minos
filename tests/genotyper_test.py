@@ -63,21 +63,22 @@ class TestGenotyper(unittest.TestCase):
         )
 
     def test_coverage_of_diploid_alleles(self):
-        "test _coverage_of_diploid_alleles" ""
-        # This is like:
-        #   {0}: 20
+        """
+        test _coverage_of_diploid_alleles function
+        # Equiv class -> coverage:
+        #   {0}: 17
         #   {1}: 80
         #   {0,1}: 10
         #   {0,2): 3
-        allele_combination_cov = {"1": 20, "2": 80, "3": 10, "4": 3}
+        We collect coverage for alleles 0 and 1: 20 units specific to 0, 80 specific to 1.
+        Thus we expect a 1:4 dispatching ratio of the 10 reads which agree with both 0 and 1.
+        """
+        allele_combination_cov = {"1": 17, "2": 80, "3": 10, "4": 3}
         allele_groups_dict = {"1": {0}, "2": {1}, "3": {0, 1}, "4": {0, 2}}
-        singleton_alleles_cov = genotyper.Genotyper._singleton_alleles_and_coverage(
-            allele_combination_cov, allele_groups_dict
-        )
         self.assertEqual(
-            (25, 88),
+            (22, 88),
             genotyper.Genotyper._coverage_of_diploid_alleles(
-                0, 1, allele_combination_cov, allele_groups_dict, singleton_alleles_cov
+                0, 1, allele_combination_cov, allele_groups_dict,
             ),
         )
 

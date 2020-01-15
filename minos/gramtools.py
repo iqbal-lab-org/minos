@@ -250,7 +250,7 @@ def update_vcf_record_using_gramtools_allele_depths(
             genotype = "/".join([str(x) for x in sorted(list(genotype_indexes))])
 
     cov_values = [
-        gtyper.singleton_alleles_cov.get(x, 0) for x in range(1 + len(vcf_record.ALT))
+        gtyper.singleton_allele_coverages.get(x, 0) for x in range(1 + len(vcf_record.ALT))
     ]
     cov_string = ",".join([str(x) for x in cov_values])
     vcf_record.QUAL = None
