@@ -6,7 +6,7 @@ def run(options):
         options.vcf_files,
         options.ref_fasta,
         options.outfile,
-        max_distance_between_variants=options.max_var_dist,
+        cluster_boundary_size=options.max_var_dist,
         max_alleles_per_cluster=options.max_alleles_per_cluster,
     )
     clusterer.run()
