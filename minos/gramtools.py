@@ -49,6 +49,7 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
             str(max_read_length),
             "--kmer-size",
             str(kmer_size),
+            "--no-vcf-clustering",
         ]
     )
     logging.info("Running gramtools build: " + build_command)
