@@ -301,6 +301,7 @@ class TestGramtools(unittest.TestCase):
             sample_name="sample_42",
             max_read_length=200,
             filtered_outfile=tmp_outfile_filtered,
+            ref_seq_lengths={"ref": "10000"},
         )
         expected_vcf = os.path.join(
             data_dir, "write_vcf_annotated_using_coverage_from_gramtools.out.vcf"

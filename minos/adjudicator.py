@@ -5,6 +5,8 @@ import shutil
 import statistics
 import sys
 
+import pyfastaq
+
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
 
 from minos import (
@@ -104,6 +106,7 @@ class Adjudicator:
         self.use_unmapped_reads = use_unmapped_reads
         self.filter_min_dp = filter_min_dp
         self.filter_min_gcp = filter_min_gcp
+        self.ref_seq_lengths = {x.id.split()[0]: len(x) for x in pyfastaq.sequences.file_reader(self.ref_fasta)}
 
     def build_output_dir(self):
         try:
@@ -414,6 +417,7 @@ class Adjudicator:
             sample_name=sample_name,
             max_read_length=self.max_read_length,
             filtered_outfile=final_vcf,
+            ref_seq_lengths=self.ref_seq_lengths,
         )
 
     def run_gt_conf(self):
