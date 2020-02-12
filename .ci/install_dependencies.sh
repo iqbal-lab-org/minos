@@ -70,7 +70,9 @@ make
 make install
 
 
-pip3 install tox
+# Why virtualenv<20.0.0?
+# See https://github.com/pypa/virtualenv/issues/1551
+pip3 install tox virtualenv<20.0.0
 
 cd $install_root
 git clone https://github.com/iqbal-lab-org/gramtools
