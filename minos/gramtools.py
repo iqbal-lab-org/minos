@@ -314,6 +314,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(
     sample_name="SAMPLE",
     max_read_length=None,
     filtered_outfile=None,
+    ref_seq_lengths=None,
 ):
     """mean_depth, vcf_records, all_allele_coverage, allele_groups should be those
     returned by load_gramtools_vcf_and_allele_coverage_files().
@@ -329,6 +330,10 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total read depth from gramtools">',
         '##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">',
     ]
+
+    if ref_seq_lengths is not None:
+        for name, length in sorted(ref_seq_lengths.items()):
+            header_lines.append(f"##contig=<ID={name},length={length}>")
 
     if max_read_length is not None:
         header_lines.append("##minos_max_read_length=" + str(max_read_length))

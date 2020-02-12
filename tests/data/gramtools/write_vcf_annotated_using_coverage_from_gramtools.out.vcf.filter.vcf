@@ -5,6 +5,7 @@
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total read depth from gramtools">
 ##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
+##contig=<ID=ref,length=10000>
 ##minos_max_read_length=200
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_42
 ref	1	.	G	T	.	.	.	DP:GT:COV:GT_CONF	11:1/1:0,10:11.15
