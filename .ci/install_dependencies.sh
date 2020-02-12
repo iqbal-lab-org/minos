@@ -70,7 +70,7 @@ make
 make install
 
 
-# Why virtualenv<20.0.0?
+# Why six>=1.14.0?
 # See https://github.com/pypa/virtualenv/issues/1551
 pip3 install tox "six>=1.14.0"
 
