@@ -62,6 +62,21 @@ class TestGenotypeConfidenceSimulator(unittest.TestCase):
         self.assertEqual(100.00, simulator.get_percentile(51))
         self.assertEqual(100.00, simulator.get_percentile(52))
 
+    def test_run_simulations_and_get_percentile_allele_length_1_no_het_calls(self):
+        """test run_simulations and get_percentile with no het calls"""
+        simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(
+            50, 300, 0.1, iterations=5, call_hets=False,
+        )
+        simulator.run_simulations()
+        expected_confidence_scores_percentiles = {
+            149: 20.0, 164: 40.0, 193: 60.0, 200: 80.0, 215: 100.0,
+        }
+        self.assertEqual(
+            expected_confidence_scores_percentiles,
+            simulator.confidence_scores_percentiles,
+        )
+        self.assertEqual(80.00, simulator.get_percentile(200))
+
     def test_run_simulations_and_get_percentile_allele_length_2(self):
         """test run_simulations and get_percentile"""
         simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(

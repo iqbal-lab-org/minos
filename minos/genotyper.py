@@ -14,6 +14,7 @@ class Genotyper:
         allele_per_base_cov,
         allele_groups_dict,
         min_cov_more_than_error=None,
+        call_hets=True,
     ):
         self.mean_depth = mean_depth
         self.error_rate = error_rate
@@ -31,6 +32,7 @@ class Genotyper:
             )
         else:
             self.min_cov_more_than_error = min_cov_more_than_error
+        self.call_hets = call_hets
 
     @classmethod
     def get_min_cov_to_be_more_likely_than_error(cls, mean_depth, error_rate):
@@ -207,6 +209,10 @@ class Genotyper:
         self.singleton_allele_coverages = Genotyper._singleton_alleles_and_coverage(
             self.allele_combination_cov, self.allele_groups_dict
         )
+
+        if not self.call_hets:
+            self.likelihoods.sort(key=operator.itemgetter(1), reverse=True)
+            return
 
         for (allele_number1, allele_number2) in itertools.combinations(
             self.singleton_allele_coverages.keys(), 2

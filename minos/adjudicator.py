@@ -49,6 +49,7 @@ class Adjudicator:
         use_unmapped_reads=False,
         filter_min_dp=5,
         filter_min_gcp=5,
+        call_hets=True,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -106,6 +107,7 @@ class Adjudicator:
         self.use_unmapped_reads = use_unmapped_reads
         self.filter_min_dp = filter_min_dp
         self.filter_min_gcp = filter_min_gcp
+        self.call_hets = call_hets
         self.ref_seq_lengths = {x.id.split()[0]: len(x) for x in pyfastaq.sequences.file_reader(self.ref_fasta)}
 
     def build_output_dir(self):
@@ -418,6 +420,7 @@ class Adjudicator:
             max_read_length=self.max_read_length,
             filtered_outfile=final_vcf,
             ref_seq_lengths=self.ref_seq_lengths,
+            call_hets=self.call_hets,
         )
 
     def run_gt_conf(self):

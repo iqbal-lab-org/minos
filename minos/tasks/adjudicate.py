@@ -21,5 +21,6 @@ def run(options):
         use_unmapped_reads=options.use_unmapped_reads,
         filter_min_dp=options.filter_min_dp,
         filter_min_gcp=options.filter_min_gcp,
+        call_hets=not options.no_het_calls,
     )
     adj.run()

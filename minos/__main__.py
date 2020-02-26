@@ -111,6 +111,11 @@ def main(args=None):
         help="Minimum genotype confidence percentile to be used for MIN_GCP filter in output VCF file [%(default)s]",
         default=5.0,
     )
+    subparser_adjudicate.add_argument(
+        "--no_het_calls",
+        action="store_true",
+        help="Do not consider heterozygous calls when genotyping each allele. Calls will all be homozygous.",
+    )
     subparser_adjudicate.add_argument("outdir", help="Name of output directory")
     subparser_adjudicate.add_argument(
         "ref_fasta", help="Reference FASTA filename (must match VCF file(s))"
