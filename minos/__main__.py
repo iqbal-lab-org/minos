@@ -58,8 +58,9 @@ def main(args=None):
     subparser_adjudicate.add_argument(
         "--read_error_rate",
         type=float,
-        help="Read error rate. If not given, is estimated from quality scores of first 10,000 reads",
+        help="Read error rate between 0 and 1 [%(default)s]",
         metavar="FLOAT",
+        default=0.002,
     )
     subparser_adjudicate.add_argument(
         "--max_alleles_per_cluster",
