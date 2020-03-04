@@ -19,6 +19,8 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
     /minos/install_dependencies.sh /bioinf-tools
     cd /minos
     tox
+    # Getting pysam issue, complaining cython no found. So install it first.
+    pip3 install cython
     pip3 install .
 
 
