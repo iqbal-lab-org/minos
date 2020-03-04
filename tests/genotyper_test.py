@@ -152,10 +152,13 @@ class TestGenotyper(unittest.TestCase):
             allele_per_base_cov,
             allele_groups_dict,
         )
+        depth0 = round(3/23, 4)
+        depth01 = 1
+        depth1 = round(21/23, 4)
         gtyper._calculate_log_likelihoods()
-        expected = [({1}, -11.68), ({0, 1}, -22.92), ({0}, -124.91)]
+        expected = [({1}, -11.68, depth1), ({0, 1}, -22.92, depth01), ({0}, -124.91, depth0)]
         self.assertEqual(3, len(gtyper.likelihoods))
-        gtyper.likelihoods = [(x[0], round(x[1], 2)) for x in gtyper.likelihoods]
+        gtyper.likelihoods = [(x[0], round(x[1], 2), x[2]) for x in gtyper.likelihoods]
         self.assertEqual(expected, gtyper.likelihoods)
 
     def test_run_with_call_hets_false(self):
@@ -173,12 +176,16 @@ class TestGenotyper(unittest.TestCase):
             allele_groups_dict,
             call_hets=False,
         )
-        expected = [({1}, -11.68), ({0}, -124.91)]
+        depth0 = round(3/23, 4)
+        depth01 = 1
+        depth1 = round(21/23, 4)
+        expected = [({1}, -11.68, depth1), ({0}, -124.91, depth0)]
         gtyper.run()
         self.assertEqual(len(expected), len(gtyper.likelihoods))
         for i in range(len(expected)):
             self.assertEqual(expected[i][0], gtyper.likelihoods[i][0])
             self.assertAlmostEqual(expected[i][1], gtyper.likelihoods[i][1], places=2)
+            self.assertEqual(expected[i][2], gtyper.likelihoods[i][2])
 
     def test_run(self):
         """test run"""
@@ -194,12 +201,16 @@ class TestGenotyper(unittest.TestCase):
             allele_per_base_cov,
             allele_groups_dict,
         )
-        expected = [({1}, -11.68), ({0, 1}, -22.92), ({0}, -124.91)]
+        depth0 = round(3/23, 4)
+        depth01 = 1
+        depth1 = round(21/23, 4)
+        expected = [({1}, -11.68, depth1), ({0, 1}, -22.92, depth01), ({0}, -124.91, depth0)]
         gtyper.run()
         self.assertEqual(len(expected), len(gtyper.likelihoods))
         for i in range(len(expected)):
             self.assertEqual(expected[i][0], gtyper.likelihoods[i][0])
             self.assertAlmostEqual(expected[i][1], gtyper.likelihoods[i][1], places=2)
+            self.assertEqual(expected[i][2], gtyper.likelihoods[i][2])
 
     def test_run_zero_coverage(self):
         """test run when all alleles have zero coverage"""
@@ -218,6 +229,7 @@ class TestGenotyper(unittest.TestCase):
         gtyper.run()
         self.assertEqual({"."}, gtyper.genotype)
         self.assertEqual(0.0, gtyper.genotype_confidence)
+        self.assertEqual(".", gtyper.genotype_frs)
 
     def test_nomatherror_mean_depth0(self):
         """
@@ -239,3 +251,4 @@ class TestGenotyper(unittest.TestCase):
         gtyper.run()
         self.assertEqual({"."}, gtyper.genotype)
         self.assertEqual(0.0, gtyper.genotype_confidence)
+        self.assertEqual(".", gtyper.genotype_frs)

@@ -263,6 +263,7 @@ def update_vcf_record_using_gramtools_allele_depths(
     vcf_record.set_format_key_value("DP", str(sum(allele_combination_cov.values())))
     vcf_record.set_format_key_value("GT", genotype)
     vcf_record.set_format_key_value("COV", cov_string)
+    vcf_record.set_format_key_value("FRS", str(gtyper.genotype_frs))
     vcf_record.set_format_key_value("GT_CONF", str(gtyper.genotype_confidence))
 
     # Make new record where all zero coverage alleles are removed
@@ -329,6 +330,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         "##source=minos, version " + minos_version,
         "##fileDate=" + str(datetime.date.today()),
         '##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">',
+        '##FORMAT=<ID=FRS,Number=1,Type=Float,Description="Fraction of reads that support the genotype call">',
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
         '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total read depth from gramtools">',
         '##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">',
