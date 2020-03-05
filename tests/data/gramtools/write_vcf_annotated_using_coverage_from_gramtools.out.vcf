@@ -1,13 +1,14 @@
 ##fileformat=VCFv4.2
-##source=minos, version 0.4.1
-##fileDate=2019-02-22
+##source=minos, version 0.9.1
+##fileDate=2020-03-04
 ##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">
+##FORMAT=<ID=FRS,Number=1,Type=Float,Description="Fraction of reads that support the genotype call">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total read depth from gramtools">
 ##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
 ##contig=<ID=ref,length=10000>
 ##minos_max_read_length=200
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_42
-ref	1	.	G	T	.	.	.	DP:GT:COV:GT_CONF	11:1/1:0,10:11.15
-ref	2	.	A	C,TA,G	.	.	.	DP:GT:COV:GT_CONF	10:2/3:1,0,3,5:18.2
-ref	42	.	A	G	.	.	.	DP:GT:COV:GT_CONF	0:./.:0,0:0.0
+ref	1	.	G	T	.	.	.	GT:DP:COV:FRS:GT_CONF	1/1:11:0,10:1.0:11.15
+ref	2	.	A	C,TA,G	.	.	.	GT:DP:COV:FRS:GT_CONF	2/3:10:1,0,3,5:0.9:18.2
+ref	42	.	A	G	.	.	.	GT:DP:COV:FRS:GT_CONF	./.:0:0,0:.:0.0

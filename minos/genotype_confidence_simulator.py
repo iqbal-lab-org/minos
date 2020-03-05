@@ -7,7 +7,7 @@ from minos import genotyper
 
 class GenotypeConfidenceSimulator:
     def __init__(
-        self, mean_depth, depth_variance, error_rate, allele_length=1, iterations=10000
+        self, mean_depth, depth_variance, error_rate, allele_length=1, iterations=10000, call_hets=True
     ):
         self.mean_depth = mean_depth
         self.depth_variance = depth_variance
@@ -17,6 +17,7 @@ class GenotypeConfidenceSimulator:
         self.confidence_scores_percentiles = {}
         self.min_conf_score = None
         self.max_conf_score = None
+        self.call_hets = call_hets
 
     @classmethod
     def _simulate_confidence_scores(
@@ -27,6 +28,7 @@ class GenotypeConfidenceSimulator:
         iterations,
         allele_length=1,
         seed=42,
+        call_hets=True,
     ):
         np.random.seed(seed)
         allele_groups_dict = {"1": {0}, "2": {1}}
@@ -65,6 +67,7 @@ class GenotypeConfidenceSimulator:
                 allele_combination_cov,
                 allele_per_base_cov,
                 allele_groups_dict,
+                call_hets=call_hets,
             )
             gtyper.run()
             confidences.append(round(gtyper.genotype_confidence))
@@ -157,6 +160,7 @@ class GenotypeConfidenceSimulator:
             self.error_rate,
             self.iterations,
             allele_length=self.allele_length,
+            call_hets=self.call_hets,
         )
         self.confidence_scores_percentiles = GenotypeConfidenceSimulator._make_conf_to_percentile_dict(
             confidence_scores

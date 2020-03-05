@@ -58,8 +58,9 @@ def main(args=None):
     subparser_adjudicate.add_argument(
         "--read_error_rate",
         type=float,
-        help="Read error rate. If not given, is estimated from quality scores of first 10,000 reads",
+        help="Read error rate between 0 and 1 [%(default)s]",
         metavar="FLOAT",
+        default=0.002,
     )
     subparser_adjudicate.add_argument(
         "--max_alleles_per_cluster",
@@ -110,6 +111,11 @@ def main(args=None):
         type=float,
         help="Minimum genotype confidence percentile to be used for MIN_GCP filter in output VCF file [%(default)s]",
         default=5.0,
+    )
+    subparser_adjudicate.add_argument(
+        "--include_het_calls",
+        action="store_true",
+        help="Consider heterozygous calls when genotyping each allele, instead of only making homozygous calls.",
     )
     subparser_adjudicate.add_argument("outdir", help="Name of output directory")
     subparser_adjudicate.add_argument(

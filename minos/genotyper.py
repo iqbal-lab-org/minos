@@ -14,6 +14,7 @@ class Genotyper:
         allele_per_base_cov,
         allele_groups_dict,
         min_cov_more_than_error=None,
+        call_hets=True,
     ):
         self.mean_depth = mean_depth
         self.error_rate = error_rate
@@ -22,6 +23,7 @@ class Genotyper:
         self.allele_groups_dict = allele_groups_dict
         self.likelihoods = None
         self.genotype = None
+        self.genotype_frs = None
         self.genotype_confidence = None
         self.singleton_allele_coverages = {}
         self.haploid_allele_coverages = []
@@ -31,6 +33,7 @@ class Genotyper:
             )
         else:
             self.min_cov_more_than_error = min_cov_more_than_error
+        self.call_hets = call_hets
 
     @classmethod
     def get_min_cov_to_be_more_likely_than_error(cls, mean_depth, error_rate):
@@ -202,11 +205,16 @@ class Genotyper:
                 allele_length,
                 non_zeros,
             )
-            self.likelihoods.append(({allele_number, allele_number}, log_likelihood))
+            frac_support = 0 if total_depth == 0 else round(allele_depth / total_depth, 4)
+            self.likelihoods.append(({allele_number, allele_number}, log_likelihood, frac_support))
 
         self.singleton_allele_coverages = Genotyper._singleton_alleles_and_coverage(
             self.allele_combination_cov, self.allele_groups_dict
         )
+
+        if not self.call_hets:
+            self.likelihoods.sort(key=operator.itemgetter(1), reverse=True)
+            return
 
         for (allele_number1, allele_number2) in itertools.combinations(
             self.singleton_allele_coverages.keys(), 2
@@ -233,8 +241,9 @@ class Genotyper:
                 non_zeros1,
                 non_zeros2,
             )
+            frac_support = 0 if total_depth == 0 else round((allele1_depth + allele2_depth) / total_depth, 4)
             self.likelihoods.append(
-                (set([allele_number1, allele_number2]), log_likelihood)
+                (set([allele_number1, allele_number2]), log_likelihood, frac_support)
             )
 
         self.likelihoods.sort(key=operator.itemgetter(1), reverse=True)
@@ -247,15 +256,17 @@ class Genotyper:
         ):
             self.genotype = {"."}
             self.genotype_confidence = 0.0
+            self.genotype_frs = "."
         else:
             self._calculate_log_likelihoods()
             assert self.likelihoods is not None and len(self.likelihoods) > 1
-            self.genotype, best_log_likelihood = self.likelihoods[0]
+            self.genotype, best_log_likelihood, self.genotype_frs = self.likelihoods[0]
 
             for allele in self.genotype:
                 if self.singleton_allele_coverages.get(allele, 0) == 0:
                     self.genotype = {"."}
                     self.genotype_confidence = 0.0
+                    self.genotype_frs = 0
                     break
             else:
                 self.genotype_confidence = round(
