@@ -339,7 +339,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         '##FORMAT=<ID=FRS,Number=1,Type=Float,Description="Fraction of reads that support the genotype call">',
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
         '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total read depth from gramtools">',
-        '##FORMAT=<ID=<DPF,Number=1,Type=Float,Description="Depth Fraction, defined as DP divided by mean depth">',
+        '##FORMAT=<ID=DPF,Number=1,Type=Float,Description="Depth Fraction, defined as DP divided by mean depth">',
         '##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">',
         f"##minosMeanReadDepth={mean_depth}",
     ]
