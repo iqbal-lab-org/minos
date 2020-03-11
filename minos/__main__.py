@@ -104,7 +104,13 @@ def main(args=None):
         "--filter_min_dp",
         type=int,
         help="Minimum depth to be used for MIN_DP filter in output VCF file [%(default)s]",
-        default=5,
+        default=0,
+    )
+    subparser_adjudicate.add_argument(
+        "--filter_min_frs",
+        type=int,
+        help="Minimum value to be used for MIN_FRS filter in output VCF file [%(default)s]",
+        default=0.9,
     )
     subparser_adjudicate.add_argument(
         "--filter_min_gcp",
