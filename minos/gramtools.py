@@ -32,7 +32,9 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
     """Runs gramtools build. Makes new directory called 'outdir' for
     the output"""
     if os.path.exists(outdir):
-        raise FileExistsError(f"Gramtools build output directory '{outdir}' already exists. Cannot continue")
+        raise FileExistsError(
+            f"Gramtools build output directory '{outdir}' already exists. Cannot continue"
+        )
     os.mkdir(outdir)
     gramtools_exe = dependencies.find_binary("gramtools")
     build_command = " ".join(
@@ -253,14 +255,18 @@ def update_vcf_record_using_gramtools_allele_depths(
             genotype = "/".join([str(x) for x in sorted(list(genotype_indexes))])
 
     cov_values = [
-        gtyper.singleton_allele_coverages.get(x, 0) for x in range(1 + len(vcf_record.ALT))
+        gtyper.singleton_allele_coverages.get(x, 0)
+        for x in range(1 + len(vcf_record.ALT))
     ]
     cov_string = ",".join([str(x) for x in cov_values])
     vcf_record.QUAL = None
     vcf_record.INFO.clear()
     vcf_record.FILTER = set()
     vcf_record.FORMAT.clear()
-    vcf_record.set_format_key_value("DP", str(sum(allele_combination_cov.values())))
+    dp = sum(allele_combination_cov.values())
+    vcf_record.set_format_key_value("DP", str(dp))
+    dpf = 0 if dp == 0 else str(round(dp / mean_depth, 4))
+    vcf_record.set_format_key_value("DPF", str(dpf))
     vcf_record.set_format_key_value("GT", genotype)
     vcf_record.set_format_key_value("COV", cov_string)
     vcf_record.set_format_key_value("FRS", str(gtyper.genotype_frs))
@@ -333,7 +339,9 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         '##FORMAT=<ID=FRS,Number=1,Type=Float,Description="Fraction of reads that support the genotype call">',
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
         '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total read depth from gramtools">',
+        '##FORMAT=<ID=<DPF,Number=1,Type=Float,Description="Depth Fraction, defined as DP divided by mean depth">',
         '##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">',
+        f"##minosMeanReadDepth={mean_depth}",
     ]
 
     if ref_seq_lengths is not None:
