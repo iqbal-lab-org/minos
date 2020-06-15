@@ -1,6 +1,0 @@
-##header1
-##header2
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
-ref1	1	.	G	T	.	PASS	.	.	.
-ref1	2	.	C	T	.	PASS	.	DP	12
-ref1	3	.	T	A	.	PASS	.	GT_CONF	4.42
