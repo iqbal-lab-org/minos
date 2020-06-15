@@ -10,10 +10,6 @@ class TestDependencies(unittest.TestCase):
         """test find_binary gramtools"""
         self.assertIsNotNone(dependencies.find_binary("gramtools"))
 
-    def test_find_binary_bwa(self):
-        """test find_binary bwa"""
-        self.assertIsNotNone(dependencies.find_binary("bwa"))
-
     def test_get_version_of_program_gramtools(self):
         """test get_version_of_program gramtools"""
         # We don't know what the version might be, so just
@@ -21,24 +17,6 @@ class TestDependencies(unittest.TestCase):
         got = dependencies.get_version_of_program("gramtools")
         self.assertIsNotNone(got)
         version_regex = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
-        self.assertIsNotNone(version_regex.search(got))
-
-    def test_get_version_of_program_bwa(self):
-        """test get_version_of_program bwa"""
-        # We don't know what the version might be, so just
-        # check that we got something that looks like X.Y.Z-rxxxxx
-        got = dependencies.get_version_of_program("bwa")
-        self.assertIsNotNone(got)
-        version_regex = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+.*")
-        self.assertIsNotNone(version_regex.search(got))
-
-    def test_get_version_of_program_dnadiff(self):
-        """test get_version_of_program dnadiff"""
-        # We don't know what the version might be, so just
-        # check that we got something that has numbers and dots
-        got = dependencies.get_version_of_program("dnadiff")
-        self.assertIsNotNone(got)
-        version_regex = re.compile(r"^[0-9\.]+$")
         self.assertIsNotNone(version_regex.search(got))
 
     def test_get_version_of_program_nextflow(self):
@@ -65,14 +43,12 @@ class TestDependencies(unittest.TestCase):
         # Just check we don't get None
         got = dependencies.find_binaries_and_versions()
         self.assertEqual(
-            ["bwa", "dnadiff", "gramtools", "nextflow"], sorted(list(got.keys()))
+            ["gramtools", "nextflow"], sorted(list(got.keys()))
         )
         for version, path in got.items():
             self.assertIsNotNone(version)
             self.assertIsNotNone(path)
 
-        got = dependencies.find_binaries_and_versions(programs=["bwa"])
-        self.assertEqual(["bwa"], list(got.keys()))
         for version, path in got.items():
             self.assertIsNotNone(version)
             self.assertIsNotNone(path)
@@ -82,9 +58,9 @@ class TestDependencies(unittest.TestCase):
         got_ok, got_lines = dependencies.dependencies_report()
         self.assertTrue(got_ok)
 
-        os.environ["MINOS_BWA"] = "oops_this_is_wrong"
+        os.environ["MINOS_GRAMTOOLS"] = "oops_this_is_wrong"
         got_ok, got_lines = dependencies.dependencies_report()
-        del os.environ["MINOS_BWA"]
+        del os.environ["MINOS_GRAMTOOLS"]
         self.assertFalse(got_ok)
 
     def test_check_and_report_dependencies(self):
@@ -98,9 +74,9 @@ class TestDependencies(unittest.TestCase):
         self.assertTrue(os.path.exists(tmpfile))
         os.unlink(tmpfile)
 
-        os.environ["MINOS_BWA"] = "oops_this_is_wrong"
+        os.environ["MINOS_GRAMTOOLS"] = "oops_this_is_wrong"
         with self.assertRaises(Exception):
             dependencies.check_and_report_dependencies(outfile=tmpfile)
-        del os.environ["MINOS_BWA"]
+        del os.environ["MINOS_GRAMTOOLS"]
         self.assertTrue(os.path.exists(tmpfile))
         os.unlink(tmpfile)
