@@ -1,2 +1,0 @@
-total	gt_correct	gt_wrong	gt_excluded	HET	tp_edit_dist	fp_edit_dist	UNKNOWN_NO_GT	variant_regions_total	called_variant_regions	false_negatives
-5	3	2	0	0	3	2	0	5	5	0

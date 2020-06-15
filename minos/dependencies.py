@@ -22,43 +22,10 @@ def get_version_of_program(program, binary=None, allow_fail=False):
     if binary is None:
         binary = find_binary(program, allow_fail=allow_fail)
 
-    if program == "bcftools":
-        bcftools_process = utils.syscall(binary, allow_fail=True)
-        for line in bcftools_process.stderr.split("\n"):
-            # example version line:
-            # Version: 1.3.1 (using htslib 1.3.1)
-            if line.startswith("Version:"):
-                try:
-                    version = line.rstrip().split(maxsplit=1)[1]
-                except:
-                    return None
-                return version
-        return None
-    elif program == "gramtools":
+    if program == "gramtools":
         gramtools_process = utils.syscall(binary + " --version")
         gramtools_json = json.loads(gramtools_process.stdout)
         return gramtools_json.get("version_number", None)
-    elif program == "bwa":
-        # To get version of BWA, need to run it with no options.
-        # This returns an error code of 1, which we need to ignore
-        bwa_process = utils.syscall(binary, allow_fail=True)
-        for line in bwa_process.stderr.split("\n"):
-            if line.strip().startswith("Version:"):
-                try:
-                    version = line.rstrip().split()[-1]
-                except:
-                    return None
-                return version
-        return None
-    elif program == "dnadiff":
-        dnadiff_process = utils.syscall(binary + " --version", allow_fail=True)
-        for line in dnadiff_process.stderr.split("\n"):
-            if line.strip().startswith("DNAdiff version"):
-                try:
-                    version = line.rstrip().split()[-1]
-                except:
-                    return None
-                return version
     elif program == "nextflow":
         nextflow_process = utils.syscall(binary + " -version", allow_fail=True)
         # example line that we want to capture;
@@ -83,7 +50,7 @@ def find_python_packages():
     package_name => (version, path).
     Values will be None if package not found"""
     packages = {}
-    for package in ["minos", "pyfastaq", "pymummer", "pysam"]:
+    for package in ["minos", "pyfastaq", "pysam"]:
         try:
             exec("import " + package)
             version = eval(package + ".__version__")
@@ -104,7 +71,7 @@ def find_binaries_and_versions(programs=None):
     data = {}
 
     if programs is None:
-        programs = ["bwa", "dnadiff", "gramtools", "nextflow"]
+        programs = ["gramtools", "nextflow"]
 
     for program in programs:
         binary = find_binary(program, allow_fail=True)
@@ -132,7 +99,7 @@ def dependencies_report(programs=None):
     lines = ["minos " + __version__]
 
     if programs is None:
-        programs = ["bwa", "dnadiff", "gramtools", "nextflow"]
+        programs = ["gramtools", "nextflow"]
     programs_data = find_binaries_and_versions(programs=programs)
 
     for program in programs:

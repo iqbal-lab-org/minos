@@ -37,38 +37,6 @@ cd $install_root
 wget -qO- https://get.nextflow.io | bash
 chmod 755 nextflow
 
-#_________________________ bcftools _______________________#
-cd $install_root
-wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2
-tar xf bcftools-1.9.tar.bz2
-rm bcftools-1.9.tar.bz2
-cd bcftools-1.9/
-make
-cd ..
-cp -s bcftools-1.9/bcftools .
-
-
-#__________________________ BWA____________________________#
-cd $install_root
-wget https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.17.tar.bz2
-tar xf bwa-0.7.17.tar.bz2
-rm bwa-0.7.17.tar.bz2
-cd bwa-0.7.17/
-make
-cd ..
-cp -s bwa-0.7.17/bwa .
-
-
-#________________________ mummer ____________________________#
-cd $install_root
-wget https://github.com/mummer4/mummer/releases/download/v4.0.0beta2/mummer-4.0.0beta2.tar.gz
-tar xf mummer-4.0.0beta2.tar.gz
-rm mummer-4.0.0beta2.tar.gz
-cd mummer-4.0.0beta2
-./configure
-make
-make install
-
 
 # Why six>=1.14.0?
 # See https://github.com/pypa/virtualenv/issues/1551
