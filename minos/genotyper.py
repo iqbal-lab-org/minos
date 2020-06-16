@@ -1,4 +1,5 @@
 import itertools
+import logging
 import math
 import operator
 
@@ -34,6 +35,7 @@ class Genotyper:
         else:
             self.min_cov_more_than_error = min_cov_more_than_error
         self.call_hets = call_hets
+        logging.debug(f"Genotyper. mean_depth={mean_depth}, error_rate={error_rate}, allele_combination_cov={allele_combination_cov}, call_hets={call_hets}, min_cov_more_than_error={self.min_cov_more_than_error}")
 
     @classmethod
     def get_min_cov_to_be_more_likely_than_error(cls, mean_depth, error_rate):

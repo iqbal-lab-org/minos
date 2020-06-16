@@ -36,18 +36,21 @@ class GenotypeConfidenceSimulator:
         confidences = []
         #  We can't use the negative binomial unless depth_variance > mean_depth.
         # So force it to be so.
-        if depth_variance < mean_depth:
-            depth_variance = 2 * mean_depth
-            logging.warn(
-                "Variance in read depth is smaller than mean read depth. Setting variance = 2 * mean, so that variant simulations can run. GT_CONF_PERCENTILE in the output VCF file may not be very useful as a result of this."
-            )
-        no_of_successes = (mean_depth ** 2) / (depth_variance - mean_depth)
-        prob_of_success = 1 - (depth_variance - mean_depth) / depth_variance
+        #if depth_variance < mean_depth:
+        #    depth_variance = 2 * mean_depth
+        #    logging.warn(
+        #        "Variance in read depth is smaller than mean read depth. Setting variance = 2 * mean, so that variant simulations can run. GT_CONF_PERCENTILE in the output VCF file may not be very useful as a result of this."
+        #    )
+        #no_of_successes = (mean_depth ** 2) / (depth_variance - mean_depth)
+        #prob_of_success = 1 - (depth_variance - mean_depth) / depth_variance
+        #logging.debug(f"Start simulation. mean_depth={mean_depth}, depth_variance={depth_variance}, error_rate={error_rate}, iterations={iterations}, call_hets={call_hets}")
+        logging.debug("Simulation:\titeration\tcorrect_coverage\tincorrect_coverage\tgenotype_confidence")
 
         while i < iterations:
-            correct_coverage = np.random.negative_binomial(
-                no_of_successes, prob_of_success
-            )
+            #correct_coverage = np.random.negative_binomial(
+            #    no_of_successes, prob_of_success
+            #)
+            correct_coverage = np.random.poisson(mean_depth)
             incorrect_coverage = np.random.binomial(mean_depth, error_rate)
             if correct_coverage + incorrect_coverage == 0:
                 continue
@@ -70,6 +73,7 @@ class GenotypeConfidenceSimulator:
                 call_hets=call_hets,
             )
             gtyper.run()
+            logging.debug(f"Simulation:\t{i}\t{correct_coverage}\t{incorrect_coverage}\t{gtyper.genotype_confidence}")
             confidences.append(round(gtyper.genotype_confidence))
             i += 1
 
@@ -153,7 +157,7 @@ class GenotypeConfidenceSimulator:
 
         return self.confidence_scores_percentiles[confidence]
 
-    def run_simulations(self):
+    def run_simulations(self, conf_scores_file=None):
         confidence_scores = GenotypeConfidenceSimulator._simulate_confidence_scores(
             self.mean_depth,
             self.depth_variance,
@@ -165,6 +169,9 @@ class GenotypeConfidenceSimulator:
         self.confidence_scores_percentiles = GenotypeConfidenceSimulator._make_conf_to_percentile_dict(
             confidence_scores
         )
+        if conf_scores_file is not None:
+            with open(conf_scores_file, "w") as f:
+                print(*confidence_scores, sep="\n", file=f)
 
 
 #  This class is here for when we were simulating different allele lengths.

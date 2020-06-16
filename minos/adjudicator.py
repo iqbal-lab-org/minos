@@ -5,9 +5,12 @@ import shutil
 import statistics
 import sys
 
-import pyfastaq
-
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import pyfastaq
+import seaborn as sns
+
 
 from minos import (
     bam_read_extract,
@@ -51,6 +54,7 @@ class Adjudicator:
         filter_min_gcp=5,
         filter_min_frs=0.9,
         call_hets=True,
+        debug=False,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -110,6 +114,7 @@ class Adjudicator:
         self.filter_min_gcp = filter_min_gcp
         self.filter_min_frs = filter_min_frs
         self.call_hets = call_hets
+        self.debug = debug
         self.ref_seq_lengths = {x.id.split()[0]: len(x) for x in pyfastaq.sequences.file_reader(self.ref_fasta)}
 
     def build_output_dir(self):
@@ -425,6 +430,28 @@ class Adjudicator:
             call_hets=self.call_hets,
         )
 
+
+    @classmethod
+    def _plot_gt_conf_hists(cls, real_file, sim_file, outfile):
+        with open(real_file) as f:
+            real_data = [int(x.rstrip()) for x in f]
+        with open(sim_file) as f:
+            sim_data = [int(x.rstrip()) for x in f]
+
+        real_color = "#7fc97f"
+        sim_color = "#beaed4"
+        real_patch = mpatches.Patch(color=real_color, label="Real")
+        sim_patch = mpatches.Patch(color=sim_color, label="Simulated")
+        fig, ax = plt.subplots()
+        sns.distplot(real_data, color=real_color, ax=ax)
+        sns.distplot(sim_data, color=sim_color, ax=ax)
+        plt.legend(handles=[real_patch, sim_patch])
+        ax.set_xlabel("GT_CONF")
+        plt.savefig(outfile)
+        plt.clf()
+        plt.close("all")
+
+
     def run_gt_conf(self):
         """
         """
@@ -439,6 +466,7 @@ class Adjudicator:
         )
 
         for f in [self.unfiltered_vcf_file, self.final_vcf]:
+            debug_out = f + ".debug" if self.debug else None
             Adjudicator._add_gt_conf_percentile_and_filters_to_vcf_file(
                 f,
                 mean_depth,
@@ -448,7 +476,14 @@ class Adjudicator:
                 min_dp=self.filter_min_dp,
                 min_gcp=self.filter_min_gcp,
                 min_frs=self.filter_min_frs,
+                debug_out=debug_out,
+                call_hets=self.call_hets,
             )
+            if self.debug:
+                real_file = f"{f}.debug.real_conf_scores.txt"
+                sim_file = f"{f}.debug.sim_conf_scores.txt"
+                outfile = f"{f}.debug.histogram.pdf"
+                Adjudicator._plot_gt_conf_hists(real_file, sim_file, outfile)
 
     @classmethod
     def _add_gt_conf_percentile_and_filters_to_vcf_file(
@@ -461,9 +496,17 @@ class Adjudicator:
         min_dp=0,
         min_gcp=5,
         min_frs=0.9,
+        debug_out=None,
+        call_hets=True,
     ):
         """Overwrites vcf_file, with new version that has GT_CONF_PERCENTILE added,
         and filter for DP, GT_CONF_PERCENTILE, and FRS"""
+        if debug_out is None:
+            sim_conf_scores_file = None
+        else:
+            sim_conf_scores_file = f"{debug_out}.sim_conf_scores.txt"
+            real_conf_scores = []
+
         if mean_depth > 0:
             simulations = genotype_confidence_simulator.GenotypeConfidenceSimulator(
                 mean_depth,
@@ -471,8 +514,9 @@ class Adjudicator:
                 error_rate,
                 allele_length=1,
                 iterations=iterations,
+                call_hets=call_hets,
             )
-            simulations.run_simulations()
+            simulations.run_simulations(conf_scores_file=sim_conf_scores_file)
         vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
         for i, line in enumerate(vcf_header):
             if line.startswith("##FORMAT=<ID=GT_CONF"):
@@ -520,8 +564,16 @@ class Adjudicator:
                             vcf_record.FILTER.add("MIN_FRS")
                         if len(vcf_record.FILTER) == 0:
                             vcf_record.FILTER.add("PASS")
+
+                        if debug_out is not None:
+                            real_conf_scores.append(conf)
                     else:
                         # Add a default null percentile
                         vcf_record.set_format_key_value("GT_CONF_PERCENTILE", "0.0")
 
                 print(vcf_record, file=f)
+
+        if debug_out is not None:
+            with open(f"{debug_out}.real_conf_scores.txt", "w") as f:
+                print(*real_conf_scores, sep="\n", file=f)
+
