@@ -25,6 +25,7 @@ def test_build_json_file_is_good():
     )
     assert not gramtools._build_json_file_is_good(build_file)
 
+
 def test_run_gramtools_build():
     """test run_gramtools_build"""
     tmp_out_build = "tmp.run_gramtools.out.build"
@@ -32,11 +33,10 @@ def test_run_gramtools_build():
         shutil.rmtree(tmp_out_build)
     vcf_file = os.path.join(data_dir, "run_gramtools.calls.vcf")
     ref_file = os.path.join(data_dir, "run_gramtools.ref.fa")
-    gramtools.run_gramtools_build(
-        tmp_out_build, vcf_file, ref_file, 150, kmer_size=5
-    )
+    gramtools.run_gramtools_build(tmp_out_build, vcf_file, ref_file, 150, kmer_size=5)
     assert os.path.exists(tmp_out_build)
     shutil.rmtree(tmp_out_build)
+
 
 def test_run_gramtools():
     """test run_gramtools"""
@@ -62,12 +62,19 @@ def test_run_gramtools():
     # that gramtools can run. Parsing its output is checked elsewhere.
     assert os.path.exists(tmp_out_build)
     assert os.path.exists(tmp_out_quasimap)
-    assert os.path.exists(os.path.join(tmp_out_quasimap, "quasimap_outputs", "allele_base_coverage.json"))
-    assert os.path.exists(os.path.join(tmp_out_quasimap, "quasimap_outputs", "grouped_allele_counts_coverage.json"))
+    assert os.path.exists(
+        os.path.join(tmp_out_quasimap, "quasimap_outputs", "allele_base_coverage.json")
+    )
+    assert os.path.exists(
+        os.path.join(
+            tmp_out_quasimap, "quasimap_outputs", "grouped_allele_counts_coverage.json"
+        )
+    )
     assert "gramtools_build" in build_report
     assert "gramtools_cpp_quasimap" in quasimap_report
     shutil.rmtree(tmp_out_build)
     shutil.rmtree(tmp_out_quasimap)
+
 
 def test_run_gramtools_fails():
     """test run_gramtools when fails"""
@@ -97,6 +104,7 @@ def test_run_gramtools_fails():
         )
     shutil.rmtree(tmp_out_build)
 
+
 def test_run_gramtools_two_reads_files():
     """test run_gramtools"""
     tmp_out_build = "tmp.run_gramtools.2files.out.build"
@@ -122,10 +130,17 @@ def test_run_gramtools_two_reads_files():
     # that gramtools can run. Parsing its output is checked elsewhere.
     assert os.path.exists(tmp_out_build)
     assert os.path.exists(tmp_out_quasimap)
-    assert os.path.exists(os.path.join(tmp_out_quasimap, "quasimap_outputs", "allele_base_coverage.json"))
-    assert os.path.exists(os.path.join(tmp_out_quasimap, "quasimap_outputs", "grouped_allele_counts_coverage.json"))
+    assert os.path.exists(
+        os.path.join(tmp_out_quasimap, "quasimap_outputs", "allele_base_coverage.json")
+    )
+    assert os.path.exists(
+        os.path.join(
+            tmp_out_quasimap, "quasimap_outputs", "grouped_allele_counts_coverage.json"
+        )
+    )
     shutil.rmtree(tmp_out_build)
     shutil.rmtree(tmp_out_quasimap)
+
 
 def test_load_gramtools_vcf_and_allele_coverage_files():
     """test load_gramtools_vcf_and_allele_coverage_files"""
@@ -133,9 +148,14 @@ def test_load_gramtools_vcf_and_allele_coverage_files():
     quasimap_dir = os.path.join(
         data_dir, "load_gramtools_vcf_and_allele_coverage_files.quasimap"
     )
-    got_mean_depth, got_depth_variance, got_vcf_header, got_vcf_records, got_allele_coverage, got_allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(
-        vcf_file, quasimap_dir
-    )
+    (
+        got_mean_depth,
+        got_depth_variance,
+        got_vcf_header,
+        got_vcf_records,
+        got_allele_coverage,
+        got_allele_groups,
+    ) = gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
 
     expected_header, expected_vcf_records = vcf_file_read.vcf_file_to_list(vcf_file)
     assert got_vcf_header == expected_header
@@ -148,25 +168,18 @@ def test_load_gramtools_vcf_and_allele_coverage_files():
         data_dir, "load_gramtools_vcf_and_allele_coverage.short.vcf"
     )
     with pytest.raises(Exception):
-        gramtools.load_gramtools_vcf_and_allele_coverage_files(
-            vcf_file, quasimap_dir
-        )
+        gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
 
-    vcf_file = os.path.join(
-        data_dir, "load_gramtools_vcf_and_allele_coverage.long.vcf"
-    )
+    vcf_file = os.path.join(data_dir, "load_gramtools_vcf_and_allele_coverage.long.vcf")
     with pytest.raises(Exception):
-        gramtools.load_gramtools_vcf_and_allele_coverage_files(
-            vcf_file, quasimap_dir
-        )
+        gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
 
     vcf_file = os.path.join(
         data_dir, "load_gramtools_vcf_and_allele_coverage.bad_allele_count.vcf"
     )
     with pytest.raises(Exception):
-        gramtools.load_gramtools_vcf_and_allele_coverage_files(
-            vcf_file, quasimap_dir
-        )
+        gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
+
 
 def test_update_vcf_record_using_gramtools_allele_depths_heterozygous():
     """test update_using_gramtools_allele_depths heterozygous"""
@@ -186,17 +199,14 @@ def test_update_vcf_record_using_gramtools_allele_depths_heterozygous():
         mean_depth, depth_variance, error_rate, call_hets=True,
     )
     got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(
-        record,
-        gtyper,
-        allele_combination_cov,
-        allele_per_base_cov,
-        allele_groups_dict,
+        record, gtyper, allele_combination_cov, allele_per_base_cov, allele_groups_dict,
     )
     assert record == expected
     expected_filtered = vcf_record.VcfRecord(
         "ref\t4\t.\tT\tG\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t0/1:17:1.1333:9,7:1.0:54.43"
     )
     assert got_filtered == expected_filtered
+
 
 def test_update_vcf_record_using_gramtools_allele_depths_homozygous():
     """test update_using_gramtools_allele_depths homozygous"""
@@ -216,17 +226,14 @@ def test_update_vcf_record_using_gramtools_allele_depths_homozygous():
         mean_depth, depth_variance, error_rate, call_hets=False,
     )
     got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(
-        record,
-        gtyper,
-        allele_combination_cov,
-        allele_per_base_cov,
-        allele_groups_dict,
+        record, gtyper, allele_combination_cov, allele_per_base_cov, allele_groups_dict,
     )
     assert record == expected
     expected_filtered = vcf_record.VcfRecord(
         "ref\t4\t.\tT\tG\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t1/1:81:0.9529:1,80:0.9877:708.01"
     )
     assert got_filtered == expected_filtered
+
 
 def test_update_vcf_record_using_gramtools_allele_depths_not_callable():
     """test update_using_gramtools_allele_depths not callable"""
@@ -246,14 +253,11 @@ def test_update_vcf_record_using_gramtools_allele_depths_not_callable():
         mean_depth, depth_variance, error_rate, call_hets=False,
     )
     got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(
-        record,
-        gtyper,
-        allele_combination_cov,
-        allele_per_base_cov,
-        allele_groups_dict,
+        record, gtyper, allele_combination_cov, allele_per_base_cov, allele_groups_dict,
     )
     assert record == expected
     assert got_filtered == expected
+
 
 def test_write_vcf_annotated_using_coverage_from_gramtools():
     """test write_vcf_annotated_using_coverage_from_gramtools"""
@@ -263,12 +267,17 @@ def test_write_vcf_annotated_using_coverage_from_gramtools():
     quasimap_dir = os.path.join(
         data_dir, "write_vcf_annotated_using_coverage_from_gramtools.quasimap"
     )
-    mean_depth, depth_variance, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(
+    (
+        mean_depth,
+        depth_variance,
+        vcf_header,
+        vcf_records,
+        allele_coverage,
+        allele_groups,
+    ) = gramtools.load_gramtools_vcf_and_allele_coverage_files(
         vcf_file_in, quasimap_dir
     )
-    tmp_outfile = (
-        "tmp.gramtools.write_vcf_annotated_using_coverage_from_gramtools.vcf"
-    )
+    tmp_outfile = "tmp.gramtools.write_vcf_annotated_using_coverage_from_gramtools.vcf"
     tmp_outfile_filtered = tmp_outfile + ".filter.vcf"
     error_rate = 0.001
     gramtools.write_vcf_annotated_using_coverage_from_gramtools(
@@ -313,6 +322,7 @@ def test_write_vcf_annotated_using_coverage_from_gramtools():
     check_vcfs(expected_vcf_filtered, tmp_outfile_filtered)
     os.unlink(tmp_outfile)
     os.unlink(tmp_outfile_filtered)
+
 
 def test_load_allele_files():
     """test load_allele_files"""

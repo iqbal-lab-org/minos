@@ -211,11 +211,7 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
 
 
 def update_vcf_record_using_gramtools_allele_depths(
-    vcf_record,
-    gtyper,
-    allele_combination_cov,
-    allele_per_base_cov,
-    allele_groups_dict,
+    vcf_record, gtyper, allele_combination_cov, allele_per_base_cov, allele_groups_dict,
 ):
     """allele_depths should be a dict of allele -> coverage.
     The REF allele must also be in the dict.
