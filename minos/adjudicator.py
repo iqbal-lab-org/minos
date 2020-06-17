@@ -119,6 +119,20 @@ class Adjudicator:
             x.id.split()[0]: len(x)
             for x in pyfastaq.sequences.file_reader(self.ref_fasta)
         }
+        if self.debug:
+            self.sim_conf_scores_file = os.path.join(
+                self.outdir, "debug.genotype_sim_conf_scores.txt"
+            )
+            self.real_conf_scores_file = os.path.join(
+                self.outdir, "debug.genotype_real_conf_scores.txt"
+            )
+            self.genotype_hist_pdf = os.path.join(
+                self.outdir, "debug.genotype_hist.pdf"
+            )
+        else:
+            self.sim_conf_scores_file = None
+            self.real_conf_scores_file = None
+            self.genotype_hist_pdf = None
 
     def build_output_dir(self):
         try:
@@ -479,11 +493,7 @@ class Adjudicator:
                 iterations=self.genotype_simulation_iterations,
                 call_hets=self.call_hets,
             )
-            if self.debug:
-                sim_conf_scores_file = f"debug.genotype_sim_conf_scores.txt"
-            else:
-                sim_conf_scores_file = None
-            simulations.run_simulations(conf_scores_file=sim_conf_scores_file)
+            simulations.run_simulations(conf_scores_file=self.sim_conf_scores_file)
         else:
             simulations = None
 
@@ -495,7 +505,7 @@ class Adjudicator:
 
         for f in [self.unfiltered_vcf_file, self.final_vcf]:
             if self.debug and f == self.final_vcf:
-                scores_file = "debug.genotype_real_conf_scores.txt"
+                scores_file = self.real_conf_scores_file
             else:
                 scores_file = None
             Adjudicator._add_gt_conf_percentile_and_filters_to_vcf_file(
@@ -508,7 +518,7 @@ class Adjudicator:
             )
             if scores_file is not None:
                 Adjudicator._plot_gt_conf_hists(
-                    scores_file, sim_conf_scores_file, "debug.genotype_hist.pdf"
+                    scores_file, self.sim_conf_scores_file, self.genotype_hist_pdf,
                 )
 
     @classmethod
