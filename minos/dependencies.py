@@ -50,7 +50,7 @@ def find_python_packages():
     package_name => (version, path).
     Values will be None if package not found"""
     packages = {}
-    for package in ["minos", "pyfastaq", "pysam"]:
+    for package in ["cluster_vcf_records", "matplotlib", "minos", "pyfastaq", "pysam", "scipy", "seaborn"]:
         try:
             exec("import " + package)
             version = eval(package + ".__version__")
