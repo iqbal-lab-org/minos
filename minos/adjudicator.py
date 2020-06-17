@@ -434,7 +434,7 @@ class Adjudicator:
             if not self.user_supplied_gramtools_build_dir:
                 os.rename(
                     os.path.join(build_dir, "build_report.json"),
-                    os.path.join(build_dir, "build.report.json"),
+                    build_dir + ".report.json",
                 )
                 shutil.rmtree(build_dir)
 
