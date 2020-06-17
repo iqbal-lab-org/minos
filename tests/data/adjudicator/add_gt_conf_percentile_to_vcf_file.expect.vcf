@@ -6,10 +6,10 @@
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total kmer depth from gramtools",Source="minos">
 ##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
-##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of 2.5">
-##FILTER=<ID=MIN_DP,Description="Minimum DP of 2">
-##FILTER=<ID=MIN_FRS,Description="Minimum FRS of 0.9">
 ##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">
+##FILTER=<ID=MIN_FRS,Description="Minimum FRS of 0.9">
+##FILTER=<ID=MIN_DP,Description="Minimum DP of 2">
+##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of 2.5">
 ##minos_max_read_length=200
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
 ref	100	.	T	G	.	PASS	.	GT:DP:COV:FRS:GT_CONF:GT_CONF_PERCENTILE	1/1:63:0,63:0.9:609.67:52.86
