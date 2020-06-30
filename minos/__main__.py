@@ -104,7 +104,7 @@ def main(args=None):
         "--filter_min_dp",
         type=int,
         help="Minimum depth to be used for MIN_DP filter in output VCF file [%(default)s]",
-        default=0,
+        default=2,
     )
     subparser_adjudicate.add_argument(
         "--filter_min_frs",
@@ -116,7 +116,7 @@ def main(args=None):
         "--filter_min_gcp",
         type=float,
         help="Minimum genotype confidence percentile to be used for MIN_GCP filter in output VCF file [%(default)s]",
-        default=5.0,
+        default=2.5,
     )
     subparser_adjudicate.add_argument(
         "--include_het_calls",
