@@ -21,6 +21,7 @@ apt-get install -y \
   libhts-dev \
   libssl-dev \
   pkg-config \
+  python-dev \
   python3 \
   python3-pip \
   python3-setuptools \
@@ -62,4 +63,4 @@ cd $install_root
 git clone https://github.com/iqbal-lab-org/gramtools
 cd gramtools
 git checkout 9313eceb606a6fc159e4a14c168b7a6f888c5ed2
-pip3 install wheel .
+pip3 install .
