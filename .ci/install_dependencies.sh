@@ -16,8 +16,10 @@ apt-get install -y \
   git \
   openjdk-8-jre \
   liblzma-dev \
+  libcurl4-gnutls-dev \
   libbz2-dev \
   libhts-dev \
+  libssl-dev \
   pkg-config \
   python3 \
   python3-pip \
@@ -37,6 +39,20 @@ cd $install_root
 wget -qO- https://get.nextflow.io | bash
 chmod 755 nextflow
 
+#________________________ vt __________________________________#
+cd $install_root
+git clone https://github.com/atks/vt.git vt-git
+cd vt-git
+git checkout 2187ff6347086e38f71bd9f8ca622cd7dcfbb40c
+make
+cd ..
+cp -s vt-git/vt .
+
+#______________________vcflib _________________________________#
+cd $install_root
+git clone --recursive https://github.com/vcflib/vcflib.git
+cd vcflib
+make
 
 # Why six>=1.14.0?
 # See https://github.com/pypa/virtualenv/issues/1551
