@@ -5,6 +5,10 @@ import pyfastaq
 import pysam
 
 
+def rm_rf(*paths):
+    for path in paths:
+        subprocess.check_output(f"rm -rf {path}", shell=True)
+
 def syscall(command, allow_fail=False):
     completed_process = subprocess.run(
         command,
