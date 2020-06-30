@@ -211,14 +211,7 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
 
 
 def update_vcf_record_using_gramtools_allele_depths(
-    vcf_record,
-    allele_combination_cov,
-    allele_per_base_cov,
-    allele_groups_dict,
-    mean_depth,
-    read_error_rate,
-    min_cov_more_than_error=None,
-    call_hets=True,
+    vcf_record, gtyper, allele_combination_cov, allele_per_base_cov, allele_groups_dict,
 ):
     """allele_depths should be a dict of allele -> coverage.
     The REF allele must also be in the dict.
@@ -226,16 +219,7 @@ def update_vcf_record_using_gramtools_allele_depths(
     This also changes all columns from QUAL onwards.
     Returns a VcfRecord the same as vcf_record, but with all zero
     coverage alleles removed, and GT and COV fixed accordingly"""
-    gtyper = genotyper.Genotyper(
-        mean_depth,
-        read_error_rate,
-        allele_combination_cov,
-        allele_per_base_cov,
-        allele_groups_dict,
-        min_cov_more_than_error=min_cov_more_than_error,
-        call_hets=call_hets,
-    )
-    gtyper.run()
+    gtyper.run(allele_combination_cov, allele_per_base_cov, allele_groups_dict)
     genotype_indexes = set()
 
     if "." in gtyper.genotype:
@@ -265,7 +249,7 @@ def update_vcf_record_using_gramtools_allele_depths(
     vcf_record.FORMAT.clear()
     dp = sum(allele_combination_cov.values())
     vcf_record.set_format_key_value("DP", str(dp))
-    dpf = 0 if dp == 0 else str(round(dp / mean_depth, 4))
+    dpf = 0 if dp == 0 else str(round(dp / gtyper.mean_depth, 4))
     vcf_record.set_format_key_value("DPF", str(dpf))
     vcf_record.set_format_key_value("GT", genotype)
     vcf_record.set_format_key_value("COV", cov_string)
@@ -315,6 +299,7 @@ def update_vcf_record_using_gramtools_allele_depths(
 
 def write_vcf_annotated_using_coverage_from_gramtools(
     mean_depth,
+    depth_variance,
     vcf_records,
     all_allele_coverage,
     allele_groups,
@@ -324,7 +309,7 @@ def write_vcf_annotated_using_coverage_from_gramtools(
     max_read_length=None,
     filtered_outfile=None,
     ref_seq_lengths=None,
-    call_hets=True,
+    call_hets=False,
 ):
     """mean_depth, vcf_records, all_allele_coverage, allele_groups should be those
     returned by load_gramtools_vcf_and_allele_coverage_files().
@@ -368,8 +353,8 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         )
     )
 
-    min_cov_more_than_error = genotyper.Genotyper.get_min_cov_to_be_more_likely_than_error(
-        mean_depth, read_error_rate
+    gtyper = genotyper.Genotyper(
+        mean_depth, depth_variance, read_error_rate, call_hets=call_hets,
     )
 
     if filtered_outfile is not None:
@@ -383,13 +368,10 @@ def write_vcf_annotated_using_coverage_from_gramtools(
             logging.debug("Genotyping: " + str(vcf_records[i]))
             filtered_record = update_vcf_record_using_gramtools_allele_depths(
                 vcf_records[i],
+                gtyper,
                 all_allele_coverage[i][0],
                 all_allele_coverage[i][1],
                 allele_groups,
-                mean_depth,
-                read_error_rate,
-                min_cov_more_than_error=min_cov_more_than_error,
-                call_hets=call_hets,
             )
             print(vcf_records[i], file=f)
             if filtered_outfile is not None:

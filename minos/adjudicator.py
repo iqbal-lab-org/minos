@@ -5,9 +5,12 @@ import shutil
 import statistics
 import sys
 
-import pyfastaq
-
 from cluster_vcf_records import vcf_clusterer, vcf_file_read
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import pyfastaq
+import seaborn as sns
+
 
 from minos import (
     bam_read_extract,
@@ -50,7 +53,8 @@ class Adjudicator:
         filter_min_dp=0,
         filter_min_gcp=5,
         filter_min_frs=0.9,
-        call_hets=True,
+        call_hets=False,
+        debug=False,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -110,7 +114,25 @@ class Adjudicator:
         self.filter_min_gcp = filter_min_gcp
         self.filter_min_frs = filter_min_frs
         self.call_hets = call_hets
-        self.ref_seq_lengths = {x.id.split()[0]: len(x) for x in pyfastaq.sequences.file_reader(self.ref_fasta)}
+        self.debug = debug
+        self.ref_seq_lengths = {
+            x.id.split()[0]: len(x)
+            for x in pyfastaq.sequences.file_reader(self.ref_fasta)
+        }
+        if self.debug:
+            self.sim_conf_scores_file = os.path.join(
+                self.outdir, "debug.genotype_sim_conf_scores.txt"
+            )
+            self.real_conf_scores_file = os.path.join(
+                self.outdir, "debug.genotype_real_conf_scores.txt"
+            )
+            self.genotype_hist_pdf = os.path.join(
+                self.outdir, "debug.genotype_hist.pdf"
+            )
+        else:
+            self.sim_conf_scores_file = None
+            self.real_conf_scores_file = None
+            self.genotype_hist_pdf = None
 
     def build_output_dir(self):
         try:
@@ -153,6 +175,8 @@ class Adjudicator:
             return input_kmer_size
 
     def run(self):
+        Adjudicator.mean_depths = []
+        Adjudicator.variance_depths = []
         self.build_output_dir()
 
         fh = logging.FileHandler(self.log_file, mode="w")
@@ -170,7 +194,10 @@ class Adjudicator:
             logging.info(
                 "One or both of read_error_rate and max_read_length not known. Estimate from first 10,000 reads..."
             )
-            estimated_read_length, estimated_read_error_rate = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(
+            (
+                estimated_read_length,
+                estimated_read_error_rate,
+            ) = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(
                 self.reads_files[0]
             )
             logging.info(
@@ -382,7 +409,14 @@ class Adjudicator:
         build_vcf = os.path.join(build_dir, "build.vcf")
 
         logging.info("Loading gramtools quasimap output files " + quasimap_dir)
-        mean_depth, variance_depth, vcf_header, vcf_records, allele_coverage, allele_groups = gramtools.load_gramtools_vcf_and_allele_coverage_files(
+        (
+            mean_depth,
+            variance_depth,
+            vcf_header,
+            vcf_records,
+            allele_coverage,
+            allele_groups,
+        ) = gramtools.load_gramtools_vcf_and_allele_coverage_files(
             build_vcf, quasimap_dir
         )
         Adjudicator.mean_depths.append(mean_depth)
@@ -400,7 +434,7 @@ class Adjudicator:
             if not self.user_supplied_gramtools_build_dir:
                 os.rename(
                     os.path.join(build_dir, "build_report.json"),
-                    os.path.join(build_dir, "build.report.json"),
+                    build_dir + ".report.json",
                 )
                 shutil.rmtree(build_dir)
 
@@ -413,6 +447,7 @@ class Adjudicator:
 
         gramtools.write_vcf_annotated_using_coverage_from_gramtools(
             mean_depth,
+            variance_depth,
             vcf_records,
             allele_coverage,
             allele_groups,
@@ -425,12 +460,42 @@ class Adjudicator:
             call_hets=self.call_hets,
         )
 
-    def run_gt_conf(self):
-        """
-        """
+    @classmethod
+    def _plot_gt_conf_hists(cls, real_file, sim_file, outfile):
+        with open(real_file) as f:
+            real_data = [int(x.rstrip()) for x in f]
+        with open(sim_file) as f:
+            sim_data = [int(x.rstrip()) for x in f]
 
+        real_color = "#7fc97f"
+        sim_color = "#beaed4"
+        real_patch = mpatches.Patch(color=real_color, label="Real")
+        sim_patch = mpatches.Patch(color=sim_color, label="Simulated")
+        fig, ax = plt.subplots()
+        sns.distplot(real_data, color=real_color, ax=ax)
+        sns.distplot(sim_data, color=sim_color, ax=ax)
+        plt.legend(handles=[real_patch, sim_patch])
+        ax.set_xlabel("GT_CONF")
+        plt.savefig(outfile)
+        plt.clf()
+        plt.close("all")
+
+    def run_gt_conf(self):
         mean_depth = statistics.mean(Adjudicator.mean_depths)
         variance_depth = statistics.mean(Adjudicator.variance_depths)
+
+        if mean_depth > 0:
+            simulations = genotype_confidence_simulator.GenotypeConfidenceSimulator(
+                mean_depth,
+                variance_depth,
+                self.read_error_rate,
+                allele_length=1,
+                iterations=self.genotype_simulation_iterations,
+                call_hets=self.call_hets,
+            )
+            simulations.run_simulations(conf_scores_file=self.sim_conf_scores_file)
+        else:
+            simulations = None
 
         logging.info(
             f"Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf} & its debug counterpart, "
@@ -439,40 +504,38 @@ class Adjudicator:
         )
 
         for f in [self.unfiltered_vcf_file, self.final_vcf]:
+            if self.debug and f == self.final_vcf:
+                scores_file = self.real_conf_scores_file
+            else:
+                scores_file = None
             Adjudicator._add_gt_conf_percentile_and_filters_to_vcf_file(
                 f,
-                mean_depth,
-                variance_depth,
-                self.read_error_rate,
-                self.genotype_simulation_iterations,
+                simulations,
                 min_dp=self.filter_min_dp,
                 min_gcp=self.filter_min_gcp,
                 min_frs=self.filter_min_frs,
+                conf_scores_file=scores_file,
             )
+            if scores_file is not None:
+                Adjudicator._plot_gt_conf_hists(
+                    scores_file, self.sim_conf_scores_file, self.genotype_hist_pdf,
+                )
 
     @classmethod
     def _add_gt_conf_percentile_and_filters_to_vcf_file(
         cls,
         vcf_file,
-        mean_depth,
-        depth_variance,
-        error_rate,
-        iterations,
+        geno_simulations,
         min_dp=0,
         min_gcp=5,
         min_frs=0.9,
+        conf_scores_file=None,
     ):
         """Overwrites vcf_file, with new version that has GT_CONF_PERCENTILE added,
         and filter for DP, GT_CONF_PERCENTILE, and FRS"""
-        if mean_depth > 0:
-            simulations = genotype_confidence_simulator.GenotypeConfidenceSimulator(
-                mean_depth,
-                depth_variance,
-                error_rate,
-                allele_length=1,
-                iterations=iterations,
-            )
-            simulations.run_simulations()
+        if conf_scores_file is not None:
+            real_conf_scores = []
+
         vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
         for i, line in enumerate(vcf_header):
             if line.startswith("##FORMAT=<ID=GT_CONF"):
@@ -482,20 +545,12 @@ class Adjudicator:
                 f"No GT_CONF description found in header of VCF file {vcf_file}. Cannot continue"
             )
 
-        vcf_header.insert(
-            i + 1,
-            r"""##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">""",
-        )
-        vcf_header.insert(
-            i + 1, f'##FILTER=<ID=MIN_FRS,Description="Minimum FRS of {min_frs}">'
-        )
-        vcf_header.insert(
-            i + 1, f'##FILTER=<ID=MIN_DP,Description="Minimum DP of {min_dp}">'
-        )
-        vcf_header.insert(
-            i + 1,
+        vcf_header[i + 1 : i + 1] = [
+            '##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">',
+            f'##FILTER=<ID=MIN_FRS,Description="Minimum FRS of {min_frs}">',
+            f'##FILTER=<ID=MIN_DP,Description="Minimum DP of {min_dp}">',
             f'##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of {min_gcp}">',
-        )
+        ]
 
         with open(vcf_file, "w") as f:
             print(*vcf_header, sep="\n", file=f)
@@ -507,7 +562,8 @@ class Adjudicator:
                     if "." not in vcf_record.FORMAT["GT"]:
                         conf = int(round(float(vcf_record.FORMAT["GT_CONF"])))
                         vcf_record.set_format_key_value(
-                            "GT_CONF_PERCENTILE", str(simulations.get_percentile(conf))
+                            "GT_CONF_PERCENTILE",
+                            str(geno_simulations.get_percentile(conf)),
                         )
                         if (
                             "DP" in vcf_record.FORMAT
@@ -516,12 +572,22 @@ class Adjudicator:
                             vcf_record.FILTER.add("MIN_DP")
                         if float(vcf_record.FORMAT["GT_CONF_PERCENTILE"]) < min_gcp:
                             vcf_record.FILTER.add("MIN_GCP")
-                        if "FRS" in vcf_record.FORMAT and float(vcf_record.FORMAT["FRS"]) < min_frs:
+                        if (
+                            "FRS" in vcf_record.FORMAT
+                            and float(vcf_record.FORMAT["FRS"]) < min_frs
+                        ):
                             vcf_record.FILTER.add("MIN_FRS")
                         if len(vcf_record.FILTER) == 0:
                             vcf_record.FILTER.add("PASS")
+
+                        if conf_scores_file is not None:
+                            real_conf_scores.append(conf)
                     else:
                         # Add a default null percentile
                         vcf_record.set_format_key_value("GT_CONF_PERCENTILE", "0.0")
 
                 print(vcf_record, file=f)
+
+        if conf_scores_file is not None:
+            with open(conf_scores_file, "w") as f:
+                print(*real_conf_scores, sep="\n", file=f)
