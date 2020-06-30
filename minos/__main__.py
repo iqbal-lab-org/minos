@@ -368,6 +368,84 @@ def main(args=None):
         func=minos.tasks.multi_sample_pipeline.run
     )
 
+    # ------------------ vcf_merge ------------------------------------------------
+    subparser_vcf_merge = subparsers.add_parser(
+        "vcf_merge",
+        help="Merge VCF files; makes input to vcf_cluster",
+        usage="minos vcf_merge [options] <ref_fasta> <vcf_fofn> <outdir>",
+        description="Gathers variants from VCF files, storing variants and sample info in new directory than can be used as input to vcf_cluster",
+    )
+
+    subparser_vcf_merge.add_argument(
+        "vcf_fofn", help="File of VCF filenames",
+    )
+    subparser_vcf_merge.add_argument(
+        "ref_fasta",
+        help="FASTA file of reference, corresponding to all input VCF files",
+    )
+    subparser_vcf_merge.add_argument(
+        "outdir", help="Output directory",
+    )
+    subparser_vcf_merge.add_argument(
+        "--tmp",
+        help="Temporary directory used for processing input VCF files. If does not exist, will be created (then destroyed at the end of the run). If this option is not used, then `tmp` is used inside the output directory",
+        metavar="FILENAME",
+    )
+    subparser_vcf_merge.add_argument(
+        "--cpus",
+        type=int,
+        help="Number of CPUs to use. This many input VCF files will be read in parallel [%(default)s]",
+        default=1,
+        metavar="INT",
+    )
+    subparser_vcf_merge.add_argument(
+        "--mem_limit",
+        type=float,
+        help="Sample information is stored in chunks. This limits the RAM in GB per chunk (total ram usage of the program will be higher), writing each chunk to disk when the limit is reached [%(default)s]",
+        default=2.0,
+        metavar="FLOAT",
+    )
+    subparser_vcf_merge.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace output directory if it already exists",
+    )
+    subparser_vcf_merge.set_defaults(func=minos.tasks.vcf_merge.run)
+
+    # ------------------ vcf_cluster ----------------------------------------------
+    subparser_vcf_cluster = subparsers.add_parser(
+        "vcf_cluster",
+        help="Make clustered VCF file, using output of vcf_merge",
+        usage="minos vcf_cluster [options] <ref_fasta> <merge_dir> <outprefix>",
+        description="Make clustered VCF file, using output of vcf_merge",
+    )
+
+    subparser_vcf_cluster.add_argument(
+        "ref_fasta",
+        help="FASTA file of reference, corresponding to all input VCF files",
+    )
+    subparser_vcf_cluster.add_argument(
+        "merge_dir", help="Input directory, made by vcf_merge",
+    )
+    subparser_vcf_cluster.add_argument(
+        "outprefix", help="Prefix of output files",
+    )
+    subparser_vcf_cluster.add_argument(
+        "--max_ref_len",
+        type=int,
+        help="Maximum allowed length of reference allele. Any longer than this are excluded [%(default)s]",
+        default=50,
+        metavar="INT",
+    )
+    subparser_vcf_cluster.add_argument(
+        "--max_alleles",
+        type=int,
+        help="If a variant site has more than this many alleles (after generating all combinations of SNPs/indels), then instead only use the combinations of variants that are seen in the samples [%(default)s]",
+        default=500,
+        metavar="INT",
+    )
+    subparser_vcf_cluster.set_defaults(func=minos.tasks.vcf_cluster.run)
+
     # ------------------------ versions -------------------------------------------
     subparser_versions = subparsers.add_parser(
         "versions",

@@ -3,6 +3,8 @@ __all__ = [
     "cluster_vcfs",
     "make_split_gramtools_build",
     "multi_sample_pipeline",
+    "vcf_cluster",
+    "vcf_merge",
     "versions",
 ]
 
