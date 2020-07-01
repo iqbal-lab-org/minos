@@ -128,45 +128,6 @@ def main(args=None):
     )
     subparser_adjudicate.set_defaults(func=minos.tasks.adjudicate.run)
 
-    # ------------------------ cluster_vcfs ---------------------------------------
-    subparser_cluster_vcfs = subparsers.add_parser(
-        "cluster_vcfs",
-        help="Cluster one or more VCF files",
-        usage="minos cluster_vcfs [options] <ref_fasta> <vcf_in_1> [vcf_in_2 ...]",
-        description="Clusters one of more VCF files, outputting a single VCF file where overlapping variants are merged into one record",
-    )
-
-    subparser_cluster_vcfs.add_argument(
-        "--max_alleles_per_cluster",
-        type=int,
-        help="Maximum allowed alleles in one cluster. If there are too many alleles then combinations of SNPs are not generated [%(default)s]",
-        metavar="INT",
-        default=5000,
-    )
-    subparser_cluster_vcfs.add_argument(
-        "--max_var_dist",
-        type=int,
-        help="Variants up to this distance apart are merged [%(default)s]",
-        default=1,
-        metavar="INT",
-    )
-    subparser_cluster_vcfs.add_argument(
-        "-o",
-        "--outfile",
-        help="Name of output VCF file (default is stdout)",
-        default="-",
-        metavar="FILENAME",
-    )
-    subparser_cluster_vcfs.add_argument(
-        "ref_fasta", help="FASTA filename of reference genome that matches the VCF file"
-    )
-    subparser_cluster_vcfs.add_argument(
-        "vcf_files",
-        nargs="+",
-        help="VCF filename(s) to be merged. Must provide at least one filename.",
-    )
-    subparser_cluster_vcfs.set_defaults(func=minos.tasks.cluster_vcfs.run)
-
     # ----------------- make_split_gramtools_build --------------------------------
     subparser_make_split_gramtools_build = subparsers.add_parser(
         "make_split_gramtools_build",
