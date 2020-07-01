@@ -5,7 +5,7 @@ import shutil
 import statistics
 import sys
 
-from cluster_vcf_records import vcf_clusterer, vcf_file_read
+from cluster_vcf_records import vcf_clusterer, vcf_file_read, variant_tracking
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import pyfastaq
@@ -55,6 +55,7 @@ class Adjudicator:
         filter_min_frs=0.9,
         call_hets=False,
         debug=False,
+        cluster_input_vcfs=True,
     ):
         self.ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
@@ -62,10 +63,14 @@ class Adjudicator:
         self.overwrite_outdir = overwrite_outdir
         self.max_alleles_per_cluster = max_alleles_per_cluster
         self.sample_name = sample_name
+        self._set_sample_name()
+        assert self.sample_name is not None
         self.outdir = os.path.abspath(outdir)
         self.split_output_dir = os.path.join(self.outdir, "split.out")
         self.log_file = os.path.join(self.outdir, "log.txt")
-        self.clustered_vcf = os.path.join(self.outdir, "gramtools.in.vcf")
+        self.cluster_dir = os.path.join(self.outdir, "cluster_vcfs")
+        self.clustered_vcf_prefix = os.path.join(self.outdir, "gramtools.in")
+        self.clustered_vcf = f"{self.clustered_vcf_prefix}.vcf"
         self.unfiltered_vcf_file = os.path.join(
             self.outdir, "debug.calls_with_zero_cov_alleles.vcf"
         )
@@ -115,6 +120,7 @@ class Adjudicator:
         self.filter_min_frs = filter_min_frs
         self.call_hets = call_hets
         self.debug = debug
+        self.cluster_input_vcfs = cluster_input_vcfs
         self.ref_seq_lengths = {
             x.id.split()[0]: len(x)
             for x in pyfastaq.sequences.file_reader(self.ref_fasta)
@@ -148,6 +154,18 @@ class Adjudicator:
                 )
         except Exception as e:
             raise Exception(f"Could not make {self.outdir} due to {e}")
+
+    def _set_sample_name(self):
+        if self.sample_name is None:
+            try:
+                self.sample_name = vcf_file_read.get_sample_name_from_vcf_file(
+                    self.vcf_files[0]
+                )
+            except:
+                self.sample_name = "sample"
+
+        if self.sample_name is None:
+            self.sample_name = "sample"
 
     @classmethod
     def _get_gramtools_kmer_size(cls, build_dir, input_kmer_size):
@@ -230,19 +248,18 @@ class Adjudicator:
             )
             assert len(self.vcf_files) == 1
             self.clustered_vcf = self.vcf_files[0]
+        elif not self.cluster_input_vcfs:
+            logging.info("Skipping VCF clustering because user requested to skip")
         else:
             logging.info(
                 "Clustering VCF file(s), to make one VCF input file for gramtools"
             )
-            clusterer = vcf_clusterer.VcfClusterer(
-                self.vcf_files,
-                self.ref_fasta,
-                self.clustered_vcf,
-                cluster_boundary_size=0,
-                max_alleles_per_cluster=self.max_alleles_per_cluster,
-            )
-            clusterer.run()
-
+            tracker = variant_tracking.VariantTracker(self.cluster_dir, self.ref_fasta)
+            tracker.merge_vcf_files(self.vcf_files)
+            tracker.cluster(self.clustered_vcf_prefix, float("Inf"), max_alleles=5000)
+            if not self.debug:
+                os.unlink(f"{self.clustered_vcf_prefix}.excluded.tsv")
+                utils.rm_rf(self.cluster_dir)
             logging.info("Finished clustering VCF file(s)")
 
         if not vcf_file_read.vcf_file_has_at_least_one_record(self.clustered_vcf):
@@ -438,13 +455,6 @@ class Adjudicator:
                 )
                 shutil.rmtree(build_dir)
 
-        if self.sample_name is None:
-            sample_name = vcf_file_read.get_sample_name_from_vcf_header_lines(
-                vcf_header
-            )
-        else:
-            sample_name = self.sample_name
-
         gramtools.write_vcf_annotated_using_coverage_from_gramtools(
             mean_depth,
             variance_depth,
@@ -453,7 +463,7 @@ class Adjudicator:
             allele_groups,
             self.read_error_rate,
             debug_vcf,
-            sample_name=sample_name,
+            sample_name=self.sample_name,
             max_read_length=self.max_read_length,
             filtered_outfile=final_vcf,
             ref_seq_lengths=self.ref_seq_lengths,
