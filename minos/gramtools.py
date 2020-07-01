@@ -28,7 +28,7 @@ def _build_json_file_is_good(json_build_report):
         return success
 
 
-def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=10):
+def run_gramtools_build(outdir, vcf_file, ref_file, kmer_size=10):
     """Runs gramtools build. Makes new directory called 'outdir' for
     the output"""
     if os.path.exists(outdir):
@@ -47,8 +47,6 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
             vcf_file,
             "--reference",
             ref_file,
-            "--max-read-length",
-            str(max_read_length),
             "--kmer-size",
             str(kmer_size),
             "--no-vcf-clustering",
@@ -76,14 +74,7 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
 
 
 def run_gramtools(
-    build_dir,
-    quasimap_dir,
-    vcf_file,
-    ref_file,
-    reads,
-    max_read_length,
-    kmer_size=10,
-    seed=42,
+    build_dir, quasimap_dir, vcf_file, ref_file, reads, kmer_size=10, seed=42,
 ):
     """If build_dir does not exist, runs runs gramtools build and quasimap.
     Otherwise, just runs quasimap. quasimap output is in new
@@ -93,9 +84,7 @@ def run_gramtools(
     files made by quasimap are not found."""
     gramtools_exe = dependencies.find_binary("gramtools")
     if not os.path.exists(build_dir):
-        run_gramtools_build(
-            build_dir, vcf_file, ref_file, max_read_length, kmer_size=kmer_size
-        )
+        run_gramtools_build(build_dir, vcf_file, ref_file, kmer_size=kmer_size)
 
     if type(reads) is not list:
         assert type(reads) is str
@@ -306,7 +295,6 @@ def write_vcf_annotated_using_coverage_from_gramtools(
     read_error_rate,
     outfile,
     sample_name="SAMPLE",
-    max_read_length=None,
     filtered_outfile=None,
     ref_seq_lengths=None,
     call_hets=False,
@@ -332,9 +320,6 @@ def write_vcf_annotated_using_coverage_from_gramtools(
     if ref_seq_lengths is not None:
         for name, length in sorted(ref_seq_lengths.items()):
             header_lines.append(f"##contig=<ID={name},length={length}>")
-
-    if max_read_length is not None:
-        header_lines.append("##minos_max_read_length=" + str(max_read_length))
 
     header_lines.append(
         "\t".join(

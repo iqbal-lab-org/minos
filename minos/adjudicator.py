@@ -37,7 +37,6 @@ class Adjudicator:
         ref_fasta,
         reads_files,
         vcf_files,
-        max_read_length=None,
         read_error_rate=None,
         overwrite_outdir=False,
         max_alleles_per_cluster=5000,
@@ -98,7 +97,6 @@ class Adjudicator:
         self.gramtools_kmer_size = gramtools_kmer_size
         self.gramtools_quasimap_dir = os.path.join(self.outdir, "gramtools.quasimap")
         self.read_error_rate = read_error_rate
-        self.max_read_length = max_read_length
         self.variants_per_split = variants_per_split
         self.alleles_per_split = alleles_per_split
         self.total_splits = total_splits
@@ -208,39 +206,22 @@ class Adjudicator:
         dependencies.check_and_report_dependencies(programs=["gramtools"])
         logging.info("Dependencies look OK")
 
-        if self.read_error_rate is None or self.max_read_length is None:
-            logging.info(
-                "One or both of read_error_rate and max_read_length not known. Estimate from first 10,000 reads..."
-            )
+        if self.read_error_rate is None:
+            logging.info("read_error_rate unknown. Estimate from first 10,000 reads...")
             (
                 estimated_read_length,
                 estimated_read_error_rate,
             ) = utils.estimate_max_read_length_and_read_error_rate_from_qual_scores(
                 self.reads_files[0]
             )
-            logging.info(
-                "Estimated max_read_length="
-                + str(estimated_read_length)
-                + " and read_error_rate="
-                + str(estimated_read_error_rate)
-            )
+            logging.info(f"Estimated read_error_rate={estimated_read_error_rate}")
 
             self.read_error_rate = (
                 estimated_read_error_rate
                 if self.read_error_rate is None
                 else self.read_error_rate
             )
-            self.max_read_length = (
-                estimated_read_length
-                if self.max_read_length is None
-                else self.max_read_length
-            )
-        logging.info(
-            "Using max_read_length="
-            + str(self.max_read_length)
-            + " and read_error_rate="
-            + str(self.read_error_rate)
-        )
+            logging.info(f"Using read_error_rate={self.read_error_rate}")
 
         if self.user_supplied_gramtools_build_dir:
             logging.info(
@@ -302,9 +283,7 @@ class Adjudicator:
             ref_fasta=self.ref_fasta,
             variants_per_split=self.variants_per_split,
             alleles_per_split=self.alleles_per_split,
-            max_read_length=self.max_read_length,
             total_splits=self.total_splits,
-            flank_length=self.max_read_length,
             gramtools_kmer_size=self.gramtools_kmer_size,
         )
         chunker.make_split_files()
@@ -419,7 +398,6 @@ class Adjudicator:
             vcf,
             self.ref_fasta,
             reads_files,
-            self.max_read_length,
             kmer_size=self.gramtools_kmer_size,
         )
 
@@ -464,7 +442,6 @@ class Adjudicator:
             self.read_error_rate,
             debug_vcf,
             sample_name=self.sample_name,
-            max_read_length=self.max_read_length,
             filtered_outfile=final_vcf,
             ref_seq_lengths=self.ref_seq_lengths,
             call_hets=self.call_hets,

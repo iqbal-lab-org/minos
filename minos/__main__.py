@@ -50,12 +50,6 @@ def main(args=None):
         metavar="INT",
     )
     subparser_adjudicate.add_argument(
-        "--max_read_length",
-        type=int,
-        help="Maximum read length, this is used by gramtools. If not given, estimated by taking longest of first 10,000 reads",
-        metavar="INT",
-    )
-    subparser_adjudicate.add_argument(
         "--read_error_rate",
         type=float,
         help="Read error rate between 0 and 1 [%(default)s]",

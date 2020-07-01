@@ -25,9 +25,10 @@ class TestVcfChunker(unittest.TestCase):
         }
         expect_variants = 5
         expect_alleles = 24
-        got_variants, got_alleles = vcf_chunker.VcfChunker._total_variants_and_alleles_in_vcf_dict(
-            test_dict
-        )
+        (
+            got_variants,
+            got_alleles,
+        ) = vcf_chunker.VcfChunker._total_variants_and_alleles_in_vcf_dict(test_dict)
         self.assertEqual(expect_variants, got_variants)
         self.assertEqual(expect_alleles, got_alleles)
 
@@ -591,7 +592,6 @@ class TestVcfChunker(unittest.TestCase):
         self.assertEqual(chunker.total_splits, chunker2.total_splits)
         self.assertEqual(chunker.flank_length, chunker2.flank_length)
         self.assertEqual(chunker.gramtools_kmer_size, chunker2.gramtools_kmer_size)
-        self.assertEqual(chunker.max_read_length, chunker2.max_read_length)
         self.assertEqual(chunker.total_split_files, chunker2.total_split_files)
         self.assertEqual(chunker.vcf_split_files, chunker2.vcf_split_files)
         shutil.rmtree(tmp_out)

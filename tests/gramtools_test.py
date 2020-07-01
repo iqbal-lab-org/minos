@@ -33,7 +33,7 @@ def test_run_gramtools_build():
         shutil.rmtree(tmp_out_build)
     vcf_file = os.path.join(data_dir, "run_gramtools.calls.vcf")
     ref_file = os.path.join(data_dir, "run_gramtools.ref.fa")
-    gramtools.run_gramtools_build(tmp_out_build, vcf_file, ref_file, 150, kmer_size=5)
+    gramtools.run_gramtools_build(tmp_out_build, vcf_file, ref_file, kmer_size=5)
     assert os.path.exists(tmp_out_build)
     shutil.rmtree(tmp_out_build)
 
@@ -50,13 +50,7 @@ def test_run_gramtools():
     ref_file = os.path.join(data_dir, "run_gramtools.ref.fa")
     reads_file = os.path.join(data_dir, "run_gramtools.reads.fq")
     build_report, quasimap_report = gramtools.run_gramtools(
-        tmp_out_build,
-        tmp_out_quasimap,
-        vcf_file,
-        ref_file,
-        reads_file,
-        150,
-        kmer_size=5,
+        tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, kmer_size=5,
     )
     # We're trusing gramtools output for this test. The point here is to check
     # that gramtools can run. Parsing its output is checked elsewhere.
@@ -99,7 +93,6 @@ def test_run_gramtools_fails():
             vcf_file,
             ref_file,
             reads_file,
-            150,
             kmer_size=5,
         )
     shutil.rmtree(tmp_out_build)
@@ -123,7 +116,6 @@ def test_run_gramtools_two_reads_files():
         vcf_file,
         ref_file,
         [reads_file1, reads_file2],
-        150,
         kmer_size=5,
     )
     # We're trusing gramtools output for this test. The point here is to check
@@ -289,7 +281,6 @@ def test_write_vcf_annotated_using_coverage_from_gramtools():
         error_rate,
         tmp_outfile,
         sample_name="sample_42",
-        max_read_length=200,
         filtered_outfile=tmp_outfile_filtered,
         ref_seq_lengths={"ref": "10000"},
         call_hets=True,
