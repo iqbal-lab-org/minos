@@ -208,6 +208,8 @@ def update_vcf_record_using_gramtools_allele_depths(
     This also changes all columns from QUAL onwards.
     Returns a VcfRecord the same as vcf_record, but with all zero
     coverage alleles removed, and GT and COV fixed accordingly"""
+    logging.debug(f"Genotyping. allele_combination_cov={[str(allele_groups_dict[x]) + ': ' + str(allele_combination_cov[x]) for x in allele_combination_cov]}")
+    logging.debug(f"Genotyping. allele_per_base_cov={allele_per_base_cov}")
     gtyper.run(allele_combination_cov, allele_per_base_cov, allele_groups_dict)
     genotype_indexes = set()
 
