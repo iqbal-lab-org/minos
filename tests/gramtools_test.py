@@ -233,7 +233,7 @@ def test_update_vcf_record_using_gramtools_allele_depths_not_callable():
         "ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0"
     )
     allele_combination_cov = {"1": 0, "2": 0}
-    allele_groups_dict = {"1": {0}}
+    allele_groups_dict = {"1": {0}, "2": {0}}
     allele_per_base_cov = [[0], [0], [0, 0]]
     expected = vcf_record.VcfRecord(
         "ref\t4\t.\tT\tG,TC\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t./.:0:0:0,0,0:.:0.0"
