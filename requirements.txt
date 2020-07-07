@@ -1,4 +1,4 @@
-cluster_vcf_records >= 0.12.1
+cluster_vcf_records >= 0.12.2
 matplotlib
 pyfastaq >= 3.14.0
 pysam >= 0.12
