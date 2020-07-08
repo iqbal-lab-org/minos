@@ -8,7 +8,6 @@ def run(options):
         options.outdir,
         max_alleles_per_cluster=options.max_alleles_per_cluster,
         min_large_ref_length=options.min_large_ref_length,
-        gramtools_max_read_length=options.max_read_length,
         gramtools_kmer_size=options.gramtools_kmer_size,
         gramtools_build_threads=options.gramtools_build_threads,
         nextflow_config_file=options.nextflow_config_file,

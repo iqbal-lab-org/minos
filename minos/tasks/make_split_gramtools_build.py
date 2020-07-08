@@ -9,8 +9,7 @@ def run(options):
         variants_per_split=options.variants_per_split,
         alleles_per_split=options.alleles_per_split,
         total_splits=options.total_splits,
-        max_read_length=options.max_read_length,
-        flank_length=options.max_read_length,
+        flank_length=200,
         gramtools_kmer_size=options.gramtools_kmer_size,
         threads=options.threads,
     )

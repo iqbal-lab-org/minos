@@ -165,12 +165,6 @@ def main(args=None):
         metavar="INT",
     )
     subparser_make_split_gramtools_build.add_argument(
-        "--max_read_length",
-        type=int,
-        help="This number is used with gramtools build --max-read-length [%(default)s]",
-        default=200,
-    )
-    subparser_make_split_gramtools_build.add_argument(
         "--gramtools_kmer_size",
         type=int,
         help="This number is used with gramtools build --kmer-size [%(default)s]",
@@ -219,13 +213,6 @@ def main(args=None):
         type=int,
         help="Variants with REF string at least this long are counted as large. These are currently removed from the analysis [%(default)s]",
         default=50,
-        metavar="INT",
-    )
-    subparser_multi_sample_pipeline.add_argument(
-        "--max_read_length",
-        type=int,
-        help="Maximum read length (--max-read-length option of gramtools build). If not given, determined from header of VCF files (if made by minos). The default of zero means determine from VCF files.",
-        default=0,
         metavar="INT",
     )
     subparser_multi_sample_pipeline.add_argument(
