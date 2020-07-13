@@ -140,6 +140,15 @@ def run_gramtools(
     return json_build_report, json_quasimap_report
 
 
+def grouped_allele_counts_coverage_json_to_cov_list(json_file):
+    with open(json_file) as f:
+        data = json.load(f)
+    coverages = []
+    for coverage_dict in data["grouped_allele_counts"]["site_counts"]:
+        coverages.append(sum(coverage_dict.values()))
+    return coverages
+
+
 def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     """Loads the perl_generated_vcf file and allele_coverage files.
     Sanity checks that they agree: 1) same number of lines (excluding header

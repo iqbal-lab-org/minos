@@ -26,11 +26,6 @@ class Adjudicator:
     """
     Runs gramtools build and quasimap, genotyping, and confidence simulations for a set of vcfs and a fasta ref.
     """
-
-    # The structures below are designed to cope with chunking
-    mean_depths = []
-    variance_depths = []
-
     def __init__(
         self,
         outdir,
@@ -96,10 +91,14 @@ class Adjudicator:
 
         self.gramtools_kmer_size = gramtools_kmer_size
         self.gramtools_quasimap_dir = os.path.join(self.outdir, "gramtools.quasimap")
+        self.gramtools_quasimap_json = self.gramtools_quasimap_dir + ".report.json"
+        self.gramtools_build_json = self.gramtools_build_dir + ".report.json"
         self.read_error_rate = read_error_rate
         self.variants_per_split = variants_per_split
         self.alleles_per_split = alleles_per_split
         self.total_splits = total_splits
+        self.mean_depth = None
+        self.variance_depth = None
 
         if (
             self.total_splits is not None
@@ -191,8 +190,6 @@ class Adjudicator:
             return input_kmer_size
 
     def run(self):
-        Adjudicator.mean_depths = []
-        Adjudicator.variance_depths = []
         self.build_output_dir()
 
         fh = logging.FileHandler(self.log_file, mode="w")
@@ -260,6 +257,7 @@ class Adjudicator:
 
         logging.info("All done! Thank you for using minos :)")
 
+
     def _run_gramtools_not_split_vcf(self):
         self.gramtools_kmer_size = Adjudicator._get_gramtools_kmer_size(
             self.gramtools_build_dir, self.gramtools_kmer_size
@@ -274,6 +272,61 @@ class Adjudicator:
             self.unfiltered_vcf_file,
         )
         self.run_gt_conf()
+
+
+    def _get_read_coverage_one_split(self, split_file, quasimap_dir):
+        grouped_allele_json = os.path.join(quasimap_dir, "quasimap_outputs", "grouped_allele_counts_coverage.json")
+        all_cov = gramtools.grouped_allele_counts_coverage_json_to_cov_list(grouped_allele_json)
+        # We don't use all the records in a split run of gramtools. The
+        # records overlap. There was originally a list of variants for the
+        # whole ref seq this split came from. The split_file stores
+        # the start/end indexes in that list. It also has the start/end
+        # indexes of the records that we want to use. Use these to work
+        # out the range we actually want.
+        assert 1 + split_file.file_end_index - split_file.file_start_index == len(all_cov)
+        start = split_file.use_start_index - split_file.file_start_index
+        number_wanted = 1 + split_file.use_end_index - split_file.use_start_index
+        return all_cov[start: start + number_wanted]
+
+
+    def _run_quasimap_one_split(self, split_file, unmapped_reads_file=None):
+        logging.info(f"Start quasimap on split file {split_file.filename}")
+        split_reads_file = os.path.join(
+            self.split_output_dir, f"split.{split_file.file_number}.reads.bam",
+        )
+        bam_read_extract.get_region(
+            self.reads_files[0],
+            split_file.chrom,
+            split_file.chrom_start,
+            split_file.chrom_end,
+            split_reads_file,
+        )
+
+        quasimap_dir = os.path.join(
+            self.split_output_dir,
+            f"split.{split_file.file_number}.gramtools.quasimap",
+        )
+        if self.use_unmapped_reads:
+            reads_files = [unmapped_reads_file, split_reads_file]
+        else:
+            reads_files = [split_reads_file]
+
+        build_report, quasimap_report = gramtools.run_gramtools(
+            split_file.gramtools_build_dir,
+            quasimap_dir,
+            split_file.filename,
+            self.ref_fasta,
+            reads_files,
+            kmer_size=self.gramtools_kmer_size,
+        )
+        read_cov = self._get_read_coverage_one_split(split_file, quasimap_dir)
+
+        if self.clean:
+            os.unlink(split_reads_file)
+
+        logging.info(f"Finish quasimap on split file {split_file.filename}")
+        return read_cov, build_report, quasimap_report
+
 
     def _run_gramtools_with_split_vcf(self):
         logging.info("Splitting VCF files into chunks (if not already done)")
@@ -306,78 +359,86 @@ class Adjudicator:
             bam_read_extract.get_unmapped_reads(
                 self.reads_files[0], unmapped_reads_file
             )
+        else:
+            unmapped_reads_file = None
 
+        read_coverage = []
+        build_reports = {}
+        quasimap_reports = {}
+
+        # Run gramtools quasimap on each split. Get back the read depth
+        # from each split, which we need to get the global read depth and
+        # variance, to then use for genotyping
+        for ref_name, split_file_list in chunker.vcf_split_files.items():
+            for split_file in split_file_list:
+                read_cov, build_report, quasimap_report = self._run_quasimap_one_split(split_file, unmapped_reads_file)
+                read_coverage.extend(read_cov)
+                build_reports[split_file.file_number] = build_report
+                quasimap_reports[split_file.file_number] = quasimap_report
+
+        with open(self.gramtools_quasimap_json, "w") as f:
+            json.dump(quasimap_reports, f, indent=2, sort_keys=True)
+        if not self.user_supplied_gramtools_build_dir:
+            with open(self.gramtools_build_json, "w") as f:
+                json.dump(build_reports, f, indent=2, sort_keys=True)
+
+        self.mean_depth = round(statistics.mean(read_coverage), 3)
+        self.variance_depth = round(statistics.variance(read_coverage), 3)
+
+        # Can now genotype each split VCF, using the global mean depth and variance
         split_vcf_outfiles = {}
         split_vcf_outfiles_unfiltered = {}
-
         for ref_name, split_file_list in chunker.vcf_split_files.items():
             split_vcf_outfiles[ref_name] = []
             split_vcf_outfiles_unfiltered[ref_name] = []
             for split_file in split_file_list:
-                logging.info(
-                    "===== Start analysing variants in VCF split file "
-                    + split_file.filename
-                    + " ====="
+                build_vcf = os.path.join(split_file.gramtools_build_dir, "build.vcf")
+                quasimap_dir = os.path.join(self.split_output_dir, f"split.{split_file.file_number}.gramtools.quasimap")
+                logging.info(f"Loading gramtools quasimap output files " + quasimap_dir)
+                (
+                    _, # mean depth for this split, which we don't want
+                    _, # depth variance for this split, which we don't want
+                    vcf_header,
+                    vcf_records,
+                    allele_coverage,
+                    allele_groups,
+                ) = gramtools.load_gramtools_vcf_and_allele_coverage_files(
+                    build_vcf, quasimap_dir
                 )
-                split_reads_file = os.path.join(
-                    self.split_output_dir,
-                    "split." + str(split_file.file_number) + ".reads.bam",
-                )
-                bam_read_extract.get_region(
-                    self.reads_files[0],
-                    split_file.chrom,
-                    split_file.chrom_start,
-                    split_file.chrom_end,
-                    split_reads_file,
-                )
-
-                gramtools_quasimap_dir = os.path.join(
-                    self.split_output_dir,
-                    "split." + str(split_file.file_number) + ".gramtools.quasimap",
-                )
-                if self.use_unmapped_reads:
-                    reads_files = [unmapped_reads_file, split_reads_file]
-                else:
-                    reads_files = [split_reads_file]
-
-                split_vcf_out = os.path.join(
-                    self.split_output_dir,
-                    "split." + str(split_file.file_number) + ".out.vcf",
-                )
-                unfiltered_vcf_out = os.path.join(
-                    self.split_output_dir,
-                    "split."
-                    + str(split_file.file_number)
-                    + ".out.debug.calls_with_zero_cov_alleles.vcf",
-                )
-
-                self.run_adjudicate(
-                    split_file.gramtools_build_dir,
-                    gramtools_quasimap_dir,
-                    split_file.filename,
-                    reads_files,
-                    split_vcf_out,
-                    unfiltered_vcf_out,
-                )
+                logging.info("Finished loading gramtools files")
 
                 if self.clean:
-                    os.unlink(split_reads_file)
-                    if not self.user_supplied_gramtools_build_dir:
-                        os.unlink(split_file.filename)
+                    shutil.rmtree(quasimap_dir)
+
+                vcf_prefix = os.path.join(
+                    self.split_output_dir, f"split.{split_file.file_number}.out",
+                )
+                split_vcf_out = f"{vcf_prefix}.vcf"
+                unfiltered_vcf_out = f"{vcf_prefix}.debug.calls_with_zero_cov_alleles.vcf"
+
+                gramtools.write_vcf_annotated_using_coverage_from_gramtools(
+                    self.mean_depth,
+                    self.variance_depth,
+                    vcf_records,
+                    allele_coverage,
+                    allele_groups,
+                    self.read_error_rate,
+                    unfiltered_vcf_out,
+                    sample_name=self.sample_name,
+                    filtered_outfile=split_vcf_out,
+                    ref_seq_lengths=self.ref_seq_lengths,
+                    call_hets=self.call_hets,
+                )
 
                 split_vcf_outfiles[ref_name].append(split_vcf_out)
                 split_vcf_outfiles_unfiltered[ref_name].append(unfiltered_vcf_out)
 
-                logging.info(
-                    "===== Finish analysing variants in VCF split file "
-                    + split_file.filename
-                    + " ====="
-                )
 
+        # We now have minos run on each split VCF. Merge into one VCF, then can
+        # add gt conf and gcp to the merged VCF.
         logging.info("Merging VCF files into one output file " + self.final_vcf)
         chunker.merge_files(split_vcf_outfiles, self.final_vcf)
         chunker.merge_files(split_vcf_outfiles_unfiltered, self.unfiltered_vcf_file)
-
         self.run_gt_conf()
 
         if self.clean:
@@ -405,8 +466,8 @@ class Adjudicator:
 
         logging.info("Loading gramtools quasimap output files " + quasimap_dir)
         (
-            mean_depth,
-            variance_depth,
+            self.mean_depth,
+            self.variance_depth,
             vcf_header,
             vcf_records,
             allele_coverage,
@@ -414,28 +475,26 @@ class Adjudicator:
         ) = gramtools.load_gramtools_vcf_and_allele_coverage_files(
             build_vcf, quasimap_dir
         )
-        Adjudicator.mean_depths.append(mean_depth)
-        Adjudicator.variance_depths.append(variance_depth)
 
         logging.info("Finished loading gramtools files")
 
         if self.clean:
             os.rename(
                 os.path.join(quasimap_dir, "quasimap_outputs", "quasimap_report.json"),
-                quasimap_dir + ".report.json",
+                self.gramtools_quasimap_json,
             )
             shutil.rmtree(quasimap_dir)
 
             if not self.user_supplied_gramtools_build_dir:
                 os.rename(
                     os.path.join(build_dir, "build_report.json"),
-                    build_dir + ".report.json",
+                    self.gramtools_build_json,
                 )
                 shutil.rmtree(build_dir)
 
         gramtools.write_vcf_annotated_using_coverage_from_gramtools(
-            mean_depth,
-            variance_depth,
+            self.mean_depth,
+            self.variance_depth,
             vcf_records,
             allele_coverage,
             allele_groups,
@@ -468,13 +527,10 @@ class Adjudicator:
         plt.close("all")
 
     def run_gt_conf(self):
-        mean_depth = statistics.mean(Adjudicator.mean_depths)
-        variance_depth = statistics.mean(Adjudicator.variance_depths)
-
-        if mean_depth > 0:
+        if self.mean_depth > 0:
             simulations = genotype_confidence_simulator.GenotypeConfidenceSimulator(
-                mean_depth,
-                variance_depth,
+                self.mean_depth,
+                self.variance_depth,
                 self.read_error_rate,
                 allele_length=1,
                 iterations=self.genotype_simulation_iterations,
@@ -486,7 +542,7 @@ class Adjudicator:
 
         logging.info(
             f"Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf} & its debug counterpart, "
-            f"using mean depth {mean_depth}, variance depth {variance_depth}, error rate {self.read_error_rate}, "
+            f"using mean depth {self.mean_depth}, variance depth {self.variance_depth}, error rate {self.read_error_rate}, "
             f"and {self.genotype_simulation_iterations} simulation iterations"
         )
 

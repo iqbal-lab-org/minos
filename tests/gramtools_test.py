@@ -134,6 +134,11 @@ def test_run_gramtools_two_reads_files():
     shutil.rmtree(tmp_out_quasimap)
 
 
+def test_grouped_allele_counts_coverage_json_to_cov_list():
+    infile = os.path.join(data_dir, "grouped_allele_counts_coverage_json_to_cov_list.json")
+    gramtools.grouped_allele_counts_coverage_json_to_cov_list(infile) == [11, 10]
+
+
 def test_load_gramtools_vcf_and_allele_coverage_files():
     """test load_gramtools_vcf_and_allele_coverage_files"""
     vcf_file = os.path.join(data_dir, "load_gramtools_vcf_and_allele_coverage.vcf")
