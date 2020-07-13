@@ -275,8 +275,7 @@ class Adjudicator:
 
 
     def _get_read_coverage_one_split(self, split_file, quasimap_dir):
-        grouped_allele_json = os.path.join(quasimap_dir, "quasimap_outputs", "grouped_allele_counts_coverage.json")
-        all_cov = gramtools.grouped_allele_counts_coverage_json_to_cov_list(grouped_allele_json)
+        all_cov = gramtools.coverage_list_from_quasimap_dir(quasimap_dir)
         # We don't use all the records in a split run of gramtools. The
         # records overlap. There was originally a list of variants for the
         # whole ref seq this split came from. The split_file stores
@@ -286,7 +285,9 @@ class Adjudicator:
         assert 1 + split_file.file_end_index - split_file.file_start_index == len(all_cov)
         start = split_file.use_start_index - split_file.file_start_index
         number_wanted = 1 + split_file.use_end_index - split_file.use_start_index
-        return all_cov[start: start + number_wanted]
+        # The list of coverages has None for non-snp sites. We only want
+        # the SNPs, so take the correct range and remove the non-snps
+        return [x for x in all_cov[start: start + number_wanted] if x is not None]
 
 
     def _run_quasimap_one_split(self, split_file, unmapped_reads_file=None):

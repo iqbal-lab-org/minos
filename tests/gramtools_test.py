@@ -157,8 +157,8 @@ def test_load_gramtools_vcf_and_allele_coverage_files():
     expected_header, expected_vcf_records = vcf_file_read.vcf_file_to_list(vcf_file)
     assert got_vcf_header == expected_header
     assert got_vcf_records == expected_vcf_records
-    assert got_mean_depth == 10.500
-    assert got_depth_variance == 0.5
+    assert got_mean_depth == 11.000
+    assert got_depth_variance == 1.000
 
     # now test bad files cause error to be raised
     vcf_file = os.path.join(

@@ -149,25 +149,17 @@ def grouped_allele_counts_coverage_json_to_cov_list(json_file):
     return coverages
 
 
-def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
-    """Loads the perl_generated_vcf file and allele_coverage files.
-    Sanity checks that they agree: 1) same number of lines (excluding header
-    lines in vcf) and 2) number of alts agree on each line.
-    Raises error at the first time somthing wrong is found.
-    Returns a list of tuples: (VcfRecord, dict of allele -> coverage)"""
+def _load_quasimap_json_files(quasimap_dir):
     allele_base_counts_file = os.path.join(
         quasimap_dir, "quasimap_outputs", "allele_base_coverage.json"
     )
     grouped_allele_counts_file = os.path.join(
         quasimap_dir, "quasimap_outputs", "grouped_allele_counts_coverage.json"
     )
-    all_allele_coverage, allele_groups = load_allele_files(
-        allele_base_counts_file, grouped_allele_counts_file
-    )
-    vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
-    coverages = []
+    return load_allele_files(allele_base_counts_file, grouped_allele_counts_file)
 
-    if len(all_allele_coverage) != len(vcf_lines):
+def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
+    if vcf_lines is not None and len(all_allele_coverage) != len(vcf_lines):
         raise Exception(
             "Number of records in VCF ("
             + str(len(vcf_lines))
@@ -176,10 +168,12 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
             + "). Cannot continue"
         )
 
+    coverages = []
+
     for i, (allele_combi_coverage, allele_per_base_coverage) in enumerate(
         all_allele_coverage
     ):
-        if len(allele_per_base_coverage) != 1 + len(vcf_lines[i].ALT):
+        if vcf_lines is not None and len(allele_per_base_coverage) != 1 + len(vcf_lines[i].ALT):
             raise Exception(
                 "Mismatch in number of alleles for this VCF record:\n"
                 + str(vcf_lines[i])
@@ -187,8 +181,34 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
                 + str(i + 1)
             )
 
-        coverages.append(sum(allele_combi_coverage.values()))
+        # We only count SNPs towards estimating the read depth. Otherwise,
+        # would need to normalise number of reads mapped by length of alelles.
+        # But multimapping makes this impossible because reads can be mapped
+        # to alleles of different lengths.
+        print(i, allele_combi_coverage, allele_per_base_coverage)
+        if any([len(x)>1 for x in allele_per_base_coverage]):
+            coverages.append(None)
+        else:
+            coverages.append(sum(allele_combi_coverage.values()))
 
+    assert len(coverages) == len(all_allele_coverage)
+    print(coverages)
+    return coverages
+
+def coverage_list_from_quasimap_dir(quasimap_dir):
+    all_allele_coverage, allele_groups = _load_quasimap_json_files(quasimap_dir)
+    return _coverage_list_from_allele_coverage(all_allele_coverage)
+
+def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
+    """Loads the perl_generated_vcf file and allele_coverage files.
+    Sanity checks that they agree: 1) same number of lines (excluding header
+    lines in vcf) and 2) number of alts agree on each line.
+    Raises error at the first time somthing wrong is found.
+    Returns a list of tuples: (VcfRecord, dict of allele -> coverage)"""
+    vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
+    all_allele_coverage, allele_groups = _load_quasimap_json_files(quasimap_dir)
+    coverages = _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=vcf_lines)
+    coverages = [x for x in coverages if x is not None]
     assert len(coverages) > 0
     # Unlikely to happen edge case on real data is when coverages has length 1.
     # It happens when running test_run in adjudicator_test, with a split VCf.
