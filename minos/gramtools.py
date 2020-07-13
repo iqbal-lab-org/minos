@@ -185,14 +185,12 @@ def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
         # would need to normalise number of reads mapped by length of alelles.
         # But multimapping makes this impossible because reads can be mapped
         # to alleles of different lengths.
-        print(i, allele_combi_coverage, allele_per_base_coverage)
         if any([len(x)>1 for x in allele_per_base_coverage]):
             coverages.append(None)
         else:
             coverages.append(sum(allele_combi_coverage.values()))
 
     assert len(coverages) == len(all_allele_coverage)
-    print(coverages)
     return coverages
 
 def coverage_list_from_quasimap_dir(quasimap_dir):
