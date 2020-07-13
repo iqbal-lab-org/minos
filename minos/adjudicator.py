@@ -541,7 +541,7 @@ class Adjudicator:
             simulations = None
 
         logging.info(
-            f"Adding GT_CONF_PERCENTLE to final VCF file {self.final_vcf} & its debug counterpart, "
+            f"Adding GT_CONF_PERCENTILE to final VCF file {self.final_vcf} & its debug counterpart, "
             f"using mean depth {self.mean_depth}, variance depth {self.variance_depth}, error rate {self.read_error_rate}, "
             f"and {self.genotype_simulation_iterations} simulation iterations"
         )
