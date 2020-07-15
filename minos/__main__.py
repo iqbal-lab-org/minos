@@ -341,6 +341,11 @@ def main(args=None):
         metavar="INT",
     )
     subparser_vcf_merge.add_argument(
+        "--sample_limit",
+        type=int,
+        help=argparse.SUPPRESS, # hidden option used when running tests
+    )
+    subparser_vcf_merge.add_argument(
         "--mem_limit",
         type=float,
         help="Sample information is stored in chunks. This limits the RAM in GB per chunk (total ram usage of the program will be higher), writing each chunk to disk when the limit is reached [%(default)s]",
