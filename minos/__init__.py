@@ -14,6 +14,7 @@ __all__ = [
     "genotype_confidence_simulator",
     "gramtools",
     "multi_sample_pipeline",
+    "regeno_helper",
     "tasks",
     "utils",
     "vcf_chunker",
