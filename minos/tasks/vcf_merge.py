@@ -11,5 +11,5 @@ def run(options):
         cpus=options.cpus,
         mem_limit=options.mem_limit,
         force=options.force,
-        sample_limit=options.sample_limit,  # only here for testing, so not exposed to command line
+        sample_limit=None,  # only here for testing, so not exposed to command line
     )

@@ -314,7 +314,7 @@ def main(args=None):
     subparser_vcf_merge = subparsers.add_parser(
         "vcf_merge",
         help="Merge VCF files; makes input to vcf_cluster",
-        usage="minos vcf_merge [options] <ref_fasta> <vcf_fofn> <outdir>",
+        usage="minos vcf_merge [options] <vcf_fofn> <ref_fasta> <outdir>",
         description="Gathers variants from VCF files, storing variants and sample info in new directory than can be used as input to vcf_cluster",
     )
 
@@ -329,7 +329,7 @@ def main(args=None):
         "outdir", help="Output directory",
     )
     subparser_vcf_merge.add_argument(
-        "--tmp",
+        "--temp_dir",
         help="Temporary directory used for processing input VCF files. If does not exist, will be created (then destroyed at the end of the run). If this option is not used, then `tmp` is used inside the output directory",
         metavar="FILENAME",
     )
