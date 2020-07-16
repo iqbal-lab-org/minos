@@ -14,10 +14,11 @@ def compress_file(filenames):
 def make_per_sample_vcfs_dir(
     sample_data_tsv, root_outdir, samples_per_dir=1000, cpus=1
 ):
-    utils.rm_rf(root_outdir)
     vcf_root_out = os.path.join("VCFs")
     logs_root_out = os.path.join("Logs")
-    os.mkdir(root_outdir)
+    if not os.path.exists(root_outdir):
+        os.mkdir(root_outdir)
+    utils.rm_rf(f"{root_outdir}/*")
     os.mkdir(os.path.join(root_outdir, vcf_root_out))
     os.mkdir(os.path.join(root_outdir, logs_root_out))
     sample_number = 0
