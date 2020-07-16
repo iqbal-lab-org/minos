@@ -48,7 +48,7 @@ def make_per_sample_vcfs_dir(
             parallel_jobs_data.append((vcf_in, vcf_out_full))
             parallel_jobs_data.append((log_in, log_out_full))
             sample_number += 1
-            print(sample_number, sample_name, vcf_out, log_out, sep="\t", file=f_out)
+            print(sample_name, vcf_out, log_out, sep="\t", file=f_out)
             data[sample_name] = {"vcf_file": vcf_out, "log_file": log_out}
 
     with multiprocessing.Pool(cpus) as pool:
