@@ -70,3 +70,11 @@ git clone https://github.com/iqbal-lab-org/gramtools
 cd gramtools
 git checkout 9313eceb606a6fc159e4a14c168b7a6f888c5ed2
 pip3 install .
+
+#______________________ ivcmerge ______________________________#
+cd $install_root
+git clone https://github.com/iqbal-lab-org/ivcfmerge.git
+cd ivcfmerge
+git checkout 5819787614a263a9f35fd0c247442f092ab174ff
+pip3 install .
+
