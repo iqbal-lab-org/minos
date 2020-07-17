@@ -45,6 +45,7 @@ def test_vcf_merge_and_cluster():
     options.outprefix = "tmp.merge_and_cluster.out"
     options.max_ref_len = 6
     options.max_alleles = 50
+    options.cpus = 1
     expect = [f"{options.outprefix}.excluded.tsv", f"{options.outprefix}.vcf"]
     utils.rm_rf(*expect)
     tasks.vcf_cluster.run(options)

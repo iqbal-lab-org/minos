@@ -343,7 +343,7 @@ def main(args=None):
     subparser_vcf_merge.add_argument(
         "--sample_limit",
         type=int,
-        help=argparse.SUPPRESS, # hidden option used when running tests
+        help=argparse.SUPPRESS,  # hidden option used when running tests
     )
     subparser_vcf_merge.add_argument(
         "--mem_limit",
@@ -376,6 +376,13 @@ def main(args=None):
     )
     subparser_vcf_cluster.add_argument(
         "outprefix", help="Prefix of output files",
+    )
+    subparser_vcf_cluster.add_argument(
+        "--cpus",
+        type=int,
+        help="Number of CPUs to use. If >1, splits genome into chunks and processes in parallel [%(default)s]",
+        default=1,
+        metavar="INT",
     )
     subparser_vcf_cluster.add_argument(
         "--max_ref_len",
