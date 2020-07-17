@@ -1,0 +1,3 @@
+name	reads
+sample1	--reads 1.reads.fq
+sample2	--reads 2.reads.1.fq --reads 2.reads.2.fq

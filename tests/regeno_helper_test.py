@@ -26,6 +26,21 @@ def test_compress_file():
     os.unlink(txt_out)
 
 
+def test_parse_manifest_file():
+    """test parse_manifest_file"""
+    infile = os.path.join(data_dir, "parse_manifest_file.in.tsv")
+    merge_out = "tmp.parse_manifest_file.merge.fofn"
+    adjudicate_out = "tmp.parse_manifest_file.adjudicate.tsv"
+    utils.rm_rf(merge_out, adjudicate_out)
+    regeno_helper.parse_manifest_file(infile, merge_out, adjudicate_out)
+    expect_merge = os.path.join(data_dir, "parse_manifest_file.out.fofn")
+    expect_adj = os.path.join(data_dir, "parse_manifest_file.out.tsv")
+    assert filecmp.cmp(expect_merge, merge_out, shallow=False)
+    assert filecmp.cmp(expect_adj, adjudicate_out, shallow=False)
+    os.unlink(merge_out)
+    os.unlink(adjudicate_out)
+
+
 def _file_to_lines(infile):
     f = pyfastaq.utils.open_file_read(infile)
     lines = [x.rstrip() for x in f]

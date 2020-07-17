@@ -1,3 +1,4 @@
+import csv
 import json
 import multiprocessing
 import os
@@ -9,6 +10,20 @@ def compress_file(filenames):
     infile, outfile = filenames
     zipper = "bgzip" if infile.endswith(".vcf") else "gzip -9"
     utils.syscall(f"{zipper} -c {infile} > {outfile}")
+
+
+def parse_manifest_file(infile, merge_fofn, adjudicate_tsv):
+    with open(infile) as f_in, open(merge_fofn, "w") as f_out_merge, open(
+        adjudicate_tsv, "w"
+    ) as f_out_adj:
+        print("name", "reads", sep="\t", file=f_out_adj)
+        reader = csv.DictReader(f_in, delimiter="\t")
+        for d in reader:
+            if "vcf" in d:
+                print(d["vcf"], file=f_out_merge)
+
+            reads = "--reads " + " --reads ".join(d["reads"].split())
+            print(d["name"], reads, sep="\t", file=f_out_adj)
 
 
 def make_per_sample_vcfs_dir(
