@@ -26,8 +26,14 @@ def parse_manifest_file(infile, merge_fofn, adjudicate_tsv):
             print(d["name"], reads, sep="\t", file=f_out_adj)
 
 
+def manifest_to_set_of_sample_names(infile):
+    with open(infile) as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        return {d["name"] for d in reader}
+
+
 def make_per_sample_vcfs_dir(
-    sample_data_tsv, root_outdir, samples_per_dir=1000, cpus=1
+    sample_data_tsv, root_outdir, original_manifest=None, samples_per_dir=1000, cpus=1
 ):
     vcf_root_out = os.path.join("VCFs")
     logs_root_out = os.path.join("Logs")
@@ -71,3 +77,14 @@ def make_per_sample_vcfs_dir(
 
     with open(os.path.join(root_outdir, "manifest.json"), "w") as f:
         json.dump(data, f, indent=2, sort_keys=True)
+
+    if original_manifest is None:
+        return
+
+    expect_samples = manifest_to_set_of_sample_names(original_manifest)
+    failed_samples = expect_samples.difference(data)
+    if len(failed_samples) > 0:
+        failed_samples = sorted(list(failed_samples))
+        with open(os.path.join(root_outdir, "failed_samples.txt"), "w") as f:
+            print(*failed_samples, sep="\n", file=f)
+

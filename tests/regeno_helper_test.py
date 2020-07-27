@@ -41,6 +41,13 @@ def test_parse_manifest_file():
     os.unlink(adjudicate_out)
 
 
+def test_manifest_to_set_of_sample_names():
+    """test manifest_to_set_of_sample_names"""
+    infile = os.path.join(data_dir, "manifest_to_set_of_sample_names.tsv")
+    expect = {"sample1", "sample2", "sample3"}
+    assert regeno_helper.manifest_to_set_of_sample_names(infile) == expect
+
+
 def _file_to_lines(infile):
     f = pyfastaq.utils.open_file_read(infile)
     lines = [x.rstrip() for x in f]
