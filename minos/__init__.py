@@ -13,7 +13,6 @@ __all__ = [
     "genotyper",
     "genotype_confidence_simulator",
     "gramtools",
-    "multi_sample_pipeline",
     "regeno_helper",
     "tasks",
     "utils",
