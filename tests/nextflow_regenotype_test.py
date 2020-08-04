@@ -36,10 +36,9 @@ def test_regenotype_pipeline():
 
     regeno_nf = os.path.join(minos_dir, "nextflow", "regenotype.nf")
     regeno_config = os.path.join(minos_dir, "nextflow", "regenotype.config")
-    minos_exe = "'python3 -m minos'"
     dag = "tmp.nextflow_regeno_test.dag.pdf"
     ref_fasta = os.path.join(data_dir, "data.ref.fa")
-    command = f"PYTHONPATH={minos_dir}:$PYTHONPATH nextflow run --minos {minos_exe} -c {regeno_config} -profile tiny -with-dag {dag} {regeno_nf} --ref_fasta {ref_fasta} --manifest {manifest} --outdir OUT"
+    command = f"nextflow run -c {regeno_config} -profile tiny -with-dag {dag} {regeno_nf} --ref_fasta {ref_fasta} --manifest {manifest} --outdir OUT"
     utils.syscall(command, cwd=outdir)
 
     expect_failed_samples = os.path.join(data_dir, "expect.failed_samples.txt")
