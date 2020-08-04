@@ -13,6 +13,7 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(this_dir, "data", "nextflow_regenotype")
 minos_dir = os.path.abspath(os.path.join(this_dir, os.pardir))
 
+
 def _write_manifest(filename):
     with open(filename, "w") as f:
         print("name", "vcf", "reads", sep="\t", file=f)
@@ -26,6 +27,7 @@ def _write_manifest(filename):
             if i == 0:
                 bam += "\t" + bam
             print(f"sample.{i}", vcf, bam, sep="\t", file=f)
+
 
 def test_regenotype_pipeline():
     outdir = "tmp.nextflow_regeno_test.out"

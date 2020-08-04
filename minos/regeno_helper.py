@@ -87,4 +87,3 @@ def make_per_sample_vcfs_dir(
         failed_samples = sorted(list(failed_samples))
         with open(os.path.join(root_outdir, "failed_samples.txt"), "w") as f:
             print(*failed_samples, sep="\n", file=f)
-

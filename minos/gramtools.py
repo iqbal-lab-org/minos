@@ -158,6 +158,7 @@ def _load_quasimap_json_files(quasimap_dir):
     )
     return load_allele_files(allele_base_counts_file, grouped_allele_counts_file)
 
+
 def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
     if vcf_lines is not None and len(all_allele_coverage) != len(vcf_lines):
         raise Exception(
@@ -173,7 +174,9 @@ def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
     for i, (allele_combi_coverage, allele_per_base_coverage) in enumerate(
         all_allele_coverage
     ):
-        if vcf_lines is not None and len(allele_per_base_coverage) != 1 + len(vcf_lines[i].ALT):
+        if vcf_lines is not None and len(allele_per_base_coverage) != 1 + len(
+            vcf_lines[i].ALT
+        ):
             raise Exception(
                 "Mismatch in number of alleles for this VCF record:\n"
                 + str(vcf_lines[i])
@@ -185,7 +188,7 @@ def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
         # would need to normalise number of reads mapped by length of alelles.
         # But multimapping makes this impossible because reads can be mapped
         # to alleles of different lengths.
-        if any([len(x)>1 for x in allele_per_base_coverage]):
+        if any([len(x) > 1 for x in allele_per_base_coverage]):
             coverages.append(None)
         else:
             coverages.append(sum(allele_combi_coverage.values()))
@@ -193,9 +196,11 @@ def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
     assert len(coverages) == len(all_allele_coverage)
     return coverages
 
+
 def coverage_list_from_quasimap_dir(quasimap_dir):
     all_allele_coverage, allele_groups = _load_quasimap_json_files(quasimap_dir)
     return _coverage_list_from_allele_coverage(all_allele_coverage)
+
 
 def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     """Loads the perl_generated_vcf file and allele_coverage files.
@@ -205,7 +210,9 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     Returns a list of tuples: (VcfRecord, dict of allele -> coverage)"""
     vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
     all_allele_coverage, allele_groups = _load_quasimap_json_files(quasimap_dir)
-    coverages = _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=vcf_lines)
+    coverages = _coverage_list_from_allele_coverage(
+        all_allele_coverage, vcf_lines=vcf_lines
+    )
     coverages = [x for x in coverages if x is not None]
     assert len(coverages) > 0
     # Unlikely to happen edge case on real data is when coverages has length 1.
@@ -235,7 +242,9 @@ def update_vcf_record_using_gramtools_allele_depths(
     This also changes all columns from QUAL onwards.
     Returns a VcfRecord the same as vcf_record, but with all zero
     coverage alleles removed, and GT and COV fixed accordingly"""
-    logging.debug(f"Genotyping. allele_combination_cov={[str(allele_groups_dict[x]) + ': ' + str(allele_combination_cov[x]) for x in allele_combination_cov]}")
+    logging.debug(
+        f"Genotyping. allele_combination_cov={[str(allele_groups_dict[x]) + ': ' + str(allele_combination_cov[x]) for x in allele_combination_cov]}"
+    )
     logging.debug(f"Genotyping. allele_per_base_cov={allele_per_base_cov}")
     gtyper.run(allele_combination_cov, allele_per_base_cov, allele_groups_dict)
     genotype_indexes = set()

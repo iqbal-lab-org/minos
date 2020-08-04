@@ -135,7 +135,9 @@ def test_run_gramtools_two_reads_files():
 
 
 def test_grouped_allele_counts_coverage_json_to_cov_list():
-    infile = os.path.join(data_dir, "grouped_allele_counts_coverage_json_to_cov_list.json")
+    infile = os.path.join(
+        data_dir, "grouped_allele_counts_coverage_json_to_cov_list.json"
+    )
     gramtools.grouped_allele_counts_coverage_json_to_cov_list(infile) == [11, 10]
 
 

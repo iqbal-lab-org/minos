@@ -9,6 +9,7 @@ def rm_rf(*paths):
     for path in paths:
         subprocess.check_output(f"rm -rf {path}", shell=True)
 
+
 def syscall(command, allow_fail=False, cwd=None):
     completed_process = subprocess.run(
         command,
