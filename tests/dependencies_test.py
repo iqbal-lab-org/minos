@@ -42,9 +42,15 @@ class TestDependencies(unittest.TestCase):
         #  We don't know what the vetsions will be.
         # Just check we don't get None
         got = dependencies.find_binaries_and_versions()
-        self.assertEqual(
-            ["gramtools", "nextflow"], sorted(list(got.keys()))
-        )
+        expect_keys = [
+            "gramtools",
+            "nextflow",
+            "vcfallelicprimitives",
+            "vcfbreakmulti",
+            "vcfuniq",
+            "vt",
+        ]
+        self.assertEqual(expect_keys, sorted(list(got.keys())))
         for version, path in got.items():
             self.assertIsNotNone(version)
             self.assertIsNotNone(path)

@@ -200,7 +200,14 @@ class Adjudicator:
         fh.setFormatter(formatter)
         log.addHandler(fh)
         logging.info("Command run: " + " ".join(sys.argv))
-        dependencies.check_and_report_dependencies(programs=["gramtools"])
+        to_check = [
+            "gramtools",
+            "vcfbreakmulti",
+            "vcfallelicprimitives",
+            "vcfuniq",
+            "vt",
+        ]
+        dependencies.check_and_report_dependencies(programs=to_check)
         logging.info("Dependencies look OK")
 
         if self.read_error_rate is None:
