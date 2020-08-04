@@ -59,7 +59,6 @@ def test_regenotype_pipeline():
     with open(manifest_tsv) as f:
         reader = csv.DictReader(f, delimiter="\t")
         for d in reader:
-            print(d)
             vcf = os.path.join(outdir, "OUT", d["vcf_file"])
             assert d["sample"] == vcf_file_read.get_sample_name_from_vcf_file(vcf)
             assert os.path.exists(os.path.join(outdir, "OUT", d["log_file"]))
