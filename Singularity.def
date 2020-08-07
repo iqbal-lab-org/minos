@@ -5,16 +5,18 @@ MirrorURL: http://us.archive.ubuntu.com/ubuntu/
 %environment
 export PATH=/bioinf-tools/:/bioinf-tools/vcflib/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+export LANG=C.UTF-8
 
 
 %setup
     mkdir $SINGULARITY_ROOTFS/minos
-    rsync -a .ci/install_dependencies.sh MANIFEST.in minos requirements.txt setup.py tests tox.ini $SINGULARITY_ROOTFS/minos/
+    rsync -a .ci/install_dependencies.sh MANIFEST.in nextflow minos requirements.txt setup.py tests tox.ini $SINGULARITY_ROOTFS/minos/
 
 
 %post
     #_____________________ setup $PATH _______________________#
     export PATH=/bioinf-tools/:/bioinf-tools/vcflib/bin:$PATH
+    export LANG=C.UTF-8
 
     /minos/install_dependencies.sh /bioinf-tools
     cd /minos
