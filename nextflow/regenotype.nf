@@ -54,7 +54,8 @@ process vcf_merge {
 
     script:
       """
-      samtools faidx ${ref_fasta}
+      # Call faidx via pysam to avoid needing samtools installed
+      python3 -c 'import pysam; pysam.faidx("${ref_fasta}")'
       ${params.minos} vcf_merge --cpus ${params.vcf_merge_cpus} --mem_limit 2 ${vcfs_fofn} $ref_fasta outdir
       """
 }
