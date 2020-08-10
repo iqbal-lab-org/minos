@@ -40,6 +40,14 @@ cd cluster_vcf_records
 git checkout 8a7e71fe86c679ef1f1cc63635620ec6ba4fc783
 pip3 install .
 
+#_________________________ bcftools _______________________#
+cd $install_root
+wget https://github.com/samtools/bcftools/releases/download/1.10.2/bcftools-1.10.2.tar.bz2
+tar xf bcftools-1.10.2.tar.bz2
+cd bcftools-1.10.2/
+make
+cd ..
+cp -s bcftools-1.10.2/bcftools .
 
 #________________________ nextflow ____________________________#
 cd $install_root
