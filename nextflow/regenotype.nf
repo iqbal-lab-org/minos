@@ -56,7 +56,7 @@ process vcf_merge {
       """
       # Call faidx via pysam to avoid needing samtools installed
       python3 -c 'import pysam; pysam.faidx("${ref_fasta}")'
-      ${params.minos} vcf_merge --cpus ${params.vcf_merge_cpus} --mem_limit 2 ${vcfs_fofn} $ref_fasta outdir
+      minos vcf_merge --cpus ${params.vcf_merge_cpus} --mem_limit 2 ${vcfs_fofn} $ref_fasta outdir
       """
 }
 
@@ -77,7 +77,7 @@ process vcf_cluster {
 
     script:
       """
-      ${params.minos} vcf_cluster --cpus ${params.vcf_cluster_cpus} --max_ref_len $max_ref_len --max_alleles $max_alleles $ref_fasta $merge_dir cluster
+      minos vcf_cluster --cpus ${params.vcf_cluster_cpus} --max_ref_len $max_ref_len --max_alleles $max_alleles $ref_fasta $merge_dir cluster
       """
 }
 
@@ -102,7 +102,7 @@ process gramtools_build {
       then
         gramtools build --vcf $vcf_in --gram-dir gramtools_build --kmer-size $kmer --reference $ref_fasta
       else
-        ${params.minos} make_split_gramtools_build --total_splits $total_splits --gramtools_kmer_size $kmer --threads ${params.gramtools_build_cpus} gramtools_build $vcf_in $ref_fasta
+        minos make_split_gramtools_build --total_splits $total_splits --gramtools_kmer_size $kmer --threads ${params.gramtools_build_cpus} gramtools_build $vcf_in $ref_fasta
       fi
       """
 }
@@ -125,7 +125,7 @@ process minos {
 
     script:
       """
-      ${params.minos} adjudicate --sample_name ${sample_dict.name} --gramtools_build_dir $build_dir ${sample_dict.reads} minos_out $ref_fasta $vcf
+      minos adjudicate --sample_name ${sample_dict.name} --gramtools_build_dir $build_dir ${sample_dict.reads} minos_out $ref_fasta $vcf
       echo "${sample_dict.name}	\$PWD/minos_out" > data_for_per_sample_dir.tsv
       echo \$PWD/minos_out/debug.calls_with_zero_cov_alleles.vcf > for_ivcfmerge.fofn
       """
@@ -263,7 +263,6 @@ params.max_ref_allele_len = 50
 params.max_alleles_per_site = 500
 params.number_of_ref_chunks = 10
 params.vcf_combine_batch_size = 100
-params.minos = "minos" // hidden option we change when running the tests
 
 if (params.help){
     log.info"""
