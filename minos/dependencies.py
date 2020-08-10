@@ -38,6 +38,20 @@ def get_version_of_program(program, binary=None, allow_fail=False):
                     return None
                 return version
         return None
+    elif program == "vt":
+        vt_process = utils.syscall(binary + " -v", allow_fail=True)
+        # Example line:
+        # vt v0.57721
+        for line in vt_process.stderr.split("\n"):
+            if line.rstrip().startswith("vt "):
+                try:
+                    version = line.rstrip().split(maxsplit=1)[1]
+                except:
+                    return None
+                return version
+        return None
+    elif program in ["vcfbreakmulti", "vcfallelicprimitives", "vcfuniq"]:
+        return "Unknown"
     else:
         raise Exception(
             'Program name "' + program + '" not recognised. Cannot continue'
@@ -50,7 +64,15 @@ def find_python_packages():
     package_name => (version, path).
     Values will be None if package not found"""
     packages = {}
-    for package in ["cluster_vcf_records", "matplotlib", "minos", "pyfastaq", "pysam", "scipy", "seaborn"]:
+    for package in [
+        "cluster_vcf_records",
+        "matplotlib",
+        "minos",
+        "pyfastaq",
+        "pysam",
+        "scipy",
+        "seaborn",
+    ]:
         try:
             exec("import " + package)
             version = eval(package + ".__version__")
@@ -71,7 +93,14 @@ def find_binaries_and_versions(programs=None):
     data = {}
 
     if programs is None:
-        programs = ["gramtools", "nextflow"]
+        programs = [
+            "gramtools",
+            "nextflow",
+            "vcfbreakmulti",
+            "vcfallelicprimitives",
+            "vcfuniq",
+            "vt",
+        ]
 
     for program in programs:
         binary = find_binary(program, allow_fail=True)

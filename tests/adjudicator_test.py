@@ -205,6 +205,6 @@ def test_0MeanDepth_stillRuns():
     )
     adj.run()
     # Make sure the coverage is 0
-    assert adj.mean_depths[0] == 0
+    assert adj.mean_depth == 0
     # And also the test passes if it raises no math related errors.
     shutil.rmtree(outdir)

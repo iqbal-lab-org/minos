@@ -7,7 +7,7 @@ python:
 install: sudo ./.ci/install_dependencies.sh $HOME/tools
 
 before_script:
-    - export PATH=$HOME/tools:$PATH
+    - export PATH=$HOME/tools:$HOME/tools/vcflib/bin:$PATH
     # the install script makes $HOME/.nextflow, owned by root with permissions
     # tha tmake the tests fail because when nextflow runs, it tries to write
     # there

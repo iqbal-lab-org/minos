@@ -1,0 +1,6 @@
+sample	vcf_file	log_file
+sample.1	VCFs/0/0.vcf.gz	Logs/0/0.log.gz
+sample.2	VCFs/0/1.vcf.gz	Logs/0/1.log.gz
+sample.3	VCFs/1/2.vcf.gz	Logs/1/2.log.gz
+sample.4	VCFs/1/3.vcf.gz	Logs/1/3.log.gz
+sample.5	VCFs/2/4.vcf.gz	Logs/2/4.log.gz

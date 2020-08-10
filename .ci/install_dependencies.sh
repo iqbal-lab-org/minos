@@ -16,9 +16,12 @@ apt-get install -y \
   git \
   openjdk-8-jre \
   liblzma-dev \
+  libcurl4-gnutls-dev \
   libbz2-dev \
   libhts-dev \
+  libssl-dev \
   pkg-config \
+  python-dev \
   python3 \
   python3-pip \
   python3-setuptools \
@@ -32,11 +35,39 @@ if [ ! -d $install_root ]; then
 fi
 cd $install_root
 
+git clone https://github.com/iqbal-lab-org/cluster_vcf_records.git
+cd cluster_vcf_records
+git checkout 8a7e71fe86c679ef1f1cc63635620ec6ba4fc783
+pip3 install .
+
+#_________________________ bcftools _______________________#
+cd $install_root
+wget https://github.com/samtools/bcftools/releases/download/1.10.2/bcftools-1.10.2.tar.bz2
+tar xf bcftools-1.10.2.tar.bz2
+cd bcftools-1.10.2/
+make
+cd ..
+cp -s bcftools-1.10.2/bcftools .
+
 #________________________ nextflow ____________________________#
 cd $install_root
 wget -qO- https://get.nextflow.io | bash
 chmod 755 nextflow
 
+#________________________ vt __________________________________#
+cd $install_root
+git clone https://github.com/atks/vt.git vt-git
+cd vt-git
+git checkout 2187ff6347086e38f71bd9f8ca622cd7dcfbb40c
+make
+cd ..
+cp -s vt-git/vt .
+
+#______________________vcflib _________________________________#
+cd $install_root
+git clone --recursive https://github.com/vcflib/vcflib.git
+cd vcflib
+make
 
 # Why six>=1.14.0?
 # See https://github.com/pypa/virtualenv/issues/1551
@@ -47,3 +78,11 @@ git clone https://github.com/iqbal-lab-org/gramtools
 cd gramtools
 git checkout 9313eceb606a6fc159e4a14c168b7a6f888c5ed2
 pip3 install .
+
+#______________________ ivcmerge ______________________________#
+cd $install_root
+git clone https://github.com/iqbal-lab-org/ivcfmerge.git
+cd ivcfmerge
+git checkout 5819787614a263a9f35fd0c247442f092ab174ff
+pip3 install .
+

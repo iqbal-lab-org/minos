@@ -33,7 +33,7 @@ def test_run_gramtools_build():
         shutil.rmtree(tmp_out_build)
     vcf_file = os.path.join(data_dir, "run_gramtools.calls.vcf")
     ref_file = os.path.join(data_dir, "run_gramtools.ref.fa")
-    gramtools.run_gramtools_build(tmp_out_build, vcf_file, ref_file, 150, kmer_size=5)
+    gramtools.run_gramtools_build(tmp_out_build, vcf_file, ref_file, kmer_size=5)
     assert os.path.exists(tmp_out_build)
     shutil.rmtree(tmp_out_build)
 
@@ -50,13 +50,7 @@ def test_run_gramtools():
     ref_file = os.path.join(data_dir, "run_gramtools.ref.fa")
     reads_file = os.path.join(data_dir, "run_gramtools.reads.fq")
     build_report, quasimap_report = gramtools.run_gramtools(
-        tmp_out_build,
-        tmp_out_quasimap,
-        vcf_file,
-        ref_file,
-        reads_file,
-        150,
-        kmer_size=5,
+        tmp_out_build, tmp_out_quasimap, vcf_file, ref_file, reads_file, kmer_size=5,
     )
     # We're trusing gramtools output for this test. The point here is to check
     # that gramtools can run. Parsing its output is checked elsewhere.
@@ -99,7 +93,6 @@ def test_run_gramtools_fails():
             vcf_file,
             ref_file,
             reads_file,
-            150,
             kmer_size=5,
         )
     shutil.rmtree(tmp_out_build)
@@ -123,7 +116,6 @@ def test_run_gramtools_two_reads_files():
         vcf_file,
         ref_file,
         [reads_file1, reads_file2],
-        150,
         kmer_size=5,
     )
     # We're trusing gramtools output for this test. The point here is to check
@@ -140,6 +132,13 @@ def test_run_gramtools_two_reads_files():
     )
     shutil.rmtree(tmp_out_build)
     shutil.rmtree(tmp_out_quasimap)
+
+
+def test_grouped_allele_counts_coverage_json_to_cov_list():
+    infile = os.path.join(
+        data_dir, "grouped_allele_counts_coverage_json_to_cov_list.json"
+    )
+    gramtools.grouped_allele_counts_coverage_json_to_cov_list(infile) == [11, 10]
 
 
 def test_load_gramtools_vcf_and_allele_coverage_files():
@@ -160,8 +159,8 @@ def test_load_gramtools_vcf_and_allele_coverage_files():
     expected_header, expected_vcf_records = vcf_file_read.vcf_file_to_list(vcf_file)
     assert got_vcf_header == expected_header
     assert got_vcf_records == expected_vcf_records
-    assert got_mean_depth == 10.500
-    assert got_depth_variance == 0.5
+    assert got_mean_depth == 11.000
+    assert got_depth_variance == 1.000
 
     # now test bad files cause error to be raised
     vcf_file = os.path.join(
@@ -241,7 +240,7 @@ def test_update_vcf_record_using_gramtools_allele_depths_not_callable():
         "ref\t4\t.\tT\tG,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0"
     )
     allele_combination_cov = {"1": 0, "2": 0}
-    allele_groups_dict = {"1": {0}}
+    allele_groups_dict = {"1": {0}, "2": {0}}
     allele_per_base_cov = [[0], [0], [0, 0]]
     expected = vcf_record.VcfRecord(
         "ref\t4\t.\tT\tG,TC\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t./.:0:0:0,0,0:.:0.0"
@@ -289,7 +288,6 @@ def test_write_vcf_annotated_using_coverage_from_gramtools():
         error_rate,
         tmp_outfile,
         sample_name="sample_42",
-        max_read_length=200,
         filtered_outfile=tmp_outfile_filtered,
         ref_seq_lengths={"ref": "10000"},
         call_hets=True,

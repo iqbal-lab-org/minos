@@ -25,14 +25,10 @@ split_file_attributes = [
 SplitFile = namedtuple("SplitFile", split_file_attributes)
 
 
-def _run_gramtools_build(split_file, ref_fasta, max_read_length, kmer_size):
+def _run_gramtools_build(split_file, ref_fasta, kmer_size):
     logging.info("Start gramtools build " + split_file.filename)
     gramtools.run_gramtools_build(
-        split_file.gramtools_build_dir,
-        split_file.filename,
-        ref_fasta,
-        max_read_length,
-        kmer_size,
+        split_file.gramtools_build_dir, split_file.filename, ref_fasta, kmer_size,
     )
     logging.info("Finish gramtools build " + split_file.filename)
 
@@ -44,7 +40,6 @@ class VcfChunker:
         vcf_infile=None,
         ref_fasta=None,
         variants_per_split=None,
-        max_read_length=200,
         total_splits=100,
         flank_length=200,
         gramtools_kmer_size=10,
@@ -69,7 +64,6 @@ class VcfChunker:
             self.total_splits = total_splits
             self.flank_length = flank_length
             self.gramtools_kmer_size = gramtools_kmer_size
-            self.max_read_length = max_read_length
 
             if not os.path.exists(self.vcf_infile):
                 raise Exception("VCF file not found: " + self.vcf_infile)
@@ -92,7 +86,6 @@ class VcfChunker:
             "total_splits": self.total_splits,
             "flank_length": self.flank_length,
             "gramtools_kmer_size": self.gramtools_kmer_size,
-            "max_read_length": self.max_read_length,
             "total_split_files": self.total_split_files,
             "split_files": self.vcf_split_files,
             "total_input_records": self.total_input_records,
@@ -111,7 +104,6 @@ class VcfChunker:
         self.total_splits = metadata["total_splits"]
         self.flank_length = metadata["flank_length"]
         self.gramtools_kmer_size = metadata["gramtools_kmer_size"]
-        self.max_read_length = metadata["max_read_length"]
         self.total_split_files = metadata["total_split_files"]
         self.vcf_split_files = metadata["split_files"]
         self.total_input_records = metadata["total_input_records"]
@@ -188,13 +180,15 @@ class VcfChunker:
 
         self.total_split_files = 0
         self.total_input_records = 0
-        vcf_header_lines, vcf_records = cluster_vcf_records.vcf_file_read.vcf_file_to_dict(
-            self.vcf_infile
-        )
+        (
+            vcf_header_lines,
+            vcf_records,
+        ) = cluster_vcf_records.vcf_file_read.vcf_file_to_dict(self.vcf_infile)
         if self.variants_per_split is None and self.alleles_per_split is None:
-            total_records, total_alleles = VcfChunker._total_variants_and_alleles_in_vcf_dict(
-                vcf_records
-            )
+            (
+                total_records,
+                total_alleles,
+            ) = VcfChunker._total_variants_and_alleles_in_vcf_dict(vcf_records)
             self.alleles_per_split = 1 + int(total_alleles / self.total_splits)
 
         for ref_name, vcf_record_list in vcf_records.items():
@@ -211,7 +205,11 @@ class VcfChunker:
                         self.vcf_split_files[ref_name][-1].use_end_index + 1
                     )
 
-                file_start_index, use_end_index, file_end_index = VcfChunker._chunk_end_indexes_from_vcf_record_list(
+                (
+                    file_start_index,
+                    use_end_index,
+                    file_end_index,
+                ) = VcfChunker._chunk_end_indexes_from_vcf_record_list(
                     vcf_record_list,
                     use_start_index,
                     self.flank_length,
@@ -271,7 +269,6 @@ class VcfChunker:
                         split_file.gramtools_build_dir,
                         split_file.filename,
                         self.ref_fasta,
-                        self.max_read_length,
                         self.gramtools_kmer_size,
                     )
         else:
@@ -286,7 +283,6 @@ class VcfChunker:
                 zip(
                     file_list,
                     itertools.repeat(self.ref_fasta),
-                    itertools.repeat(self.max_read_length),
                     itertools.repeat(self.gramtools_kmer_size),
                 ),
             )
@@ -312,7 +308,10 @@ class VcfChunker:
                     files_to_merge[ref_name]
                 )
                 for i, split_file in enumerate(self.vcf_split_files[ref_name]):
-                    header_lines, records_to_merge = cluster_vcf_records.vcf_file_read.vcf_file_to_list(
+                    (
+                        header_lines,
+                        records_to_merge,
+                    ) = cluster_vcf_records.vcf_file_read.vcf_file_to_list(
                         files_to_merge[ref_name][i]
                     )
                     if not printed_header_lines:

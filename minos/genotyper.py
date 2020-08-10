@@ -257,6 +257,7 @@ class Genotyper:
 
         if not self.call_hets:
             self.likelihoods.sort(key=operator.itemgetter(1), reverse=True)
+            logging.debug(f"likelihoods: {self.likelihoods}")
             return
 
         for (allele_number1, allele_number2) in itertools.combinations(
@@ -292,6 +293,7 @@ class Genotyper:
             )
 
         self.likelihoods.sort(key=operator.itemgetter(1), reverse=True)
+        logging.debug(f"likelihoods: {self.likelihoods}")
 
     def run(self, allele_combination_cov, allele_per_base_cov, allele_groups_dict):
         self._init_alleles_and_genotypes(

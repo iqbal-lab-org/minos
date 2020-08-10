@@ -5,13 +5,19 @@ import pyfastaq
 import pysam
 
 
-def syscall(command, allow_fail=False):
+def rm_rf(*paths):
+    for path in paths:
+        subprocess.check_output(f"rm -rf {path}", shell=True)
+
+
+def syscall(command, allow_fail=False, cwd=None):
     completed_process = subprocess.run(
         command,
         shell=True,
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         universal_newlines=True,
+        cwd=cwd,
     )
     if (not allow_fail) and completed_process.returncode != 0:
         print("Error running this command:", command, file=sys.stderr)

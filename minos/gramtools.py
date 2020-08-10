@@ -28,7 +28,7 @@ def _build_json_file_is_good(json_build_report):
         return success
 
 
-def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=10):
+def run_gramtools_build(outdir, vcf_file, ref_file, kmer_size=10):
     """Runs gramtools build. Makes new directory called 'outdir' for
     the output"""
     if os.path.exists(outdir):
@@ -47,8 +47,6 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
             vcf_file,
             "--reference",
             ref_file,
-            "--max-read-length",
-            str(max_read_length),
             "--kmer-size",
             str(kmer_size),
             "--no-vcf-clustering",
@@ -76,14 +74,7 @@ def run_gramtools_build(outdir, vcf_file, ref_file, max_read_length, kmer_size=1
 
 
 def run_gramtools(
-    build_dir,
-    quasimap_dir,
-    vcf_file,
-    ref_file,
-    reads,
-    max_read_length,
-    kmer_size=10,
-    seed=42,
+    build_dir, quasimap_dir, vcf_file, ref_file, reads, kmer_size=10, seed=42,
 ):
     """If build_dir does not exist, runs runs gramtools build and quasimap.
     Otherwise, just runs quasimap. quasimap output is in new
@@ -93,9 +84,7 @@ def run_gramtools(
     files made by quasimap are not found."""
     gramtools_exe = dependencies.find_binary("gramtools")
     if not os.path.exists(build_dir):
-        run_gramtools_build(
-            build_dir, vcf_file, ref_file, max_read_length, kmer_size=kmer_size
-        )
+        run_gramtools_build(build_dir, vcf_file, ref_file, kmer_size=kmer_size)
 
     if type(reads) is not list:
         assert type(reads) is str
@@ -151,25 +140,27 @@ def run_gramtools(
     return json_build_report, json_quasimap_report
 
 
-def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
-    """Loads the perl_generated_vcf file and allele_coverage files.
-    Sanity checks that they agree: 1) same number of lines (excluding header
-    lines in vcf) and 2) number of alts agree on each line.
-    Raises error at the first time somthing wrong is found.
-    Returns a list of tuples: (VcfRecord, dict of allele -> coverage)"""
+def grouped_allele_counts_coverage_json_to_cov_list(json_file):
+    with open(json_file) as f:
+        data = json.load(f)
+    coverages = []
+    for coverage_dict in data["grouped_allele_counts"]["site_counts"]:
+        coverages.append(sum(coverage_dict.values()))
+    return coverages
+
+
+def _load_quasimap_json_files(quasimap_dir):
     allele_base_counts_file = os.path.join(
         quasimap_dir, "quasimap_outputs", "allele_base_coverage.json"
     )
     grouped_allele_counts_file = os.path.join(
         quasimap_dir, "quasimap_outputs", "grouped_allele_counts_coverage.json"
     )
-    all_allele_coverage, allele_groups = load_allele_files(
-        allele_base_counts_file, grouped_allele_counts_file
-    )
-    vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
-    coverages = []
+    return load_allele_files(allele_base_counts_file, grouped_allele_counts_file)
 
-    if len(all_allele_coverage) != len(vcf_lines):
+
+def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
+    if vcf_lines is not None and len(all_allele_coverage) != len(vcf_lines):
         raise Exception(
             "Number of records in VCF ("
             + str(len(vcf_lines))
@@ -178,10 +169,14 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
             + "). Cannot continue"
         )
 
+    coverages = []
+
     for i, (allele_combi_coverage, allele_per_base_coverage) in enumerate(
         all_allele_coverage
     ):
-        if len(allele_per_base_coverage) != 1 + len(vcf_lines[i].ALT):
+        if vcf_lines is not None and len(allele_per_base_coverage) != 1 + len(
+            vcf_lines[i].ALT
+        ):
             raise Exception(
                 "Mismatch in number of alleles for this VCF record:\n"
                 + str(vcf_lines[i])
@@ -189,8 +184,36 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
                 + str(i + 1)
             )
 
-        coverages.append(sum(allele_combi_coverage.values()))
+        # We only count SNPs towards estimating the read depth. Otherwise,
+        # would need to normalise number of reads mapped by length of alelles.
+        # But multimapping makes this impossible because reads can be mapped
+        # to alleles of different lengths.
+        if any([len(x) > 1 for x in allele_per_base_coverage]):
+            coverages.append(None)
+        else:
+            coverages.append(sum(allele_combi_coverage.values()))
 
+    assert len(coverages) == len(all_allele_coverage)
+    return coverages
+
+
+def coverage_list_from_quasimap_dir(quasimap_dir):
+    all_allele_coverage, allele_groups = _load_quasimap_json_files(quasimap_dir)
+    return _coverage_list_from_allele_coverage(all_allele_coverage)
+
+
+def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
+    """Loads the perl_generated_vcf file and allele_coverage files.
+    Sanity checks that they agree: 1) same number of lines (excluding header
+    lines in vcf) and 2) number of alts agree on each line.
+    Raises error at the first time somthing wrong is found.
+    Returns a list of tuples: (VcfRecord, dict of allele -> coverage)"""
+    vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
+    all_allele_coverage, allele_groups = _load_quasimap_json_files(quasimap_dir)
+    coverages = _coverage_list_from_allele_coverage(
+        all_allele_coverage, vcf_lines=vcf_lines
+    )
+    coverages = [x for x in coverages if x is not None]
     assert len(coverages) > 0
     # Unlikely to happen edge case on real data is when coverages has length 1.
     # It happens when running test_run in adjudicator_test, with a split VCf.
@@ -219,6 +242,10 @@ def update_vcf_record_using_gramtools_allele_depths(
     This also changes all columns from QUAL onwards.
     Returns a VcfRecord the same as vcf_record, but with all zero
     coverage alleles removed, and GT and COV fixed accordingly"""
+    logging.debug(
+        f"Genotyping. allele_combination_cov={[str(allele_groups_dict[x]) + ': ' + str(allele_combination_cov[x]) for x in allele_combination_cov]}"
+    )
+    logging.debug(f"Genotyping. allele_per_base_cov={allele_per_base_cov}")
     gtyper.run(allele_combination_cov, allele_per_base_cov, allele_groups_dict)
     genotype_indexes = set()
 
@@ -306,7 +333,6 @@ def write_vcf_annotated_using_coverage_from_gramtools(
     read_error_rate,
     outfile,
     sample_name="SAMPLE",
-    max_read_length=None,
     filtered_outfile=None,
     ref_seq_lengths=None,
     call_hets=False,
@@ -332,9 +358,6 @@ def write_vcf_annotated_using_coverage_from_gramtools(
     if ref_seq_lengths is not None:
         for name, length in sorted(ref_seq_lengths.items()):
             header_lines.append(f"##contig=<ID={name},length={length}>")
-
-    if max_read_length is not None:
-        header_lines.append("##minos_max_read_length=" + str(max_read_length))
 
     header_lines.append(
         "\t".join(
