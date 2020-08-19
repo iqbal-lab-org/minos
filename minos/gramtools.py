@@ -159,7 +159,9 @@ def _load_quasimap_json_files(quasimap_dir):
     return load_allele_files(allele_base_counts_file, grouped_allele_counts_file)
 
 
-def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
+def _coverage_list_from_allele_coverage(
+    all_allele_coverage, vcf_lines=None, use_indels=False
+):
     if vcf_lines is not None and len(all_allele_coverage) != len(vcf_lines):
         raise Exception(
             "Number of records in VCF ("
@@ -184,11 +186,18 @@ def _coverage_list_from_allele_coverage(all_allele_coverage, vcf_lines=None):
                 + str(i + 1)
             )
 
-        # We only count SNPs towards estimating the read depth. Otherwise,
+        # We want only count SNPs towards estimating the read depth. Otherwise,
         # would need to normalise number of reads mapped by length of alelles.
         # But multimapping makes this impossible because reads can be mapped
         # to alleles of different lengths.
-        if any([len(x) > 1 for x in allele_per_base_coverage]):
+        # However, there is an edge case where there are no SNPs at all in the
+        # complete data set.
+        # In this case, we allow using indels. Take the depth on each allele
+        # to be the max depth across its positions. Then the depth of this site
+        # is max([max depth on each allele]). Is about the best we can do.
+        if use_indels:
+            coverages.append(max([max(x) for x in allele_per_base_coverage]))
+        elif any([len(x) > 1 for x in allele_per_base_coverage]):
             coverages.append(None)
         else:
             coverages.append(sum(allele_combi_coverage.values()))
@@ -214,6 +223,17 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
         all_allele_coverage, vcf_lines=vcf_lines
     )
     coverages = [x for x in coverages if x is not None]
+
+    # Unlikely to happen edge case when there were no SNPs in the input.
+    # By default, we only counted read depth at SNPs, so in this edge case we
+    # get no read depths. Do the coverage estimate again, but use indels to
+    # estimate. Is likely to be a little less accurate, but we have no choice.
+    if len(coverages) == 0:
+        coverages = _coverage_list_from_allele_coverage(
+            all_allele_coverage, vcf_lines=vcf_lines, use_indels=True
+        )
+        coverages = [x for x in coverages if x is not None]
+
     assert len(coverages) > 0
     # Unlikely to happen edge case on real data is when coverages has length 1.
     # It happens when running test_run in adjudicator_test, with a split VCf.

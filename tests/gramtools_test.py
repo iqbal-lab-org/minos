@@ -141,6 +141,22 @@ def test_grouped_allele_counts_coverage_json_to_cov_list():
     gramtools.grouped_allele_counts_coverage_json_to_cov_list(infile) == [11, 10]
 
 
+def test_coverage_list_from_allele_coverage():
+    """test _coverage_list_from_allele_coverage"""
+    all_allele_coverage = [
+        ({"0": 1, "1": 15}, [[1], [15]]),
+        ({"0": 15, "1": 13}, [[14, 2], [13]]),
+    ]
+    expect = [16, None]
+    got = gramtools._coverage_list_from_allele_coverage(all_allele_coverage)
+    assert expect == got
+    expect = [15, 14]
+    got = gramtools._coverage_list_from_allele_coverage(
+        all_allele_coverage, use_indels=True
+    )
+    assert expect == got
+
+
 def test_load_gramtools_vcf_and_allele_coverage_files():
     """test load_gramtools_vcf_and_allele_coverage_files"""
     vcf_file = os.path.join(data_dir, "load_gramtools_vcf_and_allele_coverage.vcf")
