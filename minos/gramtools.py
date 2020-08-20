@@ -225,10 +225,11 @@ def load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir):
     coverages = [x for x in coverages if x is not None]
 
     # Unlikely to happen edge case when there were no SNPs in the input.
+    # Or the few SNPs we do get coverage for all all coverage zero.
     # By default, we only counted read depth at SNPs, so in this edge case we
     # get no read depths. Do the coverage estimate again, but use indels to
     # estimate. Is likely to be a little less accurate, but we have no choice.
-    if len(coverages) == 0:
+    if len(coverages) == 0 or max(coverages) == 0:
         coverages = _coverage_list_from_allele_coverage(
             all_allele_coverage, vcf_lines=vcf_lines, use_indels=True
         )
