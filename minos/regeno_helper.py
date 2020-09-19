@@ -3,7 +3,37 @@ import json
 import multiprocessing
 import os
 
+from cluster_vcf_records import vcf_file_read, vcf_record
+
 from minos import utils
+
+
+def vcf_has_too_many_variants(
+    vcf_file, max_number_of_records, max_ref_proportion, ref_length
+):
+    number_of_records = 0
+    total_length = 0
+
+    with vcf_file_read.open_vcf_file_for_reading(vcf_file) as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            record = vcf_record.VcfRecord(line)
+            if "GT" in record.FORMAT:
+                gt = set(record.FORMAT["GT"].split("/"))
+                gt.discard("0")
+                gt.discard(".")
+                if len(gt) > 0:
+                    number_of_records += 1
+                    total_length += len(record.REF)
+
+            if (
+                number_of_records > max_number_of_records
+                or (total_length / ref_length) > max_ref_proportion
+            ):
+                return True
+
+    return False
 
 
 def compress_file(filenames):

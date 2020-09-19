@@ -11,6 +11,14 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(this_dir, "data", "regeno_helper")
 
 
+def test_vcf_has_too_many_variants():
+    vcf_file = os.path.join(data_dir, "vcf_has_too_many_variants.vcf")
+    assert not regeno_helper.vcf_has_too_many_variants(vcf_file, 5, 0.5, 10)
+    assert regeno_helper.vcf_has_too_many_variants(vcf_file, 5, 0.49, 10)
+    assert regeno_helper.vcf_has_too_many_variants(vcf_file, 4, 0.5, 10)
+    assert regeno_helper.vcf_has_too_many_variants(vcf_file, 5, 0.5, 9)
+
+
 def test_compress_file():
     """test compress_file"""
     vcf_in = os.path.join(data_dir, "compress_file.vcf")
