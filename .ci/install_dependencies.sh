@@ -37,7 +37,7 @@ cd $install_root
 
 git clone https://github.com/iqbal-lab-org/cluster_vcf_records.git
 cd cluster_vcf_records
-git checkout 8a7e71fe86c679ef1f1cc63635620ec6ba4fc783
+git checkout fd41155cea23c35196ae56f66402eb8e1b287b37
 pip3 install .
 
 #_________________________ bcftools _______________________#
