@@ -2,6 +2,7 @@ import csv
 import json
 import multiprocessing
 import os
+import re
 
 from cluster_vcf_records import vcf_file_read, vcf_record
 
@@ -20,7 +21,7 @@ def vcf_has_too_many_variants(
                 continue
             record = vcf_record.VcfRecord(line)
             if "GT" in record.FORMAT:
-                gt = set(record.FORMAT["GT"].split("/"))
+                gt = set(re.split("[/|]", record.FORMAT["GT"]))
                 gt.discard("0")
                 gt.discard(".")
                 if len(gt) > 0:
