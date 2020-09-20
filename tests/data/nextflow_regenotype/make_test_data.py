@@ -19,11 +19,20 @@ def make_ref_seqs():
     ref_seq[1504] = "G"
     ref_seq[1509] = "G"
 
+    # this is to make sample 3 have too many snps, so it gets removed
+    for i in range(1600, 1800, 20):
+        ref_seq[i] = "T"
+
     sample_seqs = [
         copy.copy(ref_seq),
         copy.copy(ref_seq),
         copy.copy(ref_seq),
+        copy.copy(ref_seq),
     ]
+
+    # this is to make sample 3 have too many snps, so it gets removed
+    for i in range(1600, 1800, 20):
+        sample_seqs[3][i] = "A"
 
     sample_seqs[0][49] = "G"
     sample_seqs[0][99] = "C"
@@ -73,11 +82,12 @@ subprocess.check_output(f"bwa index {ref_fa}", shell=True)
 subprocess.check_output(f"samtools faidx {ref_fa}", shell=True)
 
 for seq in sample_seqs:
+    print(seq.id)
     process_one_sample(ref_fa, seq, f"data.{seq.id}")
 
 
-with open("data.sample.2.vcf") as f_in, open("data.sample.3.vcf", "w") as f_out:
+with open("data.sample.2.vcf") as f_in, open("data.sample.4.vcf", "w") as f_out:
     for line in f_in:
         if line.startswith("#CHROM"):
-            line = line.replace("sample.2", "sample.3")
+            line = line.replace("sample.2", "sample.4")
         print(line, end="", file=f_out)

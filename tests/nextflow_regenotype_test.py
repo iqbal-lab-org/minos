@@ -17,9 +17,9 @@ minos_dir = os.path.abspath(os.path.join(this_dir, os.pardir))
 def _write_manifest(filename):
     with open(filename, "w") as f:
         print("name", "vcf", "reads", sep="\t", file=f)
-        for i in range(4):
+        for i in range(5):
             vcf = os.path.join(data_dir, f"data.sample.{i}.vcf")
-            if i < 3:
+            if i < 4:
                 bam = os.path.join(data_dir, f"data.sample.{i}.bam")
             else:
                 bam = "does_not_exist"
@@ -40,7 +40,7 @@ def test_regenotype_pipeline():
     regeno_config = os.path.join(minos_dir, "nextflow", "regenotype.config")
     dag = "tmp.nextflow_regeno_test.dag.pdf"
     ref_fasta = os.path.join(data_dir, "data.ref.fa")
-    command = f"nextflow run -c {regeno_config} -profile tiny -with-dag {dag} {regeno_nf} --ref_fasta {ref_fasta} --manifest {manifest} --outdir OUT"
+    command = f"nextflow run -c {regeno_config} -profile tiny -with-dag {dag} {regeno_nf} --max_variants_per_sample 10 --ref_fasta {ref_fasta} --manifest {manifest} --outdir OUT"
     utils.syscall(command, cwd=outdir)
 
     expect_failed_samples = os.path.join(data_dir, "expect.failed_samples.txt")

@@ -1,9 +1,12 @@
 import csv
+import itertools
 import json
+import logging
 import multiprocessing
 import os
 import re
 
+import pyfastaq
 from cluster_vcf_records import vcf_file_read, vcf_record
 
 from minos import utils
@@ -43,18 +46,50 @@ def compress_file(filenames):
     utils.syscall(f"{zipper} -c {infile} > {outfile}")
 
 
-def parse_manifest_file(infile, merge_fofn, adjudicate_tsv):
-    with open(infile) as f_in, open(merge_fofn, "w") as f_out_merge, open(
-        adjudicate_tsv, "w"
-    ) as f_out_adj:
-        print("name", "reads", sep="\t", file=f_out_adj)
-        reader = csv.DictReader(f_in, delimiter="\t")
-        for d in reader:
-            if "vcf" in d:
-                print(d["vcf"], file=f_out_merge)
+def _sample_is_ok(sample_tuple, max_number_of_records, max_ref_proportion, ref_length):
+    return not vcf_has_too_many_variants(sample_tuple[1], max_number_of_records, max_ref_proportion, ref_length)
 
+
+def parse_manifest_file(infile, merge_fofn, adjudicate_tsv, ref_fasta, cpus=1, max_number_of_records=15000, max_ref_proportion=0.1):
+    all_samples =[]
+    seq_reader = pyfastaq.sequences.file_reader(ref_fasta)
+    ref_length = sum([len(x) for x in seq_reader])
+
+    logging.info(f"Load manifest file {infile}")
+    with open(infile) as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        for c in ("name", "vcf", "reads"):
+            if c not in reader.fieldnames:
+                raise ValueError(f"Column called '{c}' not found in file {infile}")
+
+        for d in reader:
             reads = "--reads " + " --reads ".join(d["reads"].split())
-            print(d["name"], reads, sep="\t", file=f_out_adj)
+            all_samples.append((d["name"], d["vcf"], reads))
+
+    logging.info(f"Checking VCFs for each sample in parallel using {cpus} cpu(s)")
+    with multiprocessing.Pool(cpus) as pool:
+        samples_ok = pool.starmap(
+            _sample_is_ok,
+            zip(
+            all_samples,
+            itertools.repeat(max_number_of_records),
+            itertools.repeat(max_ref_proportion),
+            itertools.repeat(ref_length),
+            ),
+        )
+    logging.info(f"Finished checking VCFs for each sample. Keeping {sum(samples_ok)} of {len(samples_ok)} samples.")
+    logging.info("Writing output files")
+
+    with open(merge_fofn, "w") as f_merge, open(adjudicate_tsv, "w") as  f_adj:
+        print("name", "reads", sep="\t", file=f_adj)
+        for sample_ok, sample_data in zip(samples_ok, all_samples):
+            if not sample_ok:
+                continue
+
+            print(sample_data[1], file=f_merge)
+            print(sample_data[0], sample_data[2], sep="\t", file=f_adj)
+
+    logging.info("Finished writing output files")
 
 
 def manifest_to_set_of_sample_names(infile):
