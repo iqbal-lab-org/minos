@@ -1,0 +1,7 @@
+##fileformat=VCFv4.2
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1
+ref	1	.	A	G	61	.	DP=7	GT	1/1
+ref	2	.	A	G	61	.	DP=7	GT	1|1
+ref	3	.	A	G	61	.	DP=7	GT	1/1
+ref	4	.	A	G	61	.	DP=7	GT	1/1
+ref	5	.	A	G	61	.	DP=7	GT	1/1

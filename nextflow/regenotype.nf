@@ -20,11 +20,13 @@ def build_vcf_from_gramtools_build_dir(build_dir) {
 
 
 process parse_manifest {
-    memory "200 MB"
-    executor "local"
+    memory "1 GB"
+    cpus params.parse_manifest_cpus
 
     input:
       file manifest_tsv
+      file ref_fasta
+
 
     output:
       file "vcfs.fofn"
@@ -34,7 +36,15 @@ process parse_manifest {
     """
     #!/usr/bin/env python3
     from minos import regeno_helper
-    regeno_helper.parse_manifest_file("${manifest_tsv}", "vcfs.fofn", "sample_data.tsv")
+    regeno_helper.parse_manifest_file(
+        "${manifest_tsv}",
+        "vcfs.fofn",
+        "sample_data.tsv",
+        "${ref_fasta}",
+        cpus=${params.parse_manifest_cpus},
+        max_number_of_records=${params.max_variants_per_sample},
+        max_ref_proportion=${params.max_genome_proportion_per_sample},
+    )
     """
 }
 
@@ -211,7 +221,7 @@ workflow make_vcf_for_gramtools {
 
 
 workflow {
-    parse_manifest(manifest)
+    parse_manifest(manifest, ref_fasta)
     if (params.vcf == "" && params.gramtools_build_dir == "") {
         gramtools_vcf = make_vcf_for_gramtools(
             parse_manifest.out[0],
@@ -256,6 +266,9 @@ params.root_out = ""
 params.vcf = ""
 params.gramtools_build_dir = ""
 params.gramtools_kmer = 7
+params.parse_manifest_cpus = 5
+params.max_variants_per_sample = 5000
+params.max_genome_proportion_per_sample = 0.05
 params.vcf_merge_cpus = 5
 params.vcf_cluster_cpus = 5
 params.gramtools_build_cpus = 1

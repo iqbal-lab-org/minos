@@ -11,6 +11,14 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(this_dir, "data", "regeno_helper")
 
 
+def test_vcf_has_too_many_variants():
+    vcf_file = os.path.join(data_dir, "vcf_has_too_many_variants.vcf")
+    assert not regeno_helper.vcf_has_too_many_variants(vcf_file, 5, 0.5, 10)
+    assert regeno_helper.vcf_has_too_many_variants(vcf_file, 5, 0.49, 10)
+    assert regeno_helper.vcf_has_too_many_variants(vcf_file, 4, 0.5, 10)
+    assert regeno_helper.vcf_has_too_many_variants(vcf_file, 5, 0.5, 9)
+
+
 def test_compress_file():
     """test compress_file"""
     vcf_in = os.path.join(data_dir, "compress_file.vcf")
@@ -28,17 +36,29 @@ def test_compress_file():
 
 def test_parse_manifest_file():
     """test parse_manifest_file"""
-    infile = os.path.join(data_dir, "parse_manifest_file.in.tsv")
+    manifest_tsv = "tmp.parse_manifest_file.in.tsv"
+    with open(manifest_tsv, "w") as f:
+        vcf_prefix =  os.path.join(data_dir, "parse_manifest_file")
+        vcf1 = f"{vcf_prefix}.1.vcf"
+        vcf2 = f"{vcf_prefix}.2.vcf"
+        vcf3 = f"{vcf_prefix}.3.vcf"
+        print("name", "vcf", "reads", sep="\t", file=f)
+        print("sample1", vcf1, "1.reads.fq", sep="\t", file=f)
+        print("sample2", vcf2, "2.reads.1.fq 2.reads.2.fq", sep="\t", file=f)
+        print("sample3", vcf3, "3.reads.1.fq 3.reads.2.fq", sep="\t", file=f)
     merge_out = "tmp.parse_manifest_file.merge.fofn"
     adjudicate_out = "tmp.parse_manifest_file.adjudicate.tsv"
+    ref_fasta = os.path.join(data_dir, "parse_manifest_file.ref.fa")
     utils.rm_rf(merge_out, adjudicate_out)
-    regeno_helper.parse_manifest_file(infile, merge_out, adjudicate_out)
-    expect_merge = os.path.join(data_dir, "parse_manifest_file.out.fofn")
+    regeno_helper.parse_manifest_file(manifest_tsv, merge_out, adjudicate_out, ref_fasta)
+    os.unlink(manifest_tsv)
     expect_adj = os.path.join(data_dir, "parse_manifest_file.out.tsv")
-    assert filecmp.cmp(expect_merge, merge_out, shallow=False)
     assert filecmp.cmp(expect_adj, adjudicate_out, shallow=False)
-    os.unlink(merge_out)
     os.unlink(adjudicate_out)
+    with open(merge_out) as f:
+        got_lines = [x.rstrip() for x in f]
+    assert got_lines == [vcf1, vcf3]
+    os.unlink(merge_out)
 
 
 def test_manifest_to_set_of_sample_names():

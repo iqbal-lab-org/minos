@@ -1,3 +1,4 @@
 name	vcf	reads
-sample1	1.vcf	1.reads.fq
-sample2	2.vcf	2.reads.1.fq 2.reads.2.fq
+sample1	parse_manifest_file.1.vcf	1.reads.fq
+sample2	parse_manifest_file.2.vcf	2.reads.1.fq 2.reads.2.fq
+sample3	parse_manifest_file.3.vcf	3.reads.1.fq 3.reads.2.fq
