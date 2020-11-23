@@ -1,0 +1,7 @@
+##fileformat=VCFv4.2
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1	sample2	sample3
+ref	1	.	A	G	61	.	.	GT:FT	0:PASS	1:FAIL	1:PASS
+ref	2	.	A	G	61	.	.	GT:FT	1:PASS	1:PASS	1:PASS
+ref	3	.	A	G	61	.	.	GT:FT	0:PASS	0:PASS	1:PASS
+ref	4	.	A	G	61	.	.	GT:FT	1:PASS	0:PASS	1:PASS
+ref	5	.	A	G	61	.	.	GT:FT	1:PASS	0:PASS	0:PASS

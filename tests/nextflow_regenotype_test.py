@@ -40,12 +40,17 @@ def test_regenotype_pipeline():
     regeno_config = os.path.join(minos_dir, "nextflow", "regenotype.config")
     dag = "tmp.nextflow_regeno_test.dag.pdf"
     ref_fasta = os.path.join(data_dir, "data.ref.fa")
-    command = f"nextflow run -c {regeno_config} -profile tiny -with-dag {dag} {regeno_nf} --max_variants_per_sample 10 --ref_fasta {ref_fasta} --manifest {manifest} --outdir OUT"
+    mask_bed = os.path.join(data_dir, "mask.bed")
+    command = f"nextflow run -c {regeno_config} -profile tiny -with-dag {dag} {regeno_nf} --make_distance_matrix --mask_bed_file {mask_bed} --max_variants_per_sample 10 --ref_fasta {ref_fasta} --manifest {manifest} --outdir OUT"
     utils.syscall(command, cwd=outdir)
 
     expect_failed_samples = os.path.join(data_dir, "expect.failed_samples.txt")
     got_failed_samples = os.path.join(outdir, "OUT", "failed_samples.txt")
     assert filecmp.cmp(got_failed_samples, expect_failed_samples, shallow=False)
+
+    expect_dist_matrix = os.path.join(data_dir, "expect.distance_matrix.txt")
+    got_dist_matrix = os.path.join(outdir, "OUT", "distance_matrix.txt")
+    assert filecmp.cmp(got_dist_matrix, expect_dist_matrix, shallow=False)
 
     # Don't know order of lines in the manifest tsv, or the filename that will
     # be given to each sample. We'll load in each VCF and check it matches the
