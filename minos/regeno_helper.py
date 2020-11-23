@@ -47,11 +47,21 @@ def compress_file(filenames):
 
 
 def _sample_is_ok(sample_tuple, max_number_of_records, max_ref_proportion, ref_length):
-    return not vcf_has_too_many_variants(sample_tuple[1], max_number_of_records, max_ref_proportion, ref_length)
+    return not vcf_has_too_many_variants(
+        sample_tuple[1], max_number_of_records, max_ref_proportion, ref_length
+    )
 
 
-def parse_manifest_file(infile, merge_fofn, adjudicate_tsv, ref_fasta, cpus=1, max_number_of_records=15000, max_ref_proportion=0.1):
-    all_samples =[]
+def parse_manifest_file(
+    infile,
+    merge_fofn,
+    adjudicate_tsv,
+    ref_fasta,
+    cpus=1,
+    max_number_of_records=15000,
+    max_ref_proportion=0.1,
+):
+    all_samples = []
     seq_reader = pyfastaq.sequences.file_reader(ref_fasta)
     ref_length = sum([len(x) for x in seq_reader])
 
@@ -71,16 +81,18 @@ def parse_manifest_file(infile, merge_fofn, adjudicate_tsv, ref_fasta, cpus=1, m
         samples_ok = pool.starmap(
             _sample_is_ok,
             zip(
-            all_samples,
-            itertools.repeat(max_number_of_records),
-            itertools.repeat(max_ref_proportion),
-            itertools.repeat(ref_length),
+                all_samples,
+                itertools.repeat(max_number_of_records),
+                itertools.repeat(max_ref_proportion),
+                itertools.repeat(ref_length),
             ),
         )
-    logging.info(f"Finished checking VCFs for each sample. Keeping {sum(samples_ok)} of {len(samples_ok)} samples.")
+    logging.info(
+        f"Finished checking VCFs for each sample. Keeping {sum(samples_ok)} of {len(samples_ok)} samples."
+    )
     logging.info("Writing output files")
 
-    with open(merge_fofn, "w") as f_merge, open(adjudicate_tsv, "w") as  f_adj:
+    with open(merge_fofn, "w") as f_merge, open(adjudicate_tsv, "w") as f_adj:
         print("name", "reads", sep="\t", file=f_adj)
         for sample_ok, sample_data in zip(samples_ok, all_samples):
             if not sample_ok:
@@ -105,11 +117,16 @@ def make_per_sample_vcfs_dir(
     logs_root_out = os.path.join("Logs")
     if not os.path.exists(root_outdir):
         os.mkdir(root_outdir)
-    utils.rm_rf(f"{root_outdir}/*")
+    # utils.rm_rf(f"{root_outdir}/*")
+    utils.rm_rf(vcf_root_out)
+    utils.rm_rf(logs_root_out)
     os.mkdir(os.path.join(root_outdir, vcf_root_out))
     os.mkdir(os.path.join(root_outdir, logs_root_out))
     sample_number = 0
     tsv_out = os.path.join(root_outdir, "manifest.tsv")
+    utils.rm_rf(tsv_out)
+    json_out = os.path.join(root_outdir, "manifest.json")
+    utils.rm_rf(json_out)
     data = {}
     parallel_jobs_data = []
 
@@ -141,7 +158,7 @@ def make_per_sample_vcfs_dir(
     with multiprocessing.Pool(cpus) as pool:
         pool.map(compress_file, parallel_jobs_data)
 
-    with open(os.path.join(root_outdir, "manifest.json"), "w") as f:
+    with open(json_out, "w") as f:
         json.dump(data, f, indent=2, sort_keys=True)
 
     if original_manifest is None:

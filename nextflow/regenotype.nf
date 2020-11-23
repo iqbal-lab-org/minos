@@ -194,12 +194,41 @@ process ivcf_final_merge {
       val file_list
       file outdir
 
+    output:
+      file "done_file"
+
     script:
     """
     cat <<"EOF" > files.txt
 ${file_list.join('\n')}
 EOF
     ivcfmerge files.txt ${outdir}/merged.vcf
+    touch done_file
+    """
+}
+
+
+process distance_matrix {
+    memory {5.GB * task.attempt}
+    errorStrategy {task.attempt < 3 ? 'retry' : "terminate"}
+    maxRetries 3
+
+    input:
+      file outdir
+      file final_merge_done
+      file mask_bed
+
+    script:
+    def mask_opt = mask_bed.name == "NO_FILE" ? "mask_bed_file=None" : "mask_bed_file='${mask_bed}'"
+    """
+    #!/usr/bin/env python3
+    import os
+    from minos import dist_matrix
+    dist_matrix.distance_matrix_from_vcf_file(
+        os.path.join("${outdir}", "merged.vcf"),
+        os.path.join("${outdir}", "distance_matrix.txt"),
+        ${mask_opt},
+    )
     """
 }
 
@@ -221,6 +250,11 @@ workflow make_vcf_for_gramtools {
 
 
 workflow {
+    mask_bed = file(params.mask_bed_file)
+    if (params.mask_bed_file != "NO_FILE" && !mask_bed.exists()) {
+        exit 1, "Mask BED file not found: ${params.mask_bed_file} -- aborting"
+    }
+
     parse_manifest(manifest, ref_fasta)
     if (params.vcf == "" && params.gramtools_build_dir == "") {
         gramtools_vcf = make_vcf_for_gramtools(
@@ -257,6 +291,9 @@ workflow {
     ivcf_chunks = minos.out[1].collectFile().splitText(by: params.vcf_combine_batch_size, file: "ivcf_merge_chunks")
     ivcf_merge_chunks(ivcf_chunks)
     ivcf_final_merge(ivcf_merge_chunks.out.collect(), outdir)
+    if (params.make_distance_matrix) {
+        distance_matrix(outdir, ivcf_final_merge.out, mask_bed)
+    }
 }
 
 
@@ -265,6 +302,7 @@ params.ref_fasta = ""
 params.root_out = ""
 params.vcf = ""
 params.gramtools_build_dir = ""
+params.mask_bed_file = "NO_FILE"
 params.gramtools_kmer = 7
 params.parse_manifest_cpus = 5
 params.max_variants_per_sample = 5000
@@ -276,6 +314,7 @@ params.max_ref_allele_len = 50
 params.max_alleles_per_site = 500
 params.number_of_ref_chunks = 10
 params.vcf_combine_batch_size = 100
+params.make_dist_matrix = false
 
 if (params.help){
     log.info"""
