@@ -314,7 +314,7 @@ params.max_ref_allele_len = 50
 params.max_alleles_per_site = 500
 params.number_of_ref_chunks = 10
 params.vcf_combine_batch_size = 100
-params.make_dist_matrix = false
+params.make_distance_matrix = false
 
 if (params.help){
     log.info"""
