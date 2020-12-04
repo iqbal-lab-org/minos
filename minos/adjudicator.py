@@ -52,7 +52,7 @@ class Adjudicator:
         debug=False,
         cluster_input_vcfs=True,
     ):
-        self.ref_fasta = os.path.abspath(ref_fasta)
+        self.original_ref_fasta = os.path.abspath(ref_fasta)
         self.reads_files = [os.path.abspath(x) for x in reads_files]
         self.vcf_files = [os.path.abspath(x) for x in vcf_files]
         self.overwrite_outdir = overwrite_outdir
@@ -121,7 +121,7 @@ class Adjudicator:
         self.cluster_input_vcfs = cluster_input_vcfs
         self.ref_seq_lengths = {
             x.id.split()[0]: len(x)
-            for x in pyfastaq.sequences.file_reader(self.ref_fasta)
+            for x in pyfastaq.sequences.file_reader(self.original_ref_fasta)
         }
         if self.debug:
             self.sim_conf_scores_file = os.path.join(
@@ -210,6 +210,9 @@ class Adjudicator:
         ]
         dependencies.check_and_report_dependencies(programs=to_check)
         logging.info("Dependencies look OK")
+
+        self.ref_fasta = os.path.join(self.outdir, "ref.fa")
+        utils.fasta_to_upper_and_ACGT_only(self.original_ref_fasta, self.ref_fasta)
 
         if self.read_error_rate is None:
             logging.info("read_error_rate unknown. Estimate from first 10,000 reads...")

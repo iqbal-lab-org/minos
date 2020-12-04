@@ -7,7 +7,7 @@ import pickle
 
 import cluster_vcf_records
 
-from minos import gramtools
+from minos import gramtools, utils
 
 
 split_file_attributes = [
@@ -48,6 +48,7 @@ class VcfChunker:
     ):
         self.outdir = os.path.abspath(outdir)
         self.metadata_pickle = os.path.join(self.outdir, "data.pickle")
+        self.ref_fasta = os.path.join(self.outdir, "ref.fasta")
         self.threads = threads
 
         if os.path.exists(self.outdir):
@@ -58,7 +59,6 @@ class VcfChunker:
             assert ref_fasta is not None
             assert None in {variants_per_split, alleles_per_split}
             self.vcf_infile = os.path.abspath(vcf_infile)
-            self.ref_fasta = os.path.abspath(ref_fasta)
             self.variants_per_split = variants_per_split
             self.alleles_per_split = alleles_per_split
             self.total_splits = total_splits
@@ -67,14 +67,13 @@ class VcfChunker:
 
             if not os.path.exists(self.vcf_infile):
                 raise Exception("VCF file not found: " + self.vcf_infile)
-            if not os.path.exists(self.ref_fasta):
-                raise Exception("Reference FASTA file not found: " + self.ref_fasta)
 
             try:
                 os.mkdir(self.outdir)
             except:
                 raise Exception("Error mkdir " + self.outdir)
 
+            utils.fasta_to_upper_and_ACGT_only(ref_fasta, self.ref_fasta)
             self.vcf_split_files = {}  # ref name -> list of SplitFile
 
     def _save_metadata(self):

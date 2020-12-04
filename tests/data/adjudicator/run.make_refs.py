@@ -17,6 +17,7 @@ seq1 = [random.choice(nucleotides) for _ in range(1000)]
 seq2 = [random.choice(nucleotides) for _ in range(1000)]
 seq3 = seq1[:300] + [random.choice(nucleotides) for _ in range(700)]
 seq1[99] = 'G'
+seq1[50] = 'n'
 
 ref1 = pyfastaq.sequences.Fasta('ref.1', ''.join(seq1))
 ref2 = pyfastaq.sequences.Fasta('ref.2', ''.join(seq2))
