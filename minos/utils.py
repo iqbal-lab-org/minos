@@ -5,6 +5,20 @@ import pyfastaq
 import pysam
 
 
+def fasta_to_upper_and_ACGT_only(infile, outfile):
+    f = pyfastaq.sequences.file_reader(infile)
+    with open(outfile, "w") as f_out:
+        nucs = {"A", "C", "G", "T"}
+        for seq in f:
+            new_seq = list(seq.seq)
+            for i, c in enumerate(new_seq):
+                new_seq[i] = c.upper()
+                if new_seq[i] not in nucs:
+                    new_seq[i] = "C"
+            seq.seq = "".join(new_seq)
+            print(seq, file=f_out)
+
+
 def rm_rf(*paths):
     for path in paths:
         subprocess.check_output(f"rm -rf {path}", shell=True)

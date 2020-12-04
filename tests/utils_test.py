@@ -1,3 +1,4 @@
+import filecmp
 import os
 import unittest
 
@@ -8,6 +9,17 @@ data_dir = os.path.join(this_dir, "data", "utils")
 
 
 class TestUtils(unittest.TestCase):
+    def test_fasta_to_upper_and_ACGT_only(self):
+        """test fasta_to_upper_and_ACGT_only"""
+        infile = os.path.join(data_dir, "fasta_to_upper_and_ACGT_only.in.fa")
+        tmp_file = "tmp.fasta_to_upper_and_ACGT_only.fa"
+        utils.rm_rf(tmp_file)
+        utils.fasta_to_upper_and_ACGT_only(infile, tmp_file)
+        expect = os.path.join(data_dir, "fasta_to_upper_and_ACGT_only.expect.fa")
+        self.assertTrue(filecmp.cmp(tmp_file, expect, shallow=False))
+        os.unlink(tmp_file)
+
+
     def test_estimate_max_read_length_and_read_error_rate_from_qual_scores_fastq_file(
         self,
     ):
