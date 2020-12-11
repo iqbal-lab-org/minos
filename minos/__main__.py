@@ -110,7 +110,7 @@ def main(args=None):
         "--filter_min_gcp",
         type=float,
         help="Minimum genotype confidence percentile to be used for MIN_GCP filter in output VCF file [%(default)s]",
-        default=2.5,
+        default=0.5,
     )
     subparser_adjudicate.add_argument(
         "--include_het_calls",
