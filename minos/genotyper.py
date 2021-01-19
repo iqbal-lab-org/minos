@@ -56,19 +56,23 @@ class Genotyper:
             self.half_no_of_successes = None
             self.half_prob_of_success = None
 
-    def _nbinom_or_poisson_pmf(self, value, half_mean=False):
+    def _nbinom_or_poisson_pmf(self, value, log=False, half_mean=False):
         if self.use_nbinom:
+            f = nbinom.logpmf if log else nbinom.pmf
+
             if half_mean:
-                return nbinom.pmf(
+                return f(
                     value, self.half_no_of_successes, self.half_prob_of_success
                 )
             else:
-                return nbinom.pmf(value, self.no_of_successes, self.prob_of_success)
+                return f(value, self.no_of_successes, self.prob_of_success)
         else:
+            f = poisson.logpmf if log else poisson.pmf
+
             if half_mean:
-                return poisson.pmf(value, 0.5 * self.mean_depth)
+                return f(value, 0.5 * self.mean_depth)
             else:
-                return poisson.pmf(value, self.mean_depth)
+                return f(value, self.mean_depth)
 
     def _set_min_cov_more_than_error(self):
         self.min_cov_more_than_error = 0
@@ -171,7 +175,7 @@ class Genotyper:
     ):
         p_nonzero = 1 - self._nbinom_or_poisson_pmf(0)
         return sum([
-                math.log(self._nbinom_or_poisson_pmf(allele_depth)),
+                self._nbinom_or_poisson_pmf(allele_depth, log=True),
                 (total_depth - allele_depth) * math.log(self.error_rate),
                 math.log(p_nonzero) * non_zeros / allele_length,
                 math.log(1-p_nonzero) * (allele_length - non_zeros) / allele_length,
