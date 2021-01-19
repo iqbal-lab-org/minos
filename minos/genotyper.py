@@ -169,15 +169,12 @@ class Genotyper:
     def _log_likelihood_homozygous(
         self, allele_depth, total_depth, allele_length, non_zeros
     ):
-        return sum(
-            [
-                -self.mean_depth * (1 + (allele_length - non_zeros) / allele_length),
-                allele_depth * math.log(self.mean_depth),
-                -math.lgamma(allele_depth + 1),
+        p_nonzero = 1 - self._nbinom_or_poisson_pmf(0)
+        return sum([
+                math.log(self._nbinom_or_poisson_pmf(allele_depth)),
                 (total_depth - allele_depth) * math.log(self.error_rate),
-                non_zeros
-                * math.log(1 - self._nbinom_or_poisson_pmf(0))
-                / allele_length,
+                math.log(p_nonzero) * non_zeros / allele_length,
+                math.log(1-p_nonzero) * (allele_length - non_zeros) / allele_length,
             ]
         )
 
