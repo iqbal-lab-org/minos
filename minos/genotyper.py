@@ -33,8 +33,11 @@ class Genotyper:
         # read depth is very low
         if self.force_poisson:
             self.use_nbinom = False
-        else:
-            self.use_nbinom = self.depth_variance > self.mean_depth
+        elif self.depth_variance < self.mean_depth:
+            logging.warn(f"mean read depth ({self.mean_depth}) > depth variance ({self.depth_variance}) . Setting variance = 2 * mean for genotype model")
+            self.depth_variance = 2 * self.mean_depth
+
+        self.use_nbinom = self.depth_variance > self.mean_depth
 
         if self.use_nbinom:
             self.no_of_successes = (self.mean_depth ** 2) / (
