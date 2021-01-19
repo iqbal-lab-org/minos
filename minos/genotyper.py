@@ -33,7 +33,7 @@ class Genotyper:
         # read depth is very low
         if self.force_poisson:
             self.use_nbinom = False
-        elif self.depth_variance < self.mean_depth:
+        elif self.depth_variance <= self.mean_depth:
             logging.warn(f"mean read depth ({self.mean_depth}) > depth variance ({self.depth_variance}) . Setting variance = 2 * mean for genotype model")
             self.depth_variance = 2 * self.mean_depth
 
@@ -176,12 +176,11 @@ class Genotyper:
     def _log_likelihood_homozygous(
         self, allele_depth, total_depth, allele_length, non_zeros
     ):
-        p_nonzero = 1 - self._nbinom_or_poisson_pmf(0)
         return sum([
                 self._nbinom_or_poisson_pmf(allele_depth, log=True),
                 (total_depth - allele_depth) * math.log(self.error_rate),
-                math.log(p_nonzero) * non_zeros / allele_length,
-                math.log(1-p_nonzero) * (allele_length - non_zeros) / allele_length,
+                math.log(1 - self._nbinom_or_poisson_pmf(0)) * non_zeros / allele_length,
+                self._nbinom_or_poisson_pmf(0, log=True) * (allele_length - non_zeros) / allele_length,
             ]
         )
 
