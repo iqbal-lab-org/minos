@@ -196,33 +196,6 @@ def test_load_gramtools_vcf_and_allele_coverage_files():
         gramtools.load_gramtools_vcf_and_allele_coverage_files(vcf_file, quasimap_dir)
 
 
-def test_update_vcf_record_using_gramtools_allele_depths_heterozygous():
-    """test update_using_gramtools_allele_depths heterozygous"""
-    record = vcf_record.VcfRecord(
-        "ref\t4\t.\tT\tA,G,TC\t228\t.\tINDEL;IDV=54;IMF=0.885246;DP=61;VDB=7.33028e-19;SGB=-0.693147;MQSB=0.9725;MQ0F=0;AC=2;AN=2;DP4=0,0,23,31;MQ=57\tGT:PL\t1/1:255,163,0"
-    )
-    allele_combination_cov = {"1": 9, "2": 7, "3": 1}
-    allele_groups_dict = {"1": {0}, "2": {2}, "3": {2, 3}}
-    allele_per_base_cov = [[0], [9], [7], [1, 0]]
-    expected = vcf_record.VcfRecord(
-        "ref\t4\t.\tT\tA,G,TC\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t0/2:17:1.1333:9,0,7,0:1.0:54.43"
-    )
-    mean_depth = 15
-    depth_variance = 30
-    error_rate = 0.001
-    gtyper = genotyper.Genotyper(
-        mean_depth, depth_variance, error_rate, call_hets=True,
-    )
-    got_filtered = gramtools.update_vcf_record_using_gramtools_allele_depths(
-        record, gtyper, allele_combination_cov, allele_per_base_cov, allele_groups_dict,
-    )
-    assert record == expected
-    expected_filtered = vcf_record.VcfRecord(
-        "ref\t4\t.\tT\tG\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t0/1:17:1.1333:9,7:1.0:54.43"
-    )
-    assert got_filtered == expected_filtered
-
-
 def test_update_vcf_record_using_gramtools_allele_depths_homozygous():
     """test update_using_gramtools_allele_depths homozygous"""
     record = vcf_record.VcfRecord(
@@ -232,7 +205,7 @@ def test_update_vcf_record_using_gramtools_allele_depths_homozygous():
     allele_groups_dict = {"1": {0}, "2": {2}, "3": {1, 2}}
     allele_per_base_cov = [[1], [0, 0], [80]]
     expected = vcf_record.VcfRecord(
-        "ref\t4\t.\tT\tTC,G\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t2/2:81:0.9529:1,0,80:0.9877:708.01"
+        "ref\t4\t.\tT\tTC,G\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t2/2:81:0.9529:1,0,80:0.9877:646.06"
     )
     mean_depth = 85
     depth_variance = 200
@@ -245,7 +218,7 @@ def test_update_vcf_record_using_gramtools_allele_depths_homozygous():
     )
     assert record == expected
     expected_filtered = vcf_record.VcfRecord(
-        "ref\t4\t.\tT\tG\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t1/1:81:0.9529:1,80:0.9877:708.01"
+        "ref\t4\t.\tT\tG\t.\t.\t.\tGT:DP:DPF:COV:FRS:GT_CONF\t1/1:81:0.9529:1,80:0.9877:646.06"
     )
     assert got_filtered == expected_filtered
 
@@ -306,7 +279,7 @@ def test_write_vcf_annotated_using_coverage_from_gramtools():
         sample_name="sample_42",
         filtered_outfile=tmp_outfile_filtered,
         ref_seq_lengths={"ref": "10000"},
-        call_hets=True,
+        call_hets=False,
     )
     expected_vcf = os.path.join(
         data_dir, "write_vcf_annotated_using_coverage_from_gramtools.out.vcf"

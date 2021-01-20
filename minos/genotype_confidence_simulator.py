@@ -24,6 +24,8 @@ class GenotypeConfidenceSimulator:
         self.min_conf_score = None
         self.max_conf_score = None
         self.call_hets = call_hets
+        if self.call_hets:
+            raise NotImplementedError("Heterozygous calling is not implemented")
 
     @classmethod
     def _simulate_confidence_scores(
@@ -48,12 +50,9 @@ class GenotypeConfidenceSimulator:
         )
 
         while i < iterations:
-            if gtyper.use_nbinom:
-                correct_coverage = np.random.negative_binomial(
-                    gtyper.no_of_successes, gtyper.prob_of_success
-                )
-            else:
-                correct_coverage = np.random.poisson(mean_depth)
+            correct_coverage = np.random.negative_binomial(
+                gtyper.no_of_successes, gtyper.prob_of_success
+            )
 
             incorrect_coverage = np.random.binomial(mean_depth, error_rate)
             if correct_coverage + incorrect_coverage == 0:

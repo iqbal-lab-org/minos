@@ -12,7 +12,7 @@ def test_simulate_confidence_scores():
     got = genotype_confidence_simulator.GenotypeConfidenceSimulator._simulate_confidence_scores(
         50, 300, 0.1, iterations=5
     )
-    expected = [99, 114, 143, 200, 215]
+    expected = [76, 90, 119, 140, 156]
     assert got == expected
 
     #  Since the genotype confidence normalises by length, we shpuld get the same
@@ -20,7 +20,6 @@ def test_simulate_confidence_scores():
     got = genotype_confidence_simulator.GenotypeConfidenceSimulator._simulate_confidence_scores(
         50, 300, 0.1, iterations=5, allele_length=2
     )
-    expected = [99, 114, 143, 200, 215]
     assert got == expected
 
 
@@ -37,77 +36,57 @@ def test_make_conf_to_percentile_dict():
 def test_run_simulations_and_get_percentile_allele_length_1():
     """test run_simulations and get_percentile"""
     simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(
-        50, 300, 0.01, iterations=5, call_hets=True
+        50, 300, 0.01, iterations=5
     )
     simulator.run_simulations()
     expected_confidence_scores_percentiles = {
-        55: 20.0,
-        256: 40.0,
-        285: 60.0,
-        337: 80.0,
-        368: 100.0,
+        193: 20.0,
+        221: 40.0,
+        271: 60.0,
+        278: 80.0,
+        303: 100.0
     }
     assert (
         simulator.confidence_scores_percentiles
         == expected_confidence_scores_percentiles
     )
-    assert simulator.get_percentile(55) == 20.00
-    assert simulator.get_percentile(256) == 40.00
+    assert simulator.get_percentile(193) == 20.00
+    assert simulator.get_percentile(221) == 40.00
     # Try getting number that is not in the dict and will have to be inferred
-    assert simulator.get_percentile(150) == 29.45
+    assert simulator.get_percentile(207) == 30.0
     # Try values outside the range of what we already have
-    simulator.get_percentile(53) == 0.00
-    simulator.get_percentile(52) == 0.00
-    simulator.get_percentile(369) == 100.00
-    simulator.get_percentile(370) == 100.00
-
-
-def test_run_simulations_and_get_percentile_allele_length_1_no_het_calls():
-    """test run_simulations and get_percentile with no het calls"""
-    simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(
-        50, 300, 0.1, iterations=5, call_hets=False,
-    )
-    simulator.run_simulations()
-    expected_confidence_scores_percentiles = {
-        99: 20.0,
-        114: 40.0,
-        143: 60.0,
-        200: 80.0,
-        215: 100.0,
-    }
-    assert (
-        simulator.confidence_scores_percentiles
-        == expected_confidence_scores_percentiles
-    )
-    assert simulator.get_percentile(200) == 80.00
+    simulator.get_percentile(192) == 0.00
+    simulator.get_percentile(191) == 0.00
+    simulator.get_percentile(304) == 100.00
+    simulator.get_percentile(305) == 100.00
 
 
 def test_run_simulations_and_get_percentile_allele_length_2():
     """test run_simulations and get_percentile"""
     simulator = genotype_confidence_simulator.GenotypeConfidenceSimulator(
-        50, 300, 0.01, allele_length=2, iterations=5, call_hets=True,
+        50, 300, 0.01, allele_length=2, iterations=5
     )
     simulator.run_simulations()
     expected_confidence_scores_percentiles = {
-        55: 20.0,
-        256: 40.0,
-        285: 60.0,
-        337: 80.0,
-        368: 100.0,
+        193: 20.0,
+        221: 40.0,
+        271: 60.0,
+        278: 80.0,
+        303: 100.0
     }
     assert (
         simulator.confidence_scores_percentiles
         == expected_confidence_scores_percentiles
     )
-    assert simulator.get_percentile(55) == 20.00
-    assert simulator.get_percentile(256) == 40.00
+    assert simulator.get_percentile(193) == 20.00
+    assert simulator.get_percentile(221) == 40.00
     # Try getting number that is not in the dict and will have to be inferred
-    assert simulator.get_percentile(150) == 29.45
+    assert simulator.get_percentile(207) == 30.0
     # Try values outside the range of what we already have
-    simulator.get_percentile(53) == 0.00
-    simulator.get_percentile(52) == 0.00
-    simulator.get_percentile(369) == 100.00
-    simulator.get_percentile(370) == 100.00
+    simulator.get_percentile(192) == 0.00
+    simulator.get_percentile(191) == 0.00
+    simulator.get_percentile(304) == 100.00
+    simulator.get_percentile(305) == 100.00
 
 
 def test_simulations():

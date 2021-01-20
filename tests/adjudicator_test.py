@@ -174,7 +174,7 @@ def test_add_gt_conf_percentile_and_filters_to_vcf_file():
     shutil.copyfile(original_file, tmp_file)
     error_rate = 0.00026045894282438386
     simulations = genotype_confidence_simulator.GenotypeConfidenceSimulator(
-        60, 100, error_rate, iterations=1000, call_hets=True,
+        60, 100, error_rate, iterations=1000, call_hets=False,
     )
     simulations.run_simulations()
     adjudicator.Adjudicator._add_gt_conf_percentile_and_filters_to_vcf_file(

@@ -117,6 +117,8 @@ class Adjudicator:
         self.filter_min_gcp = filter_min_gcp
         self.filter_min_frs = filter_min_frs
         self.call_hets = call_hets
+        if self.call_hets:
+            raise NotImplementedError("Heterozygous calling is not implemented")
         self.debug = debug
         self.cluster_input_vcfs = cluster_input_vcfs
         self.ref_seq_lengths = {

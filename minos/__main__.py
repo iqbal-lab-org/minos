@@ -115,7 +115,8 @@ def main(args=None):
     subparser_adjudicate.add_argument(
         "--include_het_calls",
         action="store_true",
-        help="Consider heterozygous calls when genotyping each allele, instead of only making homozygous calls.",
+        #help="NOT IMPLEMENTED! Consider heterozygous calls when genotyping each allele, instead of only making homozygous calls.",
+        help=argparse.SUPPRESS,
     )
     subparser_adjudicate.add_argument("outdir", help="Name of output directory")
     subparser_adjudicate.add_argument(

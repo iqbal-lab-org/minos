@@ -362,6 +362,9 @@ def write_vcf_annotated_using_coverage_from_gramtools(
     returned by load_gramtools_vcf_and_allele_coverage_files().
     Writes a new VCF that has allele counts for all the ALTs"""
     assert len(vcf_records) == len(all_allele_coverage)
+    if call_hets:
+        raise NotImplementedError("Heterozygous calling is not implemented")
+
 
     header_lines = [
         "##fileformat=VCFv4.2",
