@@ -26,6 +26,7 @@ apt-get install -y \
   python3-pip \
   python3-setuptools \
   tabix \
+  libvcflib-tools \
   wget \
   zlib1g-dev
 
@@ -62,12 +63,6 @@ git checkout 2187ff6347086e38f71bd9f8ca622cd7dcfbb40c
 make
 cd ..
 cp -s vt-git/vt .
-
-#______________________vcflib _________________________________#
-cd $install_root
-git clone --recursive https://github.com/vcflib/vcflib.git
-cd vcflib
-make
 
 # Why six>=1.14.0?
 # See https://github.com/pypa/virtualenv/issues/1551
