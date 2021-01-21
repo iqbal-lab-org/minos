@@ -4,6 +4,7 @@ import os
 import shutil
 
 import pyfastaq
+from cluster_vcf_records import utils as cluster_utils
 
 from minos import utils, __version__
 
@@ -50,7 +51,7 @@ def get_version_of_program(program, binary=None, allow_fail=False):
                     return None
                 return version
         return None
-    elif program in ["vcfbreakmulti", "vcfallelicprimitives", "vcfuniq"]:
+    elif program in ["vcfbreakmulti", "vcfallelicprimitives", "vcfuniq", "vcflib"]:
         return "Unknown"
     else:
         raise Exception(
@@ -102,8 +103,17 @@ def find_binaries_and_versions(programs=None):
             "vt",
         ]
 
+    try:
+        vcflib_binaries = cluster_utils._get_vcflib_binaries()
+    except:
+        vcflib_binaries = {x: None for x in ["vcfbreakmulti", "vcfallelicprimitives", "vcfuniq"]}
+
     for program in programs:
-        binary = find_binary(program, allow_fail=True)
+        if program in vcflib_binaries:
+            binary = vcflib_binaries[program]
+        else:
+            binary = find_binary(program, allow_fail=True)
+
         if binary is None:
             binary = "NOT_FOUND"
             version = "NOT_FOUND"

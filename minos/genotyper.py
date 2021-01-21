@@ -3,7 +3,7 @@ import logging
 import math
 import operator
 
-from scipy.stats import nbinom, poisson
+from scipy.stats import nbinom
 
 
 class Genotyper:
@@ -13,68 +13,50 @@ class Genotyper:
         depth_variance,
         error_rate,
         call_hets=False,
-        force_poisson=False,
     ):
         self.mean_depth = mean_depth
         self.depth_variance = depth_variance
         self.error_rate = error_rate
         self.call_hets = call_hets
-        self.force_poisson = force_poisson
-        self._determine_poisson_or_nbinom()
+        if self.call_hets:
+            raise NotImplementedError("Heterozygous calling is not implemented")
+        self._set_nbinom_parameters()
         self._set_min_cov_more_than_error()
         self._init_alleles_and_genotypes()
         logging.info(
-            f"Genotyper. use_het_model={call_hets}, mean_depth={mean_depth}, depth_variance={depth_variance}, error_rate={error_rate}, using_nbinom={self.use_nbinom}, nbinom_no_of_successes={self.no_of_successes}, nbinom_prob_of_success={self.prob_of_success}, min_cov_more_than_error={self.min_cov_more_than_error}"
+            f"Genotyper parameters: mean_depth={mean_depth}, depth_variance={depth_variance}, error_rate={error_rate}, nbinom_no_of_successes={self.no_of_successes}, nbinom_prob_of_success={self.prob_of_success}, min_cov_more_than_error={self.min_cov_more_than_error}"
         )
 
-    def _determine_poisson_or_nbinom(self):
-        # We can only use nbinom if variance > depth. Otherwise fall back on
-        # poisson model, which is likely to be worse. Should only happen when
-        # read depth is very low
-        if self.force_poisson:
-            self.use_nbinom = False
-        else:
-            self.use_nbinom = self.depth_variance > self.mean_depth
+    def _set_nbinom_parameters(self):
+        # We can only use nbinom if variance > depth. Otherwise, force it by
+        # setting variance = 2 * depth. This is very rare - only seen it on
+        # simulated data, never on real data.
+        if self.depth_variance <= self.mean_depth:
+            logging.warning(f"Mean read depth ({self.mean_depth}) > depth variance ({self.depth_variance}) . Setting variance = 2 * mean for genotype model")
+            self.depth_variance = 2 * self.mean_depth
 
-        if self.use_nbinom:
+        if self.mean_depth == 0:
+            self.no_of_successes = 0
+            self.prob_of_success = 0
+        else:
             self.no_of_successes = (self.mean_depth ** 2) / (
                 self.depth_variance - self.mean_depth
             )
             self.prob_of_success = (
                 1 - (self.depth_variance - self.mean_depth) / self.depth_variance
             )
-            self.half_no_of_successes = ((0.5 * self.mean_depth) ** 2) / (
-                self.depth_variance - (0.5 * self.mean_depth)
-            )
-            self.half_prob_of_success = (
-                1
-                - (self.depth_variance - (0.5 * self.mean_depth)) / self.depth_variance
-            )
-        else:
-            self.no_of_successes = None
-            self.prob_of_success = None
-            self.half_no_of_successes = None
-            self.half_prob_of_success = None
 
-    def _nbinom_or_poisson_pmf(self, value, half_mean=False):
-        if self.use_nbinom:
-            if half_mean:
-                return nbinom.pmf(
-                    value, self.half_no_of_successes, self.half_prob_of_success
-                )
-            else:
-                return nbinom.pmf(value, self.no_of_successes, self.prob_of_success)
+    def _nbinom_pmf(self, value, log=False):
+        if log:
+            return nbinom.logpmf(value, self.no_of_successes, self.prob_of_success)
         else:
-            if half_mean:
-                return poisson.pmf(value, 0.5 * self.mean_depth)
-            else:
-                return poisson.pmf(value, self.mean_depth)
+            return nbinom.pmf(value, self.no_of_successes, self.prob_of_success)
 
     def _set_min_cov_more_than_error(self):
         self.min_cov_more_than_error = 0
         if self.mean_depth == 0:
             return
-        while self._nbinom_or_poisson_pmf(self.min_cov_more_than_error) <= pow(
+        while self._nbinom_pmf(self.min_cov_more_than_error) <= pow(
             self.error_rate, self.min_cov_more_than_error
         ):
             self.min_cov_more_than_error += 1
@@ -125,90 +107,14 @@ class Genotyper:
                 haploid_allele_coverages[allele] += coverage
         return haploid_allele_coverages
 
-    @classmethod
-    def _coverage_of_diploid_alleles(
-        cls, allele1, allele2, allele_combination_cov, allele_groups_dict,
-    ):
-        """
-        Collects coverage on each of two alleles.
-        Define specific coverage for one allele as the sum of coverages for equivalence classes involving that
-        allele but not the other one.
-
-        When an equivalence class contains both alleles, the coverage on it is dispatched
-        to each allele proportionally to how much specific coverage each has.
-        """
-        shared_cov = 0
-        allele1_total_cov, allele2_total_cov = 0, 0
-
-        for allele_key, coverage in allele_combination_cov.items():
-            assert coverage >= 0
-            allele_combination = allele_groups_dict[allele_key]
-            has_allele_1 = allele1 in allele_combination
-            has_allele_2 = allele2 in allele_combination
-            if has_allele_1 and has_allele_2:
-                shared_cov += coverage
-            elif has_allele_1:
-                allele1_total_cov += coverage
-            elif has_allele_2:
-                allele2_total_cov += coverage
-
-        ## Perform the dispatching in ambiguous equiv classes ##
-        if (
-            allele1_total_cov == 0 and allele2_total_cov == 0
-        ):  # If both are zero, do equal dispatching
-            allele1_belonging = 0.5
-        else:
-            allele1_belonging = allele1_total_cov / (
-                allele1_total_cov + allele2_total_cov
-            )
-
-        allele1_total_cov += allele1_belonging * shared_cov
-        allele2_total_cov += (1 - allele1_belonging) * shared_cov
-        return allele1_total_cov, allele2_total_cov
-
     def _log_likelihood_homozygous(
         self, allele_depth, total_depth, allele_length, non_zeros
     ):
-        return sum(
-            [
-                -self.mean_depth * (1 + (allele_length - non_zeros) / allele_length),
-                allele_depth * math.log(self.mean_depth),
-                -math.lgamma(allele_depth + 1),
+        return sum([
+                self._nbinom_pmf(allele_depth, log=True),
                 (total_depth - allele_depth) * math.log(self.error_rate),
-                non_zeros
-                * math.log(1 - self._nbinom_or_poisson_pmf(0))
-                / allele_length,
-            ]
-        )
-
-    def _log_likelihood_heterozygous(
-        self,
-        allele_depth1,
-        allele_depth2,
-        total_depth,
-        allele_length1,
-        allele_length2,
-        non_zeros1,
-        non_zeros2,
-    ):
-        return sum(
-            [
-                -self.mean_depth
-                * (
-                    1
-                    + 0.5
-                    * (
-                        (1 - (non_zeros1 / allele_length1))
-                        + (1 - (non_zeros2 / allele_length2))
-                    )
-                ),
-                (allele_depth1 + allele_depth2) * math.log(0.5 * self.mean_depth),
-                -math.lgamma(allele_depth1 + 1),
-                -math.lgamma(allele_depth2 + 1),
-                (total_depth - allele_depth1 - allele_depth2)
-                * math.log(self.error_rate),
-                ((non_zeros1 / allele_length1) + (non_zeros2 / allele_length2))
-                * math.log(1 - self._nbinom_or_poisson_pmf(0, half_mean=True)),
+                math.log(1 - self._nbinom_pmf(0)) * non_zeros / allele_length,
+                self._nbinom_pmf(0, log=True) * (allele_length - non_zeros) / allele_length,
             ]
         )
 
@@ -255,45 +161,9 @@ class Genotyper:
             self.allele_combination_cov, self.allele_groups_dict
         )
 
-        if not self.call_hets:
-            self.likelihoods.sort(key=operator.itemgetter(1), reverse=True)
-            logging.debug(f"likelihoods: {self.likelihoods}")
-            return
-
-        for (allele_number1, allele_number2) in itertools.combinations(
-            self.singleton_allele_coverages.keys(), 2
-        ):
-            allele1_depth, allele2_depth = Genotyper._coverage_of_diploid_alleles(
-                allele_number1,
-                allele_number2,
-                self.allele_combination_cov,
-                self.allele_groups_dict,
-            )
-            allele1_length = len(self.allele_per_base_cov[allele_number1])
-            allele2_length = len(self.allele_per_base_cov[allele_number2])
-            non_zeros1 = non_zeros_per_allele[allele_number1]
-            non_zeros2 = non_zeros_per_allele[allele_number2]
-
-            log_likelihood = self._log_likelihood_heterozygous(
-                allele1_depth,
-                allele2_depth,
-                total_depth,
-                allele1_length,
-                allele2_length,
-                non_zeros1,
-                non_zeros2,
-            )
-            frac_support = (
-                0
-                if total_depth == 0
-                else round((allele1_depth + allele2_depth) / total_depth, 4)
-            )
-            self.likelihoods.append(
-                (set([allele_number1, allele_number2]), log_likelihood, frac_support)
-            )
-
         self.likelihoods.sort(key=operator.itemgetter(1), reverse=True)
         logging.debug(f"likelihoods: {self.likelihoods}")
+
 
     def run(self, allele_combination_cov, allele_per_base_cov, allele_groups_dict):
         self._init_alleles_and_genotypes(

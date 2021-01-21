@@ -26,6 +26,7 @@ apt-get install -y \
   python3-pip \
   python3-setuptools \
   tabix \
+  libvcflib-tools \
   wget \
   zlib1g-dev
 
@@ -35,10 +36,7 @@ if [ ! -d $install_root ]; then
 fi
 cd $install_root
 
-git clone https://github.com/iqbal-lab-org/cluster_vcf_records.git
-cd cluster_vcf_records
-git checkout fd41155cea23c35196ae56f66402eb8e1b287b37
-pip3 install .
+pip3 install 'cluster_vcf_records==0.13.1'
 
 #_________________________ bcftools _______________________#
 cd $install_root
@@ -62,12 +60,6 @@ git checkout 2187ff6347086e38f71bd9f8ca622cd7dcfbb40c
 make
 cd ..
 cp -s vt-git/vt .
-
-#______________________vcflib _________________________________#
-cd $install_root
-git clone --recursive https://github.com/vcflib/vcflib.git
-cd vcflib
-make
 
 # Why six>=1.14.0?
 # See https://github.com/pypa/virtualenv/issues/1551

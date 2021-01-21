@@ -3,7 +3,7 @@ OSVersion: bionic
 MirrorURL: http://us.archive.ubuntu.com/ubuntu/
 
 %environment
-export PATH=/bioinf-tools/:/bioinf-tools/vcflib/bin:$PATH
+export PATH=/bioinf-tools/:$PATH
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 export LANG=C.UTF-8
 
@@ -15,7 +15,7 @@ export LANG=C.UTF-8
 
 %post
     #_____________________ setup $PATH _______________________#
-    export PATH=/bioinf-tools/:/bioinf-tools/vcflib/bin:$PATH
+    export PATH=/bioinf-tools/:$PATH
     export LANG=C.UTF-8
 
     /minos/install_dependencies.sh /bioinf-tools

@@ -55,10 +55,6 @@ class TestDependencies(unittest.TestCase):
             self.assertIsNotNone(version)
             self.assertIsNotNone(path)
 
-        for version, path in got.items():
-            self.assertIsNotNone(version)
-            self.assertIsNotNone(path)
-
     def test_dependencies_report(self):
         """test dependencies_report"""
         got_ok, got_lines = dependencies.dependencies_report()

@@ -9,8 +9,11 @@ Variant call adjudication.
 Dependencies:
 
 * Python 3 (tested on version 3.6.9)
+* [gramtools](https://github.com/iqbal-lab-org/gramtools) commit
+  9313eceb606a6fc159e4a14c168b7a6f888c5ed2
 * [vt](https://github.com/atks/vt.git)
 * [vcflib](https://github.com/vcflib/vcflib.git). Specifically,
+  either `vcflib`, or all three of
   `vcfbreakmulti`, `vcfallelicprimitives`, and `vcfuniq` must be installed.
 * Optionally, [nextflow](https://www.nextflow.io/), if you want to use the
   pipeline to regenotype a large number of samples.
