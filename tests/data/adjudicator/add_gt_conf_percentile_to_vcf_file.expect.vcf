@@ -7,13 +7,15 @@
 ##FORMAT=<ID=FRS,Number=1,Type=Float,Description="Fraction of reads that support the genotype call">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
+##minos_max_read_length=200
+##minosReadDepthVariance=60
+##minosMeanReadDepth=40
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
 ##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">
 ##FILTER=<ID=MIN_FRS,Description="Minimum FRS of 0.9">
 ##FILTER=<ID=MIN_DP,Description="Minimum DP of 2">
 ##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of 2.5">
-##FILTER=<ID=MAX_DPF,Description="Maximum DPF of 3.0">
-##minos_max_read_length=200
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
+##FILTER=<ID=MAX_DPF,Description="Maximum DPF of 63.237900077244504 (= 3.0 standard deviations from the mean read depth 40.0)">
 ref	100	.	T	G	.	PASS	.	GT:DP:DPF:COV:FRS:GT_CONF:GT_CONF_PERCENTILE	1/1:63:1.0:0,63:0.9:609.67:65.81
 ref	142	.	A	C	.	MIN_DP	.	GT:DP:DPF:COV:FRS:GT_CONF:GT_CONF_PERCENTILE	1/1:1:1.0:0,67:1:641.39:79.2
 ref	200	.	C	A	.	PASS	.	GT:DP:DPF:COV:FRS:GT_CONF:GT_CONF_PERCENTILE	1/1:44:1.0:0,44:0.91:455.2:6.06

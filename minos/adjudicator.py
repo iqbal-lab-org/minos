@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import shutil
 import statistics
@@ -601,20 +602,30 @@ class Adjudicator:
             real_conf_scores = []
 
         vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
+        found_GT_CONF = False
+        mean_depth = None
+        variance = None
         for i, line in enumerate(vcf_header):
             if line.startswith("##FORMAT=<ID=GT_CONF"):
-                break
-        else:
+                found_GT_CONF = True
+            elif line.startswith("##minosMeanReadDepth="):
+                mean_depth = float(line.rstrip().split("=")[-1])
+            elif line.startswith("##minosReadDepthVariance="):
+                variance = float(line.rstrip().split("=")[-1])
+        if not found_GT_CONF:
             raise Exception(
                 f"No GT_CONF description found in header of VCF file {vcf_file}. Cannot continue"
             )
+        if mean_depth is None or variance is None:
+            raise Exception(f"minosMeanReadDepth and/or minosReadDepthVariance not found in header of VCF file {vcf_file}. Cannot continue")
 
+        dpf_cutoff = mean_depth + max_dpf * math.sqrt(variance)
         vcf_header[i + 1 : i + 1] = [
             '##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">',
             f'##FILTER=<ID=MIN_FRS,Description="Minimum FRS of {min_frs}">',
             f'##FILTER=<ID=MIN_DP,Description="Minimum DP of {min_dp}">',
             f'##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of {min_gcp}">',
-            f'##FILTER=<ID=MAX_DPF,Description="Maximum DPF of {max_dpf}">',
+            f'##FILTER=<ID=MAX_DPF,Description="Maximum DPF of {dpf_cutoff} (= {max_dpf} standard deviations from the mean read depth {mean_depth})">',
         ]
 
         with open(vcf_file, "w") as f:

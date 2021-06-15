@@ -8,6 +8,8 @@
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
 ##minos_max_read_length=200
+##minosReadDepthVariance=60
+##minosMeanReadDepth=40
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample_name
 ref	100	.	T	G	.	.	.	GT:DP:DPF:COV:FRS:GT_CONF	1/1:63:1.0:0,63:0.9:609.67
 ref	142	.	A	C	.	.	.	GT:DP:DPF:COV:FRS:GT_CONF	1/1:1:1.0:0,67:1:641.39
