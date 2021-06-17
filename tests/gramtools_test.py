@@ -205,7 +205,7 @@ def test_update_vcf_record_using_gramtools_allele_depths_homozygous():
     allele_groups_dict = {"1": {0}, "2": {2}, "3": {1, 2}}
     allele_per_base_cov = [[1], [0, 0], [80]]
     expected = vcf_record.VcfRecord(
-        "ref\t4\t.\tT\tTC,G\t.\t.\t.\tGT:DP:DPF:ALLELE_DP:ALLELE_DPF:FRS:COV_TOTAL:COV:GT_CONF\t2/2:80:0.9412:1,0,80:0.0118,0.0,0.9412:0.9877:81:1,0,80:646.06"
+        "ref\t4\t.\tT\tTC,G\t.\t.\t.\tGT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF\t2/2:80:1,0,80:0.9877:81:1,0,80:646.06"
     )
     mean_depth = 85
     depth_variance = 200
@@ -218,7 +218,7 @@ def test_update_vcf_record_using_gramtools_allele_depths_homozygous():
     )
     assert record == expected
     expected_filtered = vcf_record.VcfRecord(
-        "ref\t4\t.\tT\tG\t.\t.\t.\tGT:DP:DPF:ALLELE_DP:ALLELE_DPF:FRS:COV_TOTAL:COV:GT_CONF\t1/1:80:0.9412:1,80:0.0118,0.9412:0.9877:81:1,80:646.06"
+        "ref\t4\t.\tT\tG\t.\t.\t.\tGT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF\t1/1:80:1,80:0.9877:81:1,80:646.06"
     )
     assert got_filtered == expected_filtered
 
@@ -232,7 +232,7 @@ def test_update_vcf_record_using_gramtools_allele_depths_not_callable():
     allele_groups_dict = {"1": {0}, "2": {0}}
     allele_per_base_cov = [[0], [0], [0, 0]]
     expected = vcf_record.VcfRecord(
-        "ref\t4\t.\tT\tG,TC\t.\t.\t.\tGT:DP:DPF:ALLELE_DP:ALLELE_DPF:FRS:COV_TOTAL:COV:GT_CONF\t./.:.:.:0,0,0:0.0,0.0,0.0:.:0:0,0,0:0.0"
+        "ref\t4\t.\tT\tG,TC\t.\t.\t.\tGT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF\t./.:.:0,0,0:.:0:0,0,0:0.0"
     )
     mean_depth = 85
     error_rate = 0.001
