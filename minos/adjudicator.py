@@ -620,7 +620,7 @@ class Adjudicator:
             raise Exception(f"minosMeanReadDepth and/or minosReadDepthVariance not found in header of VCF file {vcf_file}. Cannot continue")
 
         max_dp_cutoff = mean_depth + max_dp * math.sqrt(variance)
-        vcf_header[i + 1 : i + 1] = [
+        vcf_header[-1: -1] = [
             '##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">',
             f'##FILTER=<ID=MIN_FRS,Description="Minimum FRS of {min_frs}">',
             f'##FILTER=<ID=MIN_DP,Description="Minimum DP of {min_dp}">',
