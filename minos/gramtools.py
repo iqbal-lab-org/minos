@@ -291,17 +291,24 @@ def update_vcf_record_using_gramtools_allele_depths(
         for x in range(1 + len(vcf_record.ALT))
     ]
     cov_string = ",".join([str(x) for x in cov_values])
+    cov_total = sum(allele_combination_cov.values())
+    allele_dp_values = [(round(statistics.mean(x),4)) for x in allele_per_base_cov]
+    allele_dp_string = ",".join([str(x) for x in allele_dp_values])
+    if len(genotype_indexes) == 1:
+        dp = allele_dp_values[genotype_index]
+    else:
+        dp = "."
+
     vcf_record.QUAL = None
     vcf_record.INFO.clear()
     vcf_record.FILTER = set()
     vcf_record.FORMAT.clear()
-    dp = sum(allele_combination_cov.values())
-    vcf_record.set_format_key_value("DP", str(dp))
-    dpf = 0 if dp == 0 else str(round(dp / gtyper.mean_depth, 4))
-    vcf_record.set_format_key_value("DPF", str(dpf))
     vcf_record.set_format_key_value("GT", genotype)
-    vcf_record.set_format_key_value("COV", cov_string)
+    vcf_record.set_format_key_value("DP", str(dp))
+    vcf_record.set_format_key_value("ALLELE_DP", allele_dp_string)
     vcf_record.set_format_key_value("FRS", str(gtyper.genotype_frs))
+    vcf_record.set_format_key_value("COV_TOTAL", str(cov_total))
+    vcf_record.set_format_key_value("COV", cov_string)
     vcf_record.set_format_key_value("GT_CONF", str(gtyper.genotype_confidence))
 
     # Make new record where all zero coverage alleles are removed
@@ -317,6 +324,9 @@ def update_vcf_record_using_gramtools_allele_depths(
     indexes_to_keep.sort()
     filtered_record.set_format_key_value(
         "COV", ",".join([str(cov_values[i]) for i in indexes_to_keep])
+    )
+    filtered_record.set_format_key_value(
+        "ALLELE_DP", ",".join([str(allele_dp_values[i]) for i in indexes_to_keep])
     )
     assert indexes_to_keep[0] == 0
     filtered_record.ALT = [filtered_record.ALT[i - 1] for i in indexes_to_keep[1:]]
@@ -370,13 +380,15 @@ def write_vcf_annotated_using_coverage_from_gramtools(
         "##fileformat=VCFv4.2",
         "##source=minos, version " + minos_version,
         "##fileDate=" + str(datetime.date.today()),
+        '##FORMAT=<ID=ALLELE_DP,Number=R,Type=Float,Description="Mean read depth of ref and each allele">',
         '##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">',
+        '##FORMAT=<ID=COV_TOTAL,Number=1,Type=Integer,Description="Total reads mapped at this site, from gramtools">',
+        '##FORMAT=<ID=DP,Number=1,Type=Float,Description="Mean read depth of called allele (ie the ALLELE_DP of the called allele)">',
         '##FORMAT=<ID=FRS,Number=1,Type=Float,Description="Fraction of reads that support the genotype call">',
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
-        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="total read depth from gramtools">',
-        '##FORMAT=<ID=DPF,Number=1,Type=Float,Description="Depth Fraction, defined as DP divided by mean depth">',
         '##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">',
         f"##minosMeanReadDepth={mean_depth}",
+        f"##minosReadDepthVariance={depth_variance}",
     ]
 
     if ref_seq_lengths is not None:

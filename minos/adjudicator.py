@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import shutil
 import statistics
@@ -47,6 +48,7 @@ class Adjudicator:
         use_unmapped_reads=False,
         filter_min_dp=0,
         filter_min_gcp=5,
+        filter_max_dp=3.0,
         filter_min_frs=0.9,
         call_hets=False,
         debug=False,
@@ -115,6 +117,7 @@ class Adjudicator:
         self.use_unmapped_reads = use_unmapped_reads
         self.filter_min_dp = filter_min_dp
         self.filter_min_gcp = filter_min_gcp
+        self.filter_max_dp = filter_max_dp
         self.filter_min_frs = filter_min_frs
         self.call_hets = call_hets
         if self.call_hets:
@@ -573,6 +576,7 @@ class Adjudicator:
                 simulations,
                 min_dp=self.filter_min_dp,
                 min_gcp=self.filter_min_gcp,
+                max_dp=self.filter_max_dp,
                 min_frs=self.filter_min_frs,
                 conf_scores_file=scores_file,
             )
@@ -588,6 +592,7 @@ class Adjudicator:
         geno_simulations,
         min_dp=0,
         min_gcp=5,
+        max_dp=3.0,
         min_frs=0.9,
         conf_scores_file=None,
     ):
@@ -597,19 +602,30 @@ class Adjudicator:
             real_conf_scores = []
 
         vcf_header, vcf_lines = vcf_file_read.vcf_file_to_list(vcf_file)
+        found_GT_CONF = False
+        mean_depth = None
+        variance = None
         for i, line in enumerate(vcf_header):
             if line.startswith("##FORMAT=<ID=GT_CONF"):
-                break
-        else:
+                found_GT_CONF = True
+            elif line.startswith("##minosMeanReadDepth="):
+                mean_depth = float(line.rstrip().split("=")[-1])
+            elif line.startswith("##minosReadDepthVariance="):
+                variance = float(line.rstrip().split("=")[-1])
+        if not found_GT_CONF:
             raise Exception(
                 f"No GT_CONF description found in header of VCF file {vcf_file}. Cannot continue"
             )
+        if mean_depth is None or variance is None:
+            raise Exception(f"minosMeanReadDepth and/or minosReadDepthVariance not found in header of VCF file {vcf_file}. Cannot continue")
 
-        vcf_header[i + 1 : i + 1] = [
+        max_dp_cutoff = mean_depth + max_dp * math.sqrt(variance)
+        vcf_header[-1: -1] = [
             '##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">',
             f'##FILTER=<ID=MIN_FRS,Description="Minimum FRS of {min_frs}">',
             f'##FILTER=<ID=MIN_DP,Description="Minimum DP of {min_dp}">',
             f'##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of {min_gcp}">',
+            f'##FILTER=<ID=MAX_DP,Description="Maximum DP of {max_dp_cutoff} (= {max_dp} standard deviations from the mean read depth {mean_depth})">',
         ]
 
         with open(vcf_file, "w") as f:
@@ -632,6 +648,8 @@ class Adjudicator:
                             vcf_record.FILTER.add("MIN_DP")
                         if float(vcf_record.FORMAT["GT_CONF_PERCENTILE"]) < min_gcp:
                             vcf_record.FILTER.add("MIN_GCP")
+                        if float(vcf_record.FORMAT["DP"]) > max_dp_cutoff:
+                            vcf_record.FILTER.add("MAX_DP")
                         if (
                             "FRS" in vcf_record.FORMAT
                             and float(vcf_record.FORMAT["FRS"]) < min_frs

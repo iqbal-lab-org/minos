@@ -113,6 +113,12 @@ def main(args=None):
         default=0.5,
     )
     subparser_adjudicate.add_argument(
+        "--filter_max_dp",
+        type=float,
+        help="Determines maximum value to be used for MAX_DP filter in output VCF file. Using a value of 'x' here sets the cutoff to be more than x standard deviations from the mean read depth [%(default)s]",
+        default=3.0,
+    )
+    subparser_adjudicate.add_argument(
         "--include_het_calls",
         action="store_true",
         #help="NOT IMPLEMENTED! Consider heterozygous calls when genotyping each allele, instead of only making homozygous calls.",
