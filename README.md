@@ -3,6 +3,8 @@
 # minos
 Variant call adjudication.
 
+Minimal instructions are below. Please see the [minos wiki page](https://github.com/iqbal-lab-org/minos/wiki)
+for more details.
 
 ## Installation
 
