@@ -20,6 +20,7 @@ apt-get install -y \
   libbz2-dev \
   libhts-dev \
   libssl-dev \
+  libjpeg-dev \
   pkg-config \
   python-dev \
   python3 \
