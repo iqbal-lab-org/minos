@@ -3,6 +3,7 @@ set -vexu
 
 install_root=$1
 
+apt-get update
 apt-get install -y software-properties-common
 apt-add-repository universe
 apt-get update
@@ -62,15 +63,26 @@ make
 cd ..
 cp -s vt-git/vt .
 
+
+#______________________ gramtools _____________________________#
 # Why six>=1.14.0?
 # See https://github.com/pypa/virtualenv/issues/1551
 pip3 install tox "six>=1.14.0"
-
 cd $install_root
 git clone https://github.com/iqbal-lab-org/gramtools
 cd gramtools
 git checkout 8af53f6c8c0d72ef95223e89ab82119b717044f2
-pip3 install .
+# Note: a simple "pip3 install ." works for singularity but
+# not for docker - the `gram` exectuable does not get
+# put where gramtools expects to find it. The method
+# below, which explicitly builds the binary, then installs
+# does work ok for both docker and singularity.
+mkdir cmake-build
+cd cmake-build
+cmake .. -DCMAKE_BUILD_TYPE=REL_WITH_ASSERTS
+make gram
+cd ..
+pip3 install -e .
 
 #______________________ ivcmerge ______________________________#
 cd $install_root

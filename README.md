@@ -35,6 +35,11 @@ Alternatively, instead of running `pip3`, build a
 singularity build minos.simg Singularity.def
 ```
 
+Build a Docker container by running:
+```
+sudo docker build --network=host .
+```
+
 
 ## Quick start
 
