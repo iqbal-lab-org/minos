@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/iqbal-lab-org/minos.svg?branch=master)](https://travis-ci.org/iqbal-lab-org/minos)
+![Build Status](https://github.com/iqbal-lab-org/minos/actions/workflows/build.yaml/badge.svg)
 
 # minos
 Variant call adjudication.
