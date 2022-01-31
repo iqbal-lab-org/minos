@@ -43,8 +43,15 @@ sudo docker build --network=host .
 
 ## Quick start
 
-Supposing you have variant calls for one sample, called by two different tools
-in the files `calls1.vcf` and `calls2.vcf`. Run:
+To run on one sample, you will need:
+* A FASTA file of the reference genome.
+* One or more VCF files of variant calls.
+  The only requirement of these files is that they must contain the genotype field `GT`,
+  and correspond to the reference FASTA file.
+* Illumina reads in FASTQ file(s).
+
+For example, if you have two call sets in the files `calls1.vcf` and `calls2.vcf`,
+then run:
 
 ```
 minos adjudicate --reads reads1.fq --reads reads2.fq out ref.fasta calls1.vcf calls2.vcf
