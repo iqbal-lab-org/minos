@@ -47,7 +47,8 @@ To run on one sample, you will need:
 * A FASTA file of the reference genome.
 * One or more VCF files of variant calls.
   The only requirement of these files is that they must contain the genotype field `GT`,
-  and correspond to the reference FASTA file.
+  and correspond to the reference FASTA file. All variants with a non-reference genotype
+  call will be used (both alleles are considered for diploid calls)
 * Illumina reads in FASTQ file(s).
 
 For example, if you have two call sets in the files `calls1.vcf` and `calls2.vcf`,
