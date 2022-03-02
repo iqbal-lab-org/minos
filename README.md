@@ -8,6 +8,37 @@ for more details.
 
 ## Installation
 
+### Docker
+
+Get a Docker image of the latest release:
+
+```
+docker pull ghcr.io/iqbal-lab-org/minos:latest
+```
+
+All Docker images are listed in the
+[packages page](https://github.com/iqbal-lab-org/minos/pkgs/container/minos).
+
+Alternatively, build your own Docker image:
+
+```
+sudo docker build --network=host .
+```
+
+### Singularity
+
+[Releases](https://github.com/iqbal-lab-org/minos/releases)
+include a Singularity image to download (from version 0.12.1 onwards).
+
+Alternatively, build your own Singularity image:
+
+```
+singularity build minos.simg Singularity.def
+```
+
+
+### From source
+
 Dependencies:
 
 * Python 3 (tested on version 3.6.9)
@@ -26,18 +57,6 @@ running:
 
 ```
 pip3 install .
-```
-
-Alternatively, instead of running `pip3`, build a
-[Singularity](https://sylabs.io/singularity/) container by running:
-
-```
-singularity build minos.simg Singularity.def
-```
-
-Build a Docker container by running:
-```
-sudo docker build --network=host .
 ```
 
 
