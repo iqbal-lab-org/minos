@@ -83,6 +83,7 @@ cmake .. -DCMAKE_BUILD_TYPE=REL_WITH_ASSERTS
 make gram
 cd ..
 pip3 install -e .
+rm -rf cmake-build .git
 
 #______________________ ivcmerge ______________________________#
 cd $install_root
