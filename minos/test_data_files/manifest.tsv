@@ -1,0 +1,3 @@
+name	reads	vcf
+sample1	sample1.bam	in.1.vcf
+sample2	sample2.bam	in.2.vcf

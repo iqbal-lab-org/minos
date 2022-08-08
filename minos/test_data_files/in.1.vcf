@@ -1,0 +1,29 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##samtoolsVersion=1.10+htslib-1.10.2-3
+##samtoolsCommand=samtools mpileup -ugf Files/ref.fa Files/sample1.bam
+##reference=file://Files/ref.fa
+##contig=<ID=ref,length=1000>
+##ALT=<ID=*,Description="Represents allele(s) other than observed.">
+##INFO=<ID=INDEL,Number=0,Type=Flag,Description="Indicates that the variant is an INDEL.">
+##INFO=<ID=IDV,Number=1,Type=Integer,Description="Maximum number of reads supporting an indel">
+##INFO=<ID=IMF,Number=1,Type=Float,Description="Maximum fraction of reads supporting an indel">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Raw read depth">
+##INFO=<ID=VDB,Number=1,Type=Float,Description="Variant Distance Bias for filtering splice-site artefacts in RNA-seq data (bigger is better)",Version="3">
+##INFO=<ID=RPB,Number=1,Type=Float,Description="Mann-Whitney U test of Read Position Bias (bigger is better)">
+##INFO=<ID=MQB,Number=1,Type=Float,Description="Mann-Whitney U test of Mapping Quality Bias (bigger is better)">
+##INFO=<ID=BQB,Number=1,Type=Float,Description="Mann-Whitney U test of Base Quality Bias (bigger is better)">
+##INFO=<ID=MQSB,Number=1,Type=Float,Description="Mann-Whitney U test of Mapping Quality vs Strand Bias (bigger is better)">
+##INFO=<ID=SGB,Number=1,Type=Float,Description="Segregation based metric.">
+##INFO=<ID=MQ0F,Number=1,Type=Float,Description="Fraction of MQ0 reads (smaller is better)">
+##FORMAT=<ID=PL,Number=G,Type=Integer,Description="List of Phred-scaled genotype likelihoods">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes for each ALT allele, in the same order as listed">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+##INFO=<ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-forward , ref-reverse, alt-forward and alt-reverse bases">
+##INFO=<ID=MQ,Number=1,Type=Integer,Description="Average mapping quality">
+##bcftools_callVersion=1.15.1+htslib-1.15.1
+##bcftools_callCommand=call -vm -O v -o Files/sample1.vcf; Date=Mon Aug  8 12:04:23 2022
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Files/sample1.bam
+ref	200	.	A	C	225.417	.	DP=26;VDB=0.931709;SGB=-0.692562;MQSB=1;MQ0F=0;AC=2;AN=2;DP4=0,0,18,4;MQ=60	GT:PL	1/1:255,66,0
+ref	400	.	G	A	225.417	.	DP=28;VDB=0.222052;SGB=-0.693021;MQSB=1;MQ0F=0;AC=2;AN=2;DP4=0,0,8,19;MQ=60	GT:PL	1/1:255,81,0
