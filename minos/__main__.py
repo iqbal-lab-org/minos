@@ -189,6 +189,22 @@ def main(args=None):
         func=minos.tasks.make_split_gramtools_build.run
     )
 
+    # ------------------- get_test_data -------------------------------------------
+    subparser_get_test_data = subparsers.add_parser(
+        "get_test_data",
+        help="Get directory of test data files, for testing minos runs ok",
+        usage="minos get_test_data <outdir>",
+        description="Get directory of test data files, for testing minos runs ok",
+    )
+
+    subparser_get_test_data.add_argument(
+        "outdir",
+        help="Name of output directory (is created, must not already exist)",
+    )
+    subparser_get_test_data.set_defaults(
+        func=minos.tasks.get_test_data.run
+    )
+
     # ------------------ vcf_merge ------------------------------------------------
     subparser_vcf_merge = subparsers.add_parser(
         "vcf_merge",

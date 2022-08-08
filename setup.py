@@ -13,6 +13,7 @@ setup(
     version="0.12.3",
     description="Variant call adjudication",
     packages=find_packages(),
+    package_data={"minos": ["test_data_files/*"]},
     author="Martin Hunt",
     author_email="mhunt@ebi.ac.uk",
     url="https://github.com/iqbal-lab-org/minos",

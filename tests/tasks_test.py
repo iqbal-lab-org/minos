@@ -53,3 +53,20 @@ def test_vcf_merge_and_cluster():
         assert os.path.exists(fname)
         os.unlink(fname)
     utils.rm_rf(options.merge_dir)
+
+
+def test_get_test_data():
+    options = mock.Mock()
+    options.outdir = "tmp.get_test_data"
+    utils.syscall(f"rm -rf {options.outdir}")
+    tasks.get_test_data.run(options)
+    outdir_abs = os.path.abspath(options.outdir)
+    assert os.path.exists(options.outdir)
+    with open(os.path.join(options.outdir, "manifest.tsv")) as f:
+        got_lines = [x.rstrip().split("\t") for x in f]
+    assert got_lines == [
+        ["name", "reads", "vcf"],
+        ["sample1", os.path.join(outdir_abs, "sample1.bam"), os.path.join(outdir_abs, "in.1.vcf")],
+        ["sample2", os.path.join(outdir_abs, "sample2.bam"), os.path.join(outdir_abs, "in.2.vcf")],
+    ]
+    utils.syscall(f"rm -r {options.outdir}")

@@ -15,6 +15,7 @@ __all__ = [
     "gramtools",
     "regeno_helper",
     "tasks",
+    "test_data",
     "utils",
     "vcf_chunker",
     "vcf_file_split_deletions",
