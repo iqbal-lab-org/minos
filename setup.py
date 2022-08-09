@@ -10,7 +10,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="bio-minos",
-    version="0.12.3",
+    version="0.12.4",
     description="Variant call adjudication",
     packages=find_packages(),
     package_data={"minos": ["test_data_files/*"]},
