@@ -38,7 +38,7 @@ if [ ! -d $install_root ]; then
 fi
 cd $install_root
 
-pip3 install 'cluster_vcf_records==0.13.2'
+pip3 install 'cluster_vcf_records==0.13.3'
 
 #_________________________ bcftools _______________________#
 cd $install_root
