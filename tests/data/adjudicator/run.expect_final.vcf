@@ -1,0 +1,31 @@
+##fileformat=VCFv4.2
+##source=minos, version 0.12.3
+##fileDate=2022-08-09
+##FORMAT=<ID=ALLELE_DP,Number=R,Type=Float,Description="Mean read depth of ref and each allele">
+##FORMAT=<ID=COV,Number=R,Type=Integer,Description="Number of reads on ref and alt alleles">
+##FORMAT=<ID=COV_TOTAL,Number=1,Type=Integer,Description="Total reads mapped at this site, from gramtools">
+##FORMAT=<ID=DP,Number=1,Type=Float,Description="Mean read depth of called allele (ie the ALLELE_DP of the called allele)">
+##FORMAT=<ID=FRS,Number=1,Type=Float,Description="Fraction of reads that support the genotype call">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
+##minosMeanReadDepth=16.857
+##minosReadDepthVariance=111.143
+##contig=<ID=ref.1,length=1000>
+##contig=<ID=ref.2,length=1000>
+##contig=<ID=ref.3,length=1000>
+##contig=<ID=ref.4,length=180>
+##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">
+##FILTER=<ID=MIN_FRS,Description="Minimum FRS of 0.9">
+##FILTER=<ID=MIN_DP,Description="Minimum DP of 0">
+##FILTER=<ID=MIN_GCP,Description="Minimum GT_CONF_PERCENTILE of 5">
+##FILTER=<ID=MAX_DP,Description="Maximum DP of 48.484314144580786 (= 3.0 standard deviations from the mean read depth 16.857)">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	run.bwa.bam
+ref.1	100	.	G	T	.	PASS	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	1/1:6:0,6:1.0:6:0,6:63.3:14.15
+ref.1	299	.	GAT	G	.	PASS	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	1/1:30:0,30:1.0:30:0,30:283.3:88.7
+ref.1	501	.	G	GAGTC	.	PASS	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	1/1:24.2:0,24.2:1.0:26:0,26:246.84:81.3
+ref.1	701	.	C	A	.	PASS	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	1/1:24:0,24:1.0:24:0,24:228.6:77.3
+ref.1	702	.	T	G	.	PASS	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	1/1:25:0,25:1.0:25:0,25:237.72:79.25
+ref.1	703	.	A	T	.	PASS	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	1/1:25:0,25:1.0:25:0,25:237.72:79.25
+ref.1	704	.	A	T	.	PASS	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	1/1:25:0,25:1.0:25:0,25:237.72:79.25
+ref.1	900	.	T	G	.	PASS	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	0/0:13:13,0:1.0:13:13,0:127.96:42.7
+ref.4	61	.	C	A,T	.	.	.	GT:DP:ALLELE_DP:FRS:COV_TOTAL:COV:GT_CONF:GT_CONF_PERCENTILE	./.:.:0,0,0:.:0:0,0,0:0.0:0.0

@@ -9,6 +9,11 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(this_dir, "data", "adjudicator")
 
 
+def _load_vcf_record_lines(infile):
+    with open(infile) as f:
+        return [x.rstrip() for x in f if not x.startswith("#")]
+
+
 def test_get_gramtools_kmer_size():
     """test _get_gramtools_kmer_size"""
     build_dir = os.path.join(data_dir, "get_gramtools_kmer_size.build")
@@ -21,7 +26,7 @@ def test_get_gramtools_kmer_size():
 def test_run_clean_is_false():
     """test run when not cleaning up files afterwards"""
     # We're just testing that it doesn't crash.
-    # Check the output files exist, but not their contents.
+    # Check the output files exist, but not their contents (except VCF)
     # First run using splitting of VCF file.
     # Then run without splitting.
     outdir = "tmp.adjudicator.noclean.out"
@@ -47,6 +52,10 @@ def test_run_clean_is_false():
     assert os.path.exists(adj.log_file)
     assert os.path.exists(adj.final_vcf)
     assert os.path.exists(adj.clustered_vcf)
+    expect_vcf = os.path.join(data_dir, "run.expect_final.vcf")
+    expect_lines = _load_vcf_record_lines(expect_vcf)
+    got_lines = _load_vcf_record_lines(adj.final_vcf)
+    assert got_lines == expect_lines
 
     # Clean up and then run without splitting
     shutil.rmtree(outdir)
