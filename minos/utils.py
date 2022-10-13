@@ -98,12 +98,13 @@ def estimate_max_read_length_and_read_error_rate_from_qual_scores(
     return max_read_length, pow(10, -mean_qual_score / 10)
 
 
-def remove_vars_from_vcf_at_contig_ends(vcf_in, vcf_out, ref_lengths=None, ref_fasta=None):
+def remove_vars_from_vcf_at_contig_ends(
+    vcf_in, vcf_out, ref_lengths=None, ref_fasta=None
+):
     if ref_lengths is None:
         assert ref_fasta is not None
         ref_lengths = {
-            x.id.split()[0]: len(x)
-            for x in pyfastaq.sequences.file_reader(ref_fasta)
+            x.id.split()[0]: len(x) for x in pyfastaq.sequences.file_reader(ref_fasta)
         }
 
     lines = []
@@ -119,4 +120,3 @@ def remove_vars_from_vcf_at_contig_ends(vcf_in, vcf_out, ref_lengths=None, ref_f
 
     with open(vcf_out, "w") as f:
         print(*lines, sep="\n", file=f)
-
