@@ -19,7 +19,6 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(filecmp.cmp(tmp_file, expect, shallow=False))
         os.unlink(tmp_file)
 
-
     def test_estimate_max_read_length_and_read_error_rate_from_qual_scores_fastq_file(
         self,
     ):
@@ -137,3 +136,18 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(None, got_qual)
         self.assertEqual(4, got_length)
         os.unlink(tmp_file)
+
+    def test_remove_vars_from_vcf_at_contig_ends(self):
+        ref_fa = os.path.join(data_dir, "remove_vars_from_vcf_at_contig_ends.ref.fa")
+        vcf_in = os.path.join(data_dir, "remove_vars_from_vcf_at_contig_ends.in.vcf")
+        expect_vcf = os.path.join(
+            data_dir, "remove_vars_from_vcf_at_contig_ends.expect.vcf"
+        )
+        vcf_out = "tmp.remove_vars_from_vcf_at_contig_ends.vcf"
+        utils.remove_vars_from_vcf_at_contig_ends(vcf_in, vcf_out, ref_fasta=ref_fa)
+        self.assertTrue(filecmp.cmp(vcf_out, expect_vcf, shallow=False))
+        utils.syscall(f"cp {vcf_in} {vcf_out}")
+        ref_lengths = {"ref1": 4, "ref2": 2}
+        utils.remove_vars_from_vcf_at_contig_ends(
+            vcf_out, vcf_out, ref_lengths=ref_lengths
+        )

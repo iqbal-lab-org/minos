@@ -36,3 +36,7 @@ grep -v '^#' $pre.calls.1.vcf >> $pre.calls.1.vcf.$$
 # change some calls to het instead of hom and add a non-ACGT allele
 awk -F"\t" 'BEGIN{OFS="\t"} $2==703 {$5="T,G"; $10="0/1"substr($10,4)} $2==704 {$5="T,<FOO>"} 1' $pre.calls.1.vcf.$$ > $pre.calls.1.vcf
 rm $pre.calls.1.vcf.$$
+
+# add a variant at the final coord of ref1 - should get removed before gramtools
+# because it makes gramtools build crash
+echo -e "ref.1\t1000\t.\tC\tA\t.\t.\tDP=100\tGT\t1/1" >> run.calls.1.vcf

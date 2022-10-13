@@ -15,7 +15,7 @@ apt-get install -y \
   gcc \
   gdb \
   git \
-  openjdk-8-jre \
+  openjdk-17-jre \
   liblzma-dev \
   libcurl4-gnutls-dev \
   libbz2-dev \

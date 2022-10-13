@@ -254,6 +254,9 @@ class Adjudicator:
             if not self.debug:
                 os.unlink(f"{self.clustered_vcf_prefix}.excluded.tsv")
                 utils.rm_rf(self.cluster_dir)
+            utils.remove_vars_from_vcf_at_contig_ends(
+                self.clustered_vcf, self.clustered_vcf, ref_lengths=self.ref_seq_lengths
+            )
             logging.info("Finished clustering VCF file(s)")
 
         if not vcf_file_read.vcf_file_has_at_least_one_record(self.clustered_vcf):
@@ -308,7 +311,8 @@ class Adjudicator:
     def _run_quasimap_one_split(self, split_file, unmapped_reads_file=None):
         logging.info(f"Start quasimap on split file {split_file.filename}")
         split_reads_file = os.path.join(
-            self.split_output_dir, f"split.{split_file.file_number}.reads.bam",
+            self.split_output_dir,
+            f"split.{split_file.file_number}.reads.bam",
         )
         bam_read_extract.get_region(
             self.reads_files[0],
@@ -319,7 +323,8 @@ class Adjudicator:
         )
 
         quasimap_dir = os.path.join(
-            self.split_output_dir, f"split.{split_file.file_number}.gramtools.quasimap",
+            self.split_output_dir,
+            f"split.{split_file.file_number}.gramtools.quasimap",
         )
         if self.use_unmapped_reads:
             reads_files = [unmapped_reads_file, split_reads_file]
@@ -430,7 +435,8 @@ class Adjudicator:
                     shutil.rmtree(quasimap_dir)
 
                 vcf_prefix = os.path.join(
-                    self.split_output_dir, f"split.{split_file.file_number}.out",
+                    self.split_output_dir,
+                    f"split.{split_file.file_number}.out",
                 )
                 split_vcf_out = f"{vcf_prefix}.vcf"
                 unfiltered_vcf_out = (
@@ -582,7 +588,9 @@ class Adjudicator:
             )
             if scores_file is not None:
                 Adjudicator._plot_gt_conf_hists(
-                    scores_file, self.sim_conf_scores_file, self.genotype_hist_pdf,
+                    scores_file,
+                    self.sim_conf_scores_file,
+                    self.genotype_hist_pdf,
                 )
 
     @classmethod
@@ -617,10 +625,12 @@ class Adjudicator:
                 f"No GT_CONF description found in header of VCF file {vcf_file}. Cannot continue"
             )
         if mean_depth is None or variance is None:
-            raise Exception(f"minosMeanReadDepth and/or minosReadDepthVariance not found in header of VCF file {vcf_file}. Cannot continue")
+            raise Exception(
+                f"minosMeanReadDepth and/or minosReadDepthVariance not found in header of VCF file {vcf_file}. Cannot continue"
+            )
 
         max_dp_cutoff = mean_depth + max_dp * math.sqrt(variance)
-        vcf_header[-1: -1] = [
+        vcf_header[-1:-1] = [
             '##FORMAT=<ID=GT_CONF_PERCENTILE,Number=1,Type=Float,Description="Percentile of GT_CONF">',
             f'##FILTER=<ID=MIN_FRS,Description="Minimum FRS of {min_frs}">',
             f'##FILTER=<ID=MIN_DP,Description="Minimum DP of {min_dp}">',
