@@ -254,6 +254,7 @@ class Adjudicator:
             if not self.debug:
                 os.unlink(f"{self.clustered_vcf_prefix}.excluded.tsv")
                 utils.rm_rf(self.cluster_dir)
+            utils.remove_vars_from_vcf_at_contig_ends(self.clustered_vcf, self.clustered_vcf, ref_lengths=self.ref_seq_lengths)
             logging.info("Finished clustering VCF file(s)")
 
         if not vcf_file_read.vcf_file_has_at_least_one_record(self.clustered_vcf):

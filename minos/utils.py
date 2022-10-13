@@ -96,3 +96,27 @@ def estimate_max_read_length_and_read_error_rate_from_qual_scores(
 
     mean_qual_score = total / base_count
     return max_read_length, pow(10, -mean_qual_score / 10)
+
+
+def remove_vars_from_vcf_at_contig_ends(vcf_in, vcf_out, ref_lengths=None, ref_fasta=None):
+    if ref_lengths is None:
+        assert ref_fasta is not None
+        ref_lengths = {
+            x.id.split()[0]: len(x)
+            for x in pyfastaq.sequences.file_reader(ref_fasta)
+        }
+
+    lines = []
+    with open(vcf_in) as f:
+        for line in map(str.rstrip, f):
+            if not line.startswith("#"):
+                fields = line.split("\t")
+                ref_length = ref_lengths[fields[0]]
+                ref_end = int(fields[1]) + len(fields[3]) - 1
+                if ref_end >= ref_length:
+                    continue
+            lines.append(line)
+
+    with open(vcf_out, "w") as f:
+        print(*lines, sep="\n", file=f)
+

@@ -1,4 +1,5 @@
 from cluster_vcf_records import variant_tracking
+from minos import utils
 
 
 def run(options):
@@ -9,3 +10,5 @@ def run(options):
         max_alleles=options.max_alleles,
         cpus=options.cpus,
     )
+    clustered_vcf = f"{options.outprefix}.vcf"
+    utils.remove_vars_from_vcf_at_contig_ends(clustered_vcf, clustered_vcf, ref_fasta=options.ref_fasta)
