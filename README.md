@@ -43,7 +43,7 @@ Dependencies:
 
 * Python 3 (tested on version 3.6.9)
 * [gramtools](https://github.com/iqbal-lab-org/gramtools) commit
-  ee98085fbb9d8be5afd2288424c3d6dded796ab8
+  04c4ba717399507b643fd4b77a61c048ef2ed83f
 * [bcftools](https://samtools.github.io/bcftools/)
 * [vt](https://github.com/atks/vt.git)
 * [vcflib](https://github.com/vcflib/vcflib.git). Specifically,
