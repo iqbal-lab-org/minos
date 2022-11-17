@@ -71,7 +71,7 @@ pip3 install tox "six>=1.14.0"
 cd $install_root
 git clone https://github.com/iqbal-lab-org/gramtools
 cd gramtools
-git checkout 8af53f6c8c0d72ef95223e89ab82119b717044f2
+git checkout ee98085fbb9d8be5afd2288424c3d6dded796ab8
 # Note: a simple "pip3 install ." works for singularity but
 # not for docker - the `gram` exectuable does not get
 # put where gramtools expects to find it. The method
