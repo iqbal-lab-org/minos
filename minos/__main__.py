@@ -102,7 +102,7 @@ def main(args=None):
     )
     subparser_adjudicate.add_argument(
         "--filter_min_frs",
-        type=int,
+        type=float,
         help="Minimum value to be used for MIN_FRS filter in output VCF file [%(default)s]",
         default=0.9,
     )
